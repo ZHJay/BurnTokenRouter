@@ -34,3 +34,10 @@ describe('doc_url sanitization', () => {
     expect(keyUsageViewSource).toContain('sanitizeUrl(appStore.cachedPublicSettings?.doc_url || appStore.docUrl')
   })
 })
+
+describe('Apple panel header styling', () => {
+  it('uses the dedicated liquid-glass header surface', () => {
+    expect(headerSource).toContain('class="app-header"')
+    expect(headerSource).toContain('backdrop-filter: saturate(180%) blur(24px);')
+  })
+})

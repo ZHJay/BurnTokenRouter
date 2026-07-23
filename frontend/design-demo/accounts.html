@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>账号管理 · Apple 风格设计稿</title>
+<style>
+  /* =========================================================================
+     Apple Design Language — iOS 27 + apple.com
+     统一设计 token（颜色 / 字体 / 材质 / 圆角 / 阴影 / 动效）
+     ========================================================================= */
+  :root {
+    /* 品牌蓝：apple.com 按钮蓝 / iOS 系统蓝 */
+    --blue: #0071e3;
+    --blue-hover: #0060c0;
+    --blue-ios: #0a84ff;
+    --blue-soft: rgba(0, 113, 227, 0.10);
+
+    /* 语义色 */
+    --green: #34c759;
+    --orange: #ff9f0a;
+    --red: #ff3b30;
+    --purple: #af52de;
+    --teal: #30b0c7;
+    --gray-dot: #8e8e93;
+
+    /* 中性灰阶（apple.com / iOS 系统灰） */
+    --bg: #f5f5f7;
+    --bg-elevated: #ffffff;
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --text-tertiary: #86868b;
+    --separator: rgba(0, 0, 0, 0.08);
+    --separator-strong: rgba(0, 0, 0, 0.12);
+    --fill: rgba(120, 120, 128, 0.08);
+    --fill-hover: rgba(120, 120, 128, 0.14);
+
+    /* 材质：Liquid Glass */
+    --glass-bg: rgba(255, 255, 255, 0.72);
+    --glass-border: rgba(255, 255, 255, 0.6);
+    --glass-blur: saturate(180%) blur(20px);
+
+    /* 圆角 */
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 18px;
+    --r-xl: 24px;
+    --r-pill: 980px;
+
+    /* 阴影 */
+    --shadow-card: 0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.05);
+    --shadow-pop: 0 12px 40px rgba(0,0,0,0.14);
+    --shadow-blue: 0 6px 20px rgba(0,113,227,0.28);
+
+    /* 动效 */
+    --ease: cubic-bezier(0.32, 0.72, 0, 1);
+    --dur: 0.4s;
+  }
+
+  html.dark {
+    --blue: #0a84ff;
+    --blue-hover: #3b9dff;
+    --blue-soft: rgba(10, 132, 255, 0.16);
+    --bg: #000000;
+    --bg-elevated: #1c1c1e;
+    --text-primary: #f5f5f7;
+    --text-secondary: #aeaeb2;
+    --text-tertiary: #8e8e93;
+    --separator: rgba(255, 255, 255, 0.10);
+    --separator-strong: rgba(255, 255, 255, 0.16);
+    --fill: rgba(120, 120, 128, 0.24);
+    --fill-hover: rgba(120, 120, 128, 0.36);
+    --glass-bg: rgba(28, 28, 30, 0.72);
+    --glass-border: rgba(255, 255, 255, 0.10);
+    --shadow-card: 0 1px 2px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.5);
+    --shadow-pop: 0 16px 48px rgba(0,0,0,0.6);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont,
+      "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    letter-spacing: -0.01em;
+    transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+  }
+
+  ::selection { background: var(--blue-soft); }
+
+  /* ===================== 布局骨架 ===================== */
+  .app { display: flex; min-height: 100vh; }
+
+  /* ---------- 侧栏 ---------- */
+  .sidebar {
+    width: 248px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    padding: 18px 12px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-right: 0.5px solid var(--separator);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 11px;
+    padding: 6px 10px 18px;
+  }
+  .brand-logo {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: linear-gradient(160deg, #0a84ff, #0071e3);
+    display: grid; place-items: center;
+    color: #fff; font-weight: 700; font-size: 17px;
+    box-shadow: var(--shadow-blue);
+  }
+  .brand-name { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
+  .brand-ver { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
+
+  .nav-section {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--text-tertiary);
+    padding: 14px 12px 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 11px;
+    padding: 8px 12px; border-radius: var(--r-md);
+    font-size: 14px; font-weight: 500; color: var(--text-secondary);
+    cursor: pointer; user-select: none;
+    transition: background 0.18s var(--ease), color 0.18s var(--ease);
+  }
+  .nav-item svg { width: 19px; height: 19px; flex-shrink: 0; }
+  .nav-item:hover { background: var(--fill); color: var(--text-primary); }
+  .nav-item.active {
+    background: var(--blue);
+    color: #fff;
+    box-shadow: var(--shadow-blue);
+  }
+  .nav-item.active svg { stroke: #fff; }
+  .nav-badge {
+    margin-left: auto; font-size: 11px; font-weight: 600;
+    background: var(--fill); color: var(--text-secondary);
+    padding: 1px 8px; border-radius: var(--r-pill);
+  }
+  .nav-item.active .nav-badge { background: rgba(255,255,255,0.24); color: #fff; }
+
+  /* ---------- 主区 ---------- */
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+  /* 顶部工具栏（glass，滚动时悬浮） */
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 28px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-bottom: 0.5px solid var(--separator);
+  }
+  .page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; }
+  .page-sub { font-size: 12.5px; color: var(--text-secondary); margin-top: 1px; }
+  .topbar-spacer { flex: 1; }
+
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: var(--r-pill);
+    display: grid; place-items: center; cursor: pointer;
+    background: var(--fill); color: var(--text-secondary); border: none;
+    transition: background 0.18s var(--ease), transform 0.12s var(--ease);
+  }
+  .icon-btn:hover { background: var(--fill-hover); color: var(--text-primary); }
+  .icon-btn:active { transform: scale(0.94); }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: var(--r-pill);
+    background: linear-gradient(160deg, #af52de, #0a84ff);
+    color: #fff; display: grid; place-items: center;
+    font-weight: 600; font-size: 14px; cursor: pointer;
+  }
+
+  .content { padding: 24px 28px 48px; }
+
+  /* ===================== 组件：按钮 ===================== */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    height: 36px; padding: 0 16px; border-radius: var(--r-pill);
+    font-size: 13.5px; font-weight: 500; border: none; cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.18s var(--ease), box-shadow 0.18s var(--ease),
+      transform 0.12s var(--ease), border-color 0.18s var(--ease);
+  }
+  .btn svg { width: 16px; height: 16px; }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--blue); color: #fff; box-shadow: var(--shadow-blue); }
+  .btn-primary:hover { background: var(--blue-hover); }
+  .btn-secondary {
+    background: var(--bg-elevated); color: var(--text-primary);
+    border: 0.5px solid var(--separator-strong); box-shadow: var(--shadow-card);
+  }
+  .btn-secondary:hover { background: var(--fill); }
+  .btn-ghost { background: transparent; color: var(--text-secondary); }
+  .btn-ghost:hover { background: var(--fill); color: var(--text-primary); }
+
+  /* ===================== 组件：分段控件 ===================== */
+  .segmented {
+    display: inline-flex; gap: 2px; padding: 2px;
+    background: var(--fill); border-radius: 11px;
+  }
+  .segmented button {
+    border: none; background: transparent; cursor: pointer;
+    font-size: 13px; font-weight: 500; color: var(--text-secondary);
+    padding: 6px 14px; border-radius: 9px;
+    transition: all 0.2s var(--ease);
+  }
+  .segmented button.active {
+    background: var(--bg-elevated); color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  }
+
+  /* ===================== 组件：搜索框 ===================== */
+  .search {
+    display: flex; align-items: center; gap: 8px;
+    height: 36px; padding: 0 14px; border-radius: var(--r-pill);
+    background: var(--fill); min-width: 260px;
+    transition: background 0.18s var(--ease), box-shadow 0.18s var(--ease);
+  }
+  .search:focus-within { background: var(--bg-elevated); box-shadow: 0 0 0 4px var(--blue-soft), var(--shadow-card); }
+  .search svg { width: 16px; height: 16px; color: var(--text-tertiary); flex-shrink: 0; }
+  .search input {
+    border: none; background: transparent; outline: none; flex: 1;
+    font-size: 14px; color: var(--text-primary); font-family: inherit;
+  }
+  .search input::placeholder { color: var(--text-tertiary); }
+
+  /* ===================== 统计卡片 ===================== */
+  .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 22px; }
+  .stat-card {
+    background: var(--bg-elevated); border-radius: var(--r-lg);
+    padding: 18px 20px; box-shadow: var(--shadow-card);
+    border: 0.5px solid var(--separator);
+    transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+  }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-pop); }
+  .stat-top { display: flex; align-items: center; justify-content: space-between; }
+  .stat-icon {
+    width: 38px; height: 38px; border-radius: 11px;
+    display: grid; place-items: center;
+  }
+  .stat-icon svg { width: 20px; height: 20px; }
+  .stat-label { font-size: 13px; color: var(--text-secondary); margin-top: 14px; }
+  .stat-value { font-size: 27px; font-weight: 700; letter-spacing: -0.03em; margin-top: 3px; }
+  .stat-trend { font-size: 12px; font-weight: 600; margin-top: 6px; display: inline-flex; align-items: center; gap: 3px; }
+  .trend-up { color: var(--green); }
+  .trend-down { color: var(--red); }
+
+  /* ===================== 工具条 ===================== */
+  .toolbar {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .toolbar .grow { flex: 1; }
+
+  .filter-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 36px; padding: 0 14px; border-radius: var(--r-pill);
+    background: var(--bg-elevated); border: 0.5px solid var(--separator-strong);
+    box-shadow: var(--shadow-card); cursor: pointer;
+    font-size: 13.5px; font-weight: 500; color: var(--text-primary);
+    transition: background 0.18s var(--ease);
+  }
+  .filter-chip:hover { background: var(--fill); }
+  .filter-chip svg { width: 15px; height: 15px; color: var(--text-tertiary); }
+
+  /* ===================== 主数据卡（表格容器） ===================== */
+  .table-card {
+    background: var(--bg-elevated);
+    border-radius: var(--r-xl);
+    border: 0.5px solid var(--separator);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+
+  /* 批量操作条 */
+  .bulk-bar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 22px; background: var(--blue-soft);
+    border-bottom: 0.5px solid var(--separator);
+    font-size: 13.5px; color: var(--blue);
+  }
+  .bulk-bar .count { font-weight: 600; }
+  .bulk-bar .sep { width: 1px; height: 16px; background: var(--separator-strong); }
+  .bulk-link { color: var(--blue); font-weight: 500; cursor: pointer; }
+  .bulk-link:hover { text-decoration: underline; }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left; font-size: 12px; font-weight: 600;
+    color: var(--text-secondary); letter-spacing: 0.01em;
+    padding: 13px 16px; white-space: nowrap;
+    border-bottom: 0.5px solid var(--separator);
+    position: sticky; top: 0; background: var(--bg-elevated); z-index: 1;
+  }
+  thead th.sortable { cursor: pointer; }
+  thead th.sortable:hover { color: var(--text-primary); }
+  thead th .sort-ind { color: var(--blue); margin-left: 3px; }
+
+  tbody td {
+    padding: 14px 16px; font-size: 13.5px; vertical-align: middle;
+    border-bottom: 0.5px solid var(--separator);
+  }
+  tbody tr { transition: background 0.14s var(--ease); }
+  tbody tr:hover { background: var(--fill); }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .checkbox {
+    width: 18px; height: 18px; border-radius: 6px;
+    border: 1.5px solid var(--separator-strong); cursor: pointer;
+    display: grid; place-items: center; background: var(--bg-elevated);
+    transition: all 0.15s var(--ease);
+  }
+  .checkbox.checked { background: var(--blue); border-color: var(--blue); }
+  .checkbox.checked svg { width: 12px; height: 12px; color: #fff; }
+  .checkbox:not(.checked) svg { display: none; }
+
+  /* 名称单元格 */
+  .acct-name { display: flex; flex-direction: column; gap: 2px; }
+  .acct-name .n { font-weight: 600; color: var(--text-primary); }
+  .acct-name .e { font-size: 12px; color: var(--text-tertiary); }
+  .acct-id { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 12px; color: var(--text-tertiary); }
+
+  /* 平台徽章 */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px; border-radius: 7px;
+    font-size: 12px; font-weight: 600; white-space: nowrap;
+  }
+  .badge .logo { width: 13px; height: 13px; border-radius: 3px; }
+  .b-openai { background: rgba(16,163,127,0.12); color: #0f9d78; }
+  .b-claude { background: rgba(217,119,87,0.14); color: #c2612f; }
+  .b-gemini { background: rgba(66,133,244,0.14); color: #3b76e0; }
+  .b-grok  { background: rgba(120,120,128,0.16); color: var(--text-secondary); }
+  .badge-plan {
+    margin-top: 4px; display: inline-flex; padding: 2px 7px; border-radius: 6px;
+    font-size: 10.5px; font-weight: 600; background: var(--fill); color: var(--text-secondary);
+  }
+  .html.dark .b-claude { color: #e0955f; }
+
+  /* 状态点 */
+  .status { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-active { background: var(--green); box-shadow: 0 0 0 3px rgba(52,199,89,0.18); }
+  .dot-cooldown { background: var(--orange); box-shadow: 0 0 0 3px rgba(255,159,10,0.18); }
+  .dot-error { background: var(--red); box-shadow: 0 0 0 3px rgba(255,59,48,0.18); }
+  .dot-limited { background: var(--purple); box-shadow: 0 0 0 3px rgba(175,82,222,0.18); }
+  .dot-paused { background: var(--gray-dot); }
+  .status-sub { font-size: 11px; color: var(--text-tertiary); font-weight: 400; }
+
+  /* iOS 开关 */
+  .switch {
+    width: 40px; height: 24px; border-radius: var(--r-pill);
+    background: var(--fill-hover); position: relative; cursor: pointer;
+    transition: background 0.28s var(--ease); border: none; flex-shrink: 0;
+  }
+  .switch.on { background: var(--green); }
+  .switch .knob {
+    position: absolute; top: 2px; left: 2px; width: 20px; height: 20px;
+    border-radius: 50%; background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    transition: transform 0.28s var(--ease);
+  }
+  .switch.on .knob { transform: translateX(16px); }
+
+  /* 容量 / 用量进度 */
+  .meter { width: 108px; }
+  .meter .label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-tertiary); margin-bottom: 4px; }
+  .meter .track { height: 6px; border-radius: var(--r-pill); background: var(--fill); overflow: hidden; }
+  .meter .fill { height: 100%; border-radius: var(--r-pill); background: var(--blue); }
+  .meter .fill.warn { background: var(--orange); }
+  .meter .fill.high { background: var(--red); }
+
+  /* 分组 pills */
+  .group-pills { display: flex; flex-wrap: wrap; gap: 4px; max-width: 160px; }
+  .gpill { font-size: 11px; padding: 2px 8px; border-radius: var(--r-pill); background: var(--fill); color: var(--text-secondary); }
+
+  .mono { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 12.5px; color: var(--text-secondary); }
+  .muted { color: var(--text-tertiary); }
+
+  .row-actions { display: flex; align-items: center; gap: 2px; }
+  .row-actions .icon-btn { width: 30px; height: 30px; background: transparent; }
+  .row-actions .icon-btn:hover { background: var(--fill); }
+  .row-actions .icon-btn svg { width: 16px; height: 16px; }
+  .row-actions .danger:hover { color: var(--red); background: rgba(255,59,48,0.1); }
+
+  /* 分页 */
+  .pagination {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 22px; border-top: 0.5px solid var(--separator);
+    font-size: 13px; color: var(--text-secondary);
+  }
+  .pager { display: flex; gap: 4px; }
+  .pager button {
+    min-width: 32px; height: 32px; padding: 0 8px; border-radius: 9px;
+    border: none; background: transparent; color: var(--text-secondary);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: background 0.15s var(--ease);
+  }
+  .pager button:hover { background: var(--fill); }
+  .pager button.active { background: var(--blue); color: #fff; }
+
+  .fade-hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--glass-bg); backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 0.5px solid var(--glass-border); box-shadow: var(--shadow-pop);
+    padding: 8px 16px; border-radius: var(--r-pill); font-size: 12.5px;
+    color: var(--text-secondary); z-index: 100;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ==================== 侧栏 ==================== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">B</div>
+      <div>
+        <div class="brand-name">BurnToken</div>
+        <div class="brand-ver">v0.1.164</div>
+      </div>
+    </div>
+
+    <div class="nav-section">管理</div>
+    <div class="nav-item"><svg fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>仪表盘</div>
+    <div class="nav-item"><svg fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path d="M12 2 3 7v6c0 5 3.5 8 9 9 5.5-1 9-4 9-9V7l-9-5Z"/></svg>运营监控</div>
+    <div class="nav-item"><svg fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>审计日志</div>
+    <div class="nav-item"><svg fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M15 11a3 3 0 1 0 0-6M3 20c0-3 2.7-5 6-5s6 2 6 5M17 20c0-2-1-3.5-2.5-4.3"/></svg>用户管理</div>
+    <div class="nav-item"><svg fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg>分组管理</div>
+    <div class="nav-item active">
+      <svg fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M8 14h5"/></svg>
+      账号管理 <span class="nav-badge">248</span>
+    </div>
+    <div class="nav-item"><svg fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>订阅套餐</div>
+    <div class="nav-item"><svg fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path d="M12 3v18M3 8l9-5 9 5M5 10v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8"/></svg>代理管理</div>
+
+    <div class="nav-section">个人</div>
+    <div class="nav-item"><svg fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path d="M12 15a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.2A1.6 1.6 0 0 0 7 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 3 14.1H2.9a2 2 0 1 1 0-4H3a1.6 1.6 0 0 0 1.5-2.4 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 10 3V2.9a2 2 0 1 1 4 0V3a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8Z"/></svg>系统设置</div>
+    <div class="nav-item"><svg fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path d="M15 7a4 4 0 0 1 0 10M9 7v10M9 7l6-3v16l-6-3M5 9v6"/></svg>公告管理</div>
+  </aside>
+
+  <!-- ==================== 主区 ==================== -->
+  <div class="main">
+    <!-- 顶部工具栏 -->
+    <header class="topbar">
+      <div>
+        <div class="page-title">账号管理</div>
+        <div class="page-sub">管理 AI 平台账号和 Cookie</div>
+      </div>
+      <div class="topbar-spacer"></div>
+      <div class="segmented">
+        <button class="active">全部</button>
+        <button>OpenAI</button>
+        <button>Claude</button>
+        <button>Gemini</button>
+      </div>
+      <button class="icon-btn" title="主题" onclick="toggleTheme()">
+        <svg id="theme-icon" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+      </button>
+      <div class="avatar">8</div>
+    </header>
+
+    <div class="content">
+      <!-- 统计卡片 -->
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-top">
+            <div class="stat-icon" style="background:var(--blue-soft);color:var(--blue)">
+              <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18"/></svg>
+            </div>
+          </div>
+          <div class="stat-label">账号总数</div>
+          <div class="stat-value">248</div>
+          <div class="stat-trend trend-up">↑ 12 本周新增</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-top">
+            <div class="stat-icon" style="background:rgba(52,199,89,0.14);color:var(--green)">
+              <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+            </div>
+          </div>
+          <div class="stat-label">可调度</div>
+          <div class="stat-value">213</div>
+          <div class="stat-trend trend-up">85.9% 健康率</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-top">
+            <div class="stat-icon" style="background:rgba(255,159,10,0.14);color:var(--orange)">
+              <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            </div>
+          </div>
+          <div class="stat-label">冷却 / 限流</div>
+          <div class="stat-value">27</div>
+          <div class="stat-trend trend-down">↑ 5 需关注</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-top">
+            <div class="stat-icon" style="background:rgba(255,59,48,0.14);color:var(--red)">
+              <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+            </div>
+          </div>
+          <div class="stat-label">异常</div>
+          <div class="stat-value">8</div>
+          <div class="stat-trend trend-down">需重新授权</div>
+        </div>
+      </div>
+
+      <!-- 工具条 -->
+      <div class="toolbar">
+        <div class="search">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input placeholder="搜索账号名称、邮箱、ID…" />
+        </div>
+        <div class="filter-chip">
+          <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 5h18l-7 8v5l-4 2v-7L3 5Z"/></svg>
+          分组：全部
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+        <div class="filter-chip">
+          状态：全部
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+        <div class="grow"></div>
+        <button class="btn btn-secondary">
+          <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.3M21 4v5h-5"/></svg>
+          自动刷新：15s
+        </button>
+        <button class="btn btn-secondary">
+          <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+          更多操作
+        </button>
+        <button class="btn btn-primary">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          添加账号
+        </button>
+      </div>
+
+      <!-- 主数据卡 -->
+      <div class="table-card">
+        <div class="bulk-bar">
+          <span class="count">已选择 3 个账号</span>
+          <span class="sep"></span>
+          <span class="bulk-link">批量编辑</span>
+          <span class="bulk-link">刷新令牌</span>
+          <span class="bulk-link">重置状态</span>
+          <span class="bulk-link">删除</span>
+          <div style="flex:1"></div>
+          <span class="bulk-link">取消选择</span>
+        </div>
+
+        <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:44px"><div class="checkbox"><svg fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></div></th>
+              <th class="sortable">名称 <span class="sort-ind">↑</span></th>
+              <th>平台/类型</th>
+              <th>容量</th>
+              <th class="sortable">状态</th>
+              <th>调度</th>
+              <th>今日统计</th>
+              <th>分组</th>
+              <th>用量窗口</th>
+              <th>代理</th>
+              <th class="sortable">优先级</th>
+              <th class="sortable">账号倍率</th>
+              <th class="sortable">最近使用</th>
+              <th style="text-align:right">操作</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        </div>
+
+        <div class="pagination">
+          <span>共 <b style="color:var(--text-primary)">248</b> 个账号 · 每页 20 条</span>
+          <div class="pager">
+            <button>‹</button>
+            <button class="active">1</button>
+            <button>2</button>
+            <button>3</button>
+            <button>…</button>
+            <button>13</button>
+            <button>›</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="fade-hint">Apple 设计语言 · iOS 27 + apple.com · /admin/accounts 设计稿</div>
+
+<script>
+  // ---------- Mock 数据（映射真实列） ----------
+  const rows = [
+    { sel:true,  name:"codex-pro-01", email:"alex.chen@icloud.com", id:1042, platform:"openai", plan:"Pro", cap:34, capMax:40, status:"active", statusSub:"", sched:true, today:"12.4k · 86 次", groups:["默认","高优先"], u5h:62, u7d:41, proxy:"US-West · 洛杉矶", pri:100, rate:"1.00x", last:"2 分钟前" },
+    { sel:true,  name:"claude-team-a", email:"team-a@burntoken.dev", id:1041, platform:"claude", plan:"Max 20x", cap:18, capMax:50, status:"active", statusSub:"", sched:true, today:"8.1k · 52 次", groups:["Claude 池"], u5h:37, u7d:22, proxy:"EU · 法兰克福", pri:90, rate:"1.20x", last:"刚刚" },
+    { sel:false, name:"gpt5-shared-07", email:"ops+7@burntoken.dev", id:1038, platform:"openai", plan:"Plus", cap:47, capMax:50, status:"cooldown", statusSub:"14:32 自动恢复", sched:false, today:"21.9k · 140 次", groups:["共享池","默认"], u5h:94, u7d:78, proxy:"US-East · 纽约", pri:60, rate:"1.00x", last:"9 分钟前" },
+    { sel:false, name:"gemini-vertex-3", email:"svc-vertex-3@gcp", id:1035, platform:"gemini", plan:"Vertex", cap:12, capMax:60, status:"active", statusSub:"", sched:true, today:"5.6k · 33 次", groups:["Gemini"], u5h:20, u7d:14, proxy:"直连", pri:80, rate:"0.80x", last:"1 小时前" },
+    { sel:true,  name:"claude-oauth-12", email:"maria.lopez@me.com", id:1030, platform:"claude", plan:"Pro", cap:29, capMax:30, status:"limited", statusSub:"opus 限流至 15:10", sched:true, today:"15.2k · 97 次", groups:["Claude 池","高优先"], u5h:98, u7d:66, proxy:"EU · 巴黎", pri:95, rate:"1.00x", last:"5 分钟前" },
+    { sel:false, name:"gpt5-backup-19", email:"backup19@burntoken.dev", id:1024, platform:"openai", plan:"Plus", cap:3, capMax:50, status:"error", statusSub:"令牌失效 · 待重新授权", sched:false, today:"0 · 0 次", groups:["备用池"], u5h:0, u7d:8, proxy:"US-West · 洛杉矶", pri:20, rate:"1.00x", last:"3 小时前" },
+    { sel:false, name:"grok-x-premium", email:"grok@burntoken.dev", id:1019, platform:"grok", plan:"Premium+", cap:8, capMax:25, status:"active", statusSub:"", sched:true, today:"2.3k · 19 次", groups:["Grok"], u5h:33, u7d:19, proxy:"US-Central · 达拉斯", pri:70, rate:"1.00x", last:"22 分钟前" },
+    { sel:false, name:"codex-agent-05", email:"agent05@burntoken.dev", id:1015, platform:"openai", plan:"Codex", cap:41, capMax:45, status:"paused", statusSub:"手动暂停", sched:false, today:"9.8k · 71 次", groups:["Codex"], u5h:71, u7d:52, proxy:"JP · 东京", pri:50, rate:"1.10x", last:"昨天" },
+    { sel:false, name:"claude-pool-33", email:"pool33@burntoken.dev", id:1009, platform:"claude", plan:"Max 5x", cap:22, capMax:40, status:"active", statusSub:"", sched:true, today:"11.0k · 80 次", groups:["Claude 池"], u5h:48, u7d:31, proxy:"SG · 新加坡", pri:85, rate:"1.00x", last:"14 分钟前" },
+    { sel:false, name:"gemini-flash-2", email:"flash2@gcp", id:1003, platform:"gemini", plan:"AI Studio", cap:6, capMax:100, status:"active", statusSub:"", sched:true, today:"3.1k · 24 次", groups:["Gemini","备用池"], u5h:11, u7d:6, proxy:"直连", pri:75, rate:"0.50x", last:"38 分钟前" },
+  ];
+
+  const platformMeta = {
+    openai: { cls:"b-openai", label:"OpenAI", glyph:"◎" },
+    claude: { cls:"b-claude", label:"Claude", glyph:"✳" },
+    gemini: { cls:"b-gemini", label:"Gemini", glyph:"✦" },
+    grok:   { cls:"b-grok",   label:"Grok",   glyph:"𝕏" },
+  };
+  const statusMeta = {
+    active:   { dot:"dot-active",   label:"正常" },
+    cooldown: { dot:"dot-cooldown", label:"冷却中" },
+    error:    { dot:"dot-error",    label:"错误" },
+    limited:  { dot:"dot-limited",  label:"限流中" },
+    paused:   { dot:"dot-paused",   label:"暂停" },
+  };
+
+  const check = '<svg fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>';
+  function meterCls(v){ return v>=90 ? "high" : v>=70 ? "warn" : ""; }
+
+  document.getElementById("tbody").innerHTML = rows.map(r => {
+    const p = platformMeta[r.platform];
+    const s = statusMeta[r.status];
+    const capPct = Math.round(r.cap / r.capMax * 100);
+    return `
+    <tr>
+      <td><div class="checkbox ${r.sel?'checked':''}">${check}</div></td>
+      <td><div class="acct-name"><span class="n">${r.name}</span><span class="e">${r.email}</span><span class="acct-id">#${r.id}</span></div></td>
+      <td>
+        <div><span class="badge ${p.cls}"><span>${p.glyph}</span>${p.label}</span></div>
+        <span class="badge-plan">${r.plan}</span>
+      </td>
+      <td>
+        <div class="meter">
+          <div class="label"><span>${r.cap}/${r.capMax}</span><span>${capPct}%</span></div>
+          <div class="track"><div class="fill ${meterCls(capPct)}" style="width:${capPct}%"></div></div>
+        </div>
+      </td>
+      <td>
+        <div class="status"><span class="dot ${s.dot}"></span>${s.label}</div>
+        ${r.statusSub?`<div class="status-sub">${r.statusSub}</div>`:''}
+      </td>
+      <td><button class="switch ${r.sched?'on':''}"><span class="knob"></span></button></td>
+      <td><span class="mono">${r.today}</span></td>
+      <td><div class="group-pills">${r.groups.map(g=>`<span class="gpill">${g}</span>`).join('')}</div></td>
+      <td>
+        <div class="meter" style="width:92px">
+          <div class="label"><span>5h</span><span>${r.u5h}%</span></div>
+          <div class="track"><div class="fill ${meterCls(r.u5h)}" style="width:${r.u5h}%"></div></div>
+          <div class="label" style="margin-top:5px"><span>7d</span><span>${r.u7d}%</span></div>
+          <div class="track"><div class="fill ${meterCls(r.u7d)}" style="width:${r.u7d}%"></div></div>
+        </div>
+      </td>
+      <td><span class="${r.proxy==='直连'?'muted':''}" style="font-size:12.5px">${r.proxy}</span></td>
+      <td><span class="mono">${r.pri}</span></td>
+      <td><span class="mono">${r.rate}</span></td>
+      <td><span class="muted" style="font-size:12.5px">${r.last}</span></td>
+      <td>
+        <div class="row-actions" style="justify-content:flex-end">
+          <button class="icon-btn" title="编辑"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg></button>
+          <button class="icon-btn danger" title="删除"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+          <button class="icon-btn" title="更多"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  function toggleTheme(){
+    document.documentElement.classList.toggle('dark');
+    document.documentElement.classList.toggle('light');
+  }
+</script>
+</body>
+</html>

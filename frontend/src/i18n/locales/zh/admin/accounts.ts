@@ -2,6 +2,19 @@ export default {
     accounts: {
       title: '账号管理',
       description: '管理 AI 平台账号和 Cookie',
+      overview: {
+        label: '账号概览',
+        total: '账号总数',
+        schedulable: '可调度',
+        limited: '冷却 / 限流',
+        errors: '异常',
+        filteredScope: '当前筛选',
+        pageScope: '当前页',
+        visibleCount: '本页显示 {count} 个账号',
+        healthRate: '{percent}% 健康率',
+        attention: '{count} 个账号需关注',
+        errorHint: '检查授权和凭据状态'
+      },
       createAccount: '添加账号',
       autoRefresh: '自动刷新',
       enableAutoRefresh: '启用自动刷新',

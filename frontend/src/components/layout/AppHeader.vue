@@ -1,8 +1,8 @@
 <template>
-  <header class="glass sticky top-0 z-30 border-b border-gray-200/50 dark:border-dark-700/50">
-    <div class="flex h-16 items-center justify-between gap-2 px-2 sm:px-4 md:px-6">
+  <header class="app-header">
+    <div class="app-header__inner">
       <!-- Left: Mobile Menu Toggle + Page Title -->
-      <div class="flex shrink-0 items-center gap-2 sm:gap-4">
+      <div class="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
         <button
           @click="toggleMobileSidebar"
           class="btn-ghost btn-icon lg:hidden"
@@ -11,18 +11,22 @@
           <Icon name="menu" size="md" />
         </button>
 
-        <div class="hidden lg:block">
-          <h1 class="text-lg font-semibold text-gray-900 dark:text-white">
+        <div class="min-w-0">
+          <h1 class="app-header__title">
             {{ pageTitle }}
           </h1>
-          <p v-if="pageDescription" class="text-xs text-gray-500 dark:text-dark-400">
+          <p v-if="pageDescription" class="app-header__description hidden lg:block">
             {{ pageDescription }}
           </p>
         </div>
       </div>
 
+      <div v-if="$slots.context" class="app-header__context">
+        <slot name="context" />
+      </div>
+
       <!-- Right: Announcements + Docs + Language + Subscriptions + Balance + User Dropdown -->
-      <div class="flex min-w-0 items-center gap-1 sm:gap-3">
+      <div class="flex shrink-0 items-center gap-1 sm:gap-3">
         <!-- Announcement Bell -->
         <AnnouncementBell v-if="user" />
 
@@ -32,7 +36,7 @@
           :href="docUrl"
           target="_blank"
           rel="noopener noreferrer"
-          class="hidden items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white sm:flex"
+          class="app-header__utility hidden sm:flex"
         >
           <Icon name="book" size="sm" />
           <span class="hidden sm:inline">{{ t('nav.docs') }}</span>
@@ -47,7 +51,7 @@
         <!-- Balance Display -->
         <div
           v-if="user"
-          class="group relative hidden items-center gap-2 rounded-xl bg-primary-50 px-3 py-1.5 dark:bg-primary-900/20 sm:flex"
+          class="app-header__balance group relative hidden sm:flex"
         >
           <svg
             class="h-4 w-4 text-primary-600 dark:text-primary-400"
@@ -95,10 +99,10 @@
         <div v-if="user" class="relative" ref="dropdownRef">
           <button
             @click="toggleDropdown"
-            class="flex items-center gap-2 rounded-xl p-1.5 transition-colors hover:bg-gray-100 dark:hover:bg-dark-800"
+            class="app-header__user"
             :aria-label="t('common.userMenu')"
           >
-            <div class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-sm font-medium text-white shadow-sm">
+            <div class="app-header__avatar">
               <img
                 v-if="avatarUrl"
                 :src="avatarUrl"
@@ -370,9 +374,58 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.app-header {
+  @apply sticky top-0 z-30 border-b border-black/[0.06] dark:border-white/[0.08];
+  background: rgb(255 255 255 / 0.72);
+  backdrop-filter: saturate(180%) blur(24px);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+}
+
+:global(.dark) .app-header {
+  background: rgb(0 0 0 / 0.68);
+}
+
+.app-header__inner {
+  @apply flex h-16 items-center justify-between gap-2 px-3 sm:px-5 md:px-7 lg:h-[77px];
+}
+
+.app-header__title {
+  @apply truncate text-[1.0625rem] font-semibold leading-6 tracking-[-0.025em] text-[#1d1d1f] dark:text-[#f5f5f7];
+  @apply sm:text-[1.125rem] lg:text-[1.375rem] lg:font-bold lg:tracking-[-0.03em];
+}
+
+.app-header__description {
+  @apply mt-0.5 text-xs leading-4 text-gray-500 dark:text-dark-400;
+}
+
+.app-header__context {
+  @apply hidden shrink-0 items-center xl:flex;
+}
+
+.app-header__utility {
+  @apply items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium text-gray-600;
+  @apply transition-colors hover:bg-black/[0.05] hover:text-gray-900;
+  @apply dark:text-dark-300 dark:hover:bg-white/[0.08] dark:hover:text-white;
+}
+
+.app-header__balance {
+  @apply items-center gap-2 rounded-full bg-primary-50 px-3 py-2 dark:bg-primary-900/20;
+}
+
+.app-header__user {
+  @apply flex items-center gap-2 rounded-full p-1 transition-colors;
+  @apply hover:bg-black/[0.05] dark:hover:bg-white/[0.08];
+}
+
+.app-header__avatar {
+  @apply flex h-9 w-9 items-center justify-center overflow-hidden rounded-full;
+  @apply bg-gradient-to-br from-primary-400 to-primary-600 text-sm font-semibold text-white;
+  box-shadow: 0 4px 12px rgb(0 113 227 / 0.24);
+}
+
 .dropdown-enter-active,
 .dropdown-leave-active {
-  transition: all 0.2s ease;
+  transition: all 0.24s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .dropdown-enter-from,

@@ -1,6 +1,9 @@
 <template>
-  <div class="mb-4 flex items-center justify-between rounded-lg bg-primary-50 p-3 dark:bg-primary-900/20">
-    <div class="flex flex-wrap items-center gap-2">
+  <div
+    class="account-bulk-bar"
+    :class="selectedIds.length > 0 ? 'account-bulk-bar--selected' : 'account-bulk-bar--idle'"
+  >
+    <div class="flex min-w-0 flex-wrap items-center gap-2">
       <span v-if="selectedIds.length > 0" class="text-sm font-medium text-primary-900 dark:text-primary-100">
         {{ t('admin.accounts.bulkActions.selected', { count: selectedIds.length }) }}
       </span>
@@ -14,7 +17,7 @@
       >
         {{ t('admin.accounts.bulkActions.selectCurrentPage') }}
       </button>
-      <span class="text-gray-300 dark:text-primary-800">•</span>
+      <span class="account-bulk-divider" aria-hidden="true"></span>
       <button
         @click="$emit('clear')"
         class="text-xs font-medium text-primary-700 hover:text-primary-800 dark:text-primary-300 dark:hover:text-primary-200"
@@ -23,7 +26,7 @@
       </button>
       </template>
     </div>
-    <div class="flex gap-2">
+    <div class="account-bulk-actions">
       <template v-if="selectedIds.length > 0">
         <button @click="$emit('delete')" class="btn btn-danger btn-sm">{{ t('admin.accounts.bulkActions.delete') }}</button>
         <button @click="$emit('reset-status')" class="btn btn-secondary btn-sm">{{ t('admin.accounts.bulkActions.resetStatus') }}</button>
@@ -58,3 +61,43 @@ defineEmits([
 
 const { t } = useI18n()
 </script>
+
+<style scoped>
+.account-bulk-bar {
+  @apply flex flex-wrap items-center justify-between gap-3 px-5 py-1.5;
+  @apply border-b border-black/[0.06] dark:border-white/[0.08];
+  transition:
+    background-color 220ms cubic-bezier(0.32, 0.72, 0, 1),
+    border-color 220ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.account-bulk-bar--selected {
+  @apply bg-primary-50/80 dark:bg-primary-900/20;
+}
+
+.account-bulk-bar--idle {
+  @apply bg-gray-50/60 dark:bg-dark-900/60;
+}
+
+.account-bulk-divider {
+  @apply h-4 w-px bg-primary-200 dark:bg-primary-800;
+}
+
+.account-bulk-actions {
+  @apply flex flex-wrap items-center justify-end gap-2;
+}
+
+.account-bulk-actions :deep(.btn) {
+  min-height: 2rem;
+}
+
+@media (max-width: 767px) {
+  .account-bulk-bar {
+    @apply rounded-2xl border px-4 py-3;
+  }
+
+  .account-bulk-actions {
+    @apply w-full justify-start;
+  }
+}
+</style>

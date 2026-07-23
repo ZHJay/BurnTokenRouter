@@ -14,12 +14,10 @@
     <div class="layout-section-scrollable">
       <div class="card table-scroll-container">
         <slot name="table" />
+        <div v-if="$slots.pagination" class="table-pagination-container">
+          <slot name="pagination" />
+        </div>
       </div>
-    </div>
-
-    <!-- 固定区域：分页器 -->
-    <div v-if="$slots.pagination" class="layout-section-fixed">
-      <slot name="pagination" />
     </div>
   </div>
 </template>
@@ -46,8 +44,8 @@ onUnmounted(() => {
 <style scoped>
 /* 桌面端：Flexbox 布局 */
 .table-page-layout {
-  @apply flex flex-col gap-6;
-  height: calc(100vh - 64px - 4rem); /* 减去 header + lg:p-8 的上下padding */
+  @apply flex flex-col gap-4;
+  height: calc(100vh - 77px - 4.5rem); /* 减去桌面 header + lg:pt-6/lg:pb-12 */
 }
 
 .layout-section-fixed {
@@ -60,7 +58,10 @@ onUnmounted(() => {
 
 /* 表格滚动容器 - 增强版表体滚动方案 */
 .table-scroll-container {
-  @apply flex flex-col overflow-hidden h-full bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm;
+  @apply flex flex-col overflow-hidden h-full bg-white dark:bg-dark-900 rounded-3xl border border-black/[0.06] dark:border-white/10 shadow-card;
+  transition:
+    border-color 240ms cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 240ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .table-scroll-container :deep(.table-wrapper) {
@@ -76,7 +77,7 @@ onUnmounted(() => {
 }
 
 .table-scroll-container :deep(thead) {
-  @apply bg-gray-50/80 dark:bg-dark-800/80 backdrop-blur-sm;
+  @apply bg-white/90 dark:bg-dark-900/90 backdrop-blur-xl;
 }
 
 .table-scroll-container :deep(tbody) {
@@ -84,11 +85,19 @@ onUnmounted(() => {
 }
 
 .table-scroll-container :deep(th) {
-  @apply px-5 py-4 text-left text-sm font-medium text-gray-600 dark:text-dark-300 border-b border-gray-200 dark:border-dark-700;
+  @apply px-5 py-3.5 text-left text-xs font-semibold tracking-wide text-gray-500 dark:text-dark-300 border-b border-black/[0.07] dark:border-white/10;
 }
 
 .table-scroll-container :deep(td) {
-  @apply px-5 py-4 text-sm text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-dark-800;
+  @apply px-5 py-3.5 text-sm text-gray-700 dark:text-gray-300 border-b border-black/[0.05] dark:border-white/[0.07];
+}
+
+.table-pagination-container {
+  @apply flex-shrink-0 border-t border-black/[0.06] dark:border-white/10;
+}
+
+.table-pagination-container :deep(> div) {
+  @apply border-t-0 bg-transparent dark:bg-transparent;
 }
 
 /* 移动端：恢复正常滚动 */
@@ -104,5 +113,9 @@ onUnmounted(() => {
   @apply flex-none;
   display: table;
   min-width: 100%;
+}
+
+.table-page-layout.mobile-mode .table-pagination-container {
+  @apply mt-3 overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-card dark:border-white/10 dark:bg-dark-900;
 }
 </style>

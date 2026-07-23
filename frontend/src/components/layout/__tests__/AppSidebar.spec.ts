@@ -53,3 +53,19 @@ describe('AppSidebar header styles', () => {
     expect(sidebarBrandBlockMatch?.[0]).not.toContain('overflow: hidden;')
   })
 })
+
+describe('Apple panel shell styling', () => {
+  it('defines the liquid-glass sidebar surface and solid Apple blue active state', () => {
+    const sidebarBlock = styleSource.match(/\.sidebar\s*\{[\s\S]*?\n {2}\}/)?.[0] ?? ''
+    const activeBlock = styleSource.match(/\.sidebar-link-active\s*\{[\s\S]*?\n {2}\}/)?.[0] ?? ''
+
+    expect(sidebarBlock).toContain('backdrop-filter: blur(24px) saturate(180%);')
+    expect(activeBlock).toContain('@apply bg-primary-500')
+    expect(activeBlock).toMatch(/@apply[^;]*\btext-white\b/)
+  })
+
+  it('labels the production admin navigation with the same hierarchy as the reference shell', () => {
+    expect(componentSource).toContain("{{ t('nav.management') }}")
+    expect(componentSource).toContain('sidebar-section-title')
+  })
+})

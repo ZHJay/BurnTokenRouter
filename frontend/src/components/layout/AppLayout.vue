@@ -6,13 +6,17 @@
     <!-- Main Content Area -->
     <div
       class="relative min-h-screen transition-all duration-300"
-      :class="[sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-64']"
+      :class="[sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-[248px]']"
     >
       <!-- Header -->
-      <AppHeader />
+      <AppHeader>
+        <template #context>
+          <slot name="header-context" />
+        </template>
+      </AppHeader>
 
       <!-- Main Content -->
-      <main class="p-4 md:p-6 lg:p-8">
+      <main class="p-4 md:p-6 lg:px-7 lg:pb-12 lg:pt-6">
         <slot />
       </main>
     </div>

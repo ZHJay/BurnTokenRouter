@@ -535,42 +535,53 @@
   /* ============ 侧边栏 ============ */
   .sidebar {
     @apply fixed inset-y-0 left-0 z-40;
-    @apply w-64 bg-white dark:bg-dark-900;
-    @apply border-r border-gray-200 dark:border-dark-800;
+    @apply border-r border-black/[0.06] dark:border-white/[0.08];
     @apply flex flex-col;
     @apply transition-transform duration-300;
+    background: rgb(255 255 255 / 0.74);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
     transition-property: width, transform;
   }
 
+  .dark .sidebar {
+    background: rgb(28 28 30 / 0.76);
+  }
+
   .sidebar-header {
-    @apply h-16 px-6;
+    @apply h-16 px-4;
     @apply flex items-center gap-3;
-    @apply border-b border-gray-100 dark:border-dark-800;
+    @apply border-b border-black/[0.05] dark:border-white/[0.07];
     transition:
       padding 0.2s ease,
       gap 0.2s ease;
   }
 
   .sidebar-nav {
-    @apply flex-1 overflow-y-auto px-3 py-4;
+    @apply flex-1 overflow-y-auto px-3 py-3;
   }
 
   .sidebar-link {
-    @apply flex items-center gap-3 rounded-xl py-2.5;
+    @apply flex items-center gap-3 rounded-xl py-2;
     @apply overflow-hidden;
-    @apply text-sm font-medium;
+    @apply text-sm font-medium tracking-[-0.01em];
     @apply text-gray-600 dark:text-dark-300;
-    @apply transition-all duration-200;
-    @apply hover:bg-gray-100 dark:hover:bg-dark-800;
+    @apply transition-all duration-200 ease-out;
+    @apply hover:bg-black/[0.05] dark:hover:bg-white/[0.07];
     @apply hover:text-gray-900 dark:hover:text-white;
-    padding-left: 1.0625rem;
+    padding-left: 0.875rem;
     padding-right: 0.875rem;
   }
 
   .sidebar-link-active {
-    @apply bg-primary-50 dark:bg-primary-900/20;
-    @apply text-primary-600 dark:text-primary-400;
-    @apply hover:bg-primary-100 dark:hover:bg-primary-900/30;
+    @apply bg-primary-500 text-white shadow-md shadow-primary-500/25;
+    @apply hover:bg-primary-600 hover:text-white;
+    @apply dark:bg-primary-600 dark:text-white dark:hover:bg-primary-500;
+  }
+
+  .sidebar-link-active svg,
+  .sidebar-link-active .sidebar-svg-icon {
+    color: white;
   }
 
   .sidebar-section {
@@ -581,6 +592,10 @@
     @apply mb-2 px-3;
     @apply text-xs font-semibold uppercase tracking-wider;
     @apply text-gray-400 dark:text-dark-500;
+  }
+
+  .sidebar-footer {
+    @apply border-t border-black/[0.05] dark:border-white/[0.07];
   }
 
   /* ============ 页面头部 ============ */

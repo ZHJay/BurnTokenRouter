@@ -1,11 +1,20 @@
 <template>
   <div class="flex flex-col gap-0.5">
-    <!-- 并发槽位 -->
-    <CapacityBadge :color-class="concurrencyClass" :current="currentConcurrency" :max="account.concurrency">
-      <svg class="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-      </svg>
-    </CapacityBadge>
+    <!-- 并发槽位：Apple 风格紧凑进度条，同时保留真实并发数据 -->
+    <div data-test="account-concurrency-meter" class="account-concurrency-meter">
+      <div class="account-concurrency-meter__label">
+        <span class="font-mono">{{ currentConcurrency }}/{{ account.concurrency }}</span>
+        <span data-test="account-concurrency-percent">{{ concurrencyPercent }}%</span>
+      </div>
+      <div class="account-concurrency-meter__track">
+        <span
+          data-test="account-concurrency-bar"
+          class="account-concurrency-meter__bar"
+          :class="concurrencyBarClass"
+          :style="{ width: `${concurrencyPercent}%` }"
+        />
+      </div>
+    </div>
 
     <!-- 5h窗口费用限制 -->
     <CapacityBadge v-if="showWindowCost" :color-class="windowCostClass" :tooltip="windowCostTooltip" :current="'$' + formatCost(currentWindowCost)" :max="'$' + formatCost(account.window_cost_limit)">
@@ -51,12 +60,16 @@ const { t } = useI18n()
 // ====== 并发 ======
 const currentConcurrency = computed(() => props.account.current_concurrency || 0)
 
-const concurrencyClass = computed(() => {
-  const current = currentConcurrency.value
-  const max = props.account.concurrency
-  if (current >= max) return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-  if (current > 0) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-  return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+const concurrencyPercent = computed(() => {
+  const maximum = Number(props.account.concurrency || 0)
+  if (maximum <= 0) return 0
+  return Math.min(100, Math.max(0, Math.round((currentConcurrency.value / maximum) * 100)))
+})
+
+const concurrencyBarClass = computed(() => {
+  if (concurrencyPercent.value >= 90) return 'account-concurrency-meter__bar--danger'
+  if (concurrencyPercent.value >= 70) return 'account-concurrency-meter__bar--warning'
+  return 'account-concurrency-meter__bar--primary'
 })
 
 // ====== 窗口费用 ======
@@ -188,3 +201,33 @@ const showTotalQuota = computed(() =>
   isQuotaEligible.value && props.account.quota_limit != null && props.account.quota_limit > 0
 )
 </script>
+
+<style scoped>
+.account-concurrency-meter {
+  @apply w-[7rem];
+}
+
+.account-concurrency-meter__label {
+  @apply mb-1 flex items-center justify-between text-[10px] leading-3 text-gray-500 dark:text-dark-300;
+}
+
+.account-concurrency-meter__track {
+  @apply h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-dark-700;
+}
+
+.account-concurrency-meter__bar {
+  @apply block h-full rounded-full transition-[width] duration-300;
+}
+
+.account-concurrency-meter__bar--primary {
+  background: #0071e3;
+}
+
+.account-concurrency-meter__bar--warning {
+  background: #ff9f0a;
+}
+
+.account-concurrency-meter__bar--danger {
+  background: #ff3b30;
+}
+</style>

@@ -1,8 +1,111 @@
 <template>
   <AppLayout>
-    <TablePageLayout>
+    <template #header-context>
+      <div class="account-platform-segmented" data-test="account-platform-segmented">
+        <button
+          v-for="platform in platformSegments"
+          :key="platform.value || 'all'"
+          type="button"
+          class="account-platform-segmented__option"
+          :class="{ 'account-platform-segmented__option--active': params.platform === platform.value }"
+          :aria-pressed="params.platform === platform.value"
+          @click="selectPlatformSegment(platform.value)"
+        >
+          {{ platform.label }}
+        </button>
+      </div>
+    </template>
+
+    <TablePageLayout class="accounts-page-layout">
+      <template #actions>
+        <section class="account-overview-grid" :aria-label="t('admin.accounts.overview.label')">
+          <article
+            class="account-overview-card account-overview-card--primary"
+            data-test="account-overview-card"
+            data-test-scope="global"
+          >
+            <div class="account-overview-card__content" data-test="account-overview-total">
+            <div class="account-overview-card__topline">
+              <span class="account-overview-icon account-overview-icon--primary">
+                <Icon name="users" size="md" :stroke-width="1.75" />
+              </span>
+              <span class="account-overview-scope">{{ t('admin.accounts.overview.filteredScope') }}</span>
+            </div>
+            <p class="account-overview-label">{{ t('admin.accounts.overview.total') }}</p>
+            <p class="account-overview-value" data-test="value">{{ pagination.total }}</p>
+            <p class="account-overview-detail">
+              {{ t('admin.accounts.overview.visibleCount', { count: accounts.length }) }}
+            </p>
+            </div>
+          </article>
+
+          <article
+            class="account-overview-card account-overview-card--success"
+            data-test="account-overview-card"
+          >
+            <div class="account-overview-card__content" data-test="account-overview-schedulable">
+            <div class="account-overview-card__topline">
+              <span class="account-overview-icon account-overview-icon--success">
+                <Icon name="checkCircle" size="md" :stroke-width="1.75" />
+              </span>
+              <span class="account-overview-scope" data-test="account-overview-page-scope">
+                {{ t('admin.accounts.overview.pageScope') }}
+              </span>
+            </div>
+            <p class="account-overview-label">{{ t('admin.accounts.overview.schedulable') }}</p>
+            <p class="account-overview-value" data-test="value">{{ accountOverview.schedulable }}</p>
+            <p class="account-overview-detail account-overview-detail--success">
+              {{ t('admin.accounts.overview.healthRate', { percent: accountOverview.healthRate }) }}
+            </p>
+            </div>
+          </article>
+
+          <article
+            class="account-overview-card account-overview-card--warning"
+            data-test="account-overview-card"
+          >
+            <div class="account-overview-card__content" data-test="account-overview-limited">
+            <div class="account-overview-card__topline">
+              <span class="account-overview-icon account-overview-icon--warning">
+                <Icon name="clock" size="md" :stroke-width="1.75" />
+              </span>
+              <span class="account-overview-scope" data-test="account-overview-page-scope">
+                {{ t('admin.accounts.overview.pageScope') }}
+              </span>
+            </div>
+            <p class="account-overview-label">{{ t('admin.accounts.overview.limited') }}</p>
+            <p class="account-overview-value" data-test="value">{{ accountOverview.limited }}</p>
+            <p class="account-overview-detail account-overview-detail--warning">
+              {{ t('admin.accounts.overview.attention', { count: accountOverview.limited }) }}
+            </p>
+            </div>
+          </article>
+
+          <article
+            class="account-overview-card account-overview-card--danger"
+            data-test="account-overview-card"
+          >
+            <div class="account-overview-card__content" data-test="account-overview-error">
+            <div class="account-overview-card__topline">
+              <span class="account-overview-icon account-overview-icon--danger">
+                <Icon name="exclamationTriangle" size="md" :stroke-width="1.75" />
+              </span>
+              <span class="account-overview-scope" data-test="account-overview-page-scope">
+                {{ t('admin.accounts.overview.pageScope') }}
+              </span>
+            </div>
+            <p class="account-overview-label">{{ t('admin.accounts.overview.errors') }}</p>
+            <p class="account-overview-value" data-test="value">{{ accountOverview.errors }}</p>
+            <p class="account-overview-detail account-overview-detail--danger">
+              {{ t('admin.accounts.overview.errorHint') }}
+            </p>
+            </div>
+          </article>
+        </section>
+      </template>
+
       <template #filters>
-        <div class="flex flex-wrap-reverse items-start justify-between gap-3">
+        <div class="accounts-command-bar">
           <AccountTableFilters
             v-model:searchQuery="params.search"
             :filters="params"
@@ -24,7 +127,7 @@
                     showAutoRefreshDropdown = !showAutoRefreshDropdown;
                     showAccountToolsDropdown = false
                   "
-                  class="btn btn-secondary px-2 md:px-3"
+                  class="btn btn-secondary account-command-button px-2 md:px-3"
                   :title="t('admin.accounts.autoRefresh')"
                 >
                   <Icon name="refresh" size="sm" :class="[autoRefreshEnabled ? 'animate-spin' : '']" />
@@ -38,12 +141,12 @@
                 </button>
                 <div
                   v-if="showAutoRefreshDropdown"
-                  class="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-lg border border-gray-200 bg-white shadow-lg dark:border-dark-700 dark:bg-dark-800"
+                  class="account-command-popover absolute right-0 z-50 mt-2 w-56 origin-top-right"
                 >
                   <div class="p-2">
                     <button
                       @click="setAutoRefreshEnabled(!autoRefreshEnabled)"
-                      class="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-dark-700"
+                      class="account-command-menu-item"
                     >
                       <span>{{ t('admin.accounts.enableAutoRefresh') }}</span>
                       <Icon v-if="autoRefreshEnabled" name="check" size="sm" class="text-primary-500" />
@@ -53,7 +156,7 @@
                       v-for="sec in autoRefreshIntervals"
                       :key="sec"
                       @click="setAutoRefreshInterval(sec)"
-                      class="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-dark-700"
+                      class="account-command-menu-item"
                     >
                       <span>{{ autoRefreshIntervalLabel(sec) }}</span>
                       <Icon v-if="autoRefreshIntervalSeconds === sec" name="check" size="sm" class="text-primary-500" />
@@ -67,7 +170,7 @@
                 <button
                   ref="accountToolsTriggerRef"
                   @click="toggleAccountToolsDropdown"
-                  class="btn btn-secondary px-2 md:px-3"
+                  class="btn btn-secondary account-command-button px-2 md:px-3"
                   :title="t('admin.accounts.moreActions')"
                   :aria-expanded="showAccountToolsDropdown"
                 >
@@ -78,7 +181,7 @@
                 <Teleport to="body">
                   <div
                     v-if="showAccountToolsDropdown"
-                    class="fixed z-[9999] origin-top-right overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-dark-700 dark:bg-dark-800"
+                    class="account-tools-popover fixed z-[9999] origin-top-right overflow-hidden"
                     :style="accountToolsDropdownStyle"
                     @click.stop
                   >
@@ -148,7 +251,7 @@
                           v-for="col in toggleableColumns"
                           :key="col.key"
                           @click="toggleColumn(col.key)"
-                          class="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-dark-700"
+                          class="account-command-menu-item"
                         >
                           <span class="truncate">{{ col.label }}</span>
                           <Icon v-if="isColumnVisible(col.key)" name="check" size="sm" class="text-primary-500" />
@@ -206,14 +309,14 @@
           <template #header-select>
             <input
               type="checkbox"
-              class="h-4 w-4 cursor-pointer rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              class="account-checkbox"
               :checked="allVisibleSelected"
               @click.stop
               @change="toggleSelectAllVisible($event)"
             />
           </template>
           <template #cell-select="{ row }">
-            <input type="checkbox" :checked="isSelected(row.id)" @change="toggleSel(row.id)" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+            <input type="checkbox" :checked="isSelected(row.id)" @change="toggleSel(row.id)" class="account-checkbox" />
           </template>
           <template #cell-id="{ value }">
             <span class="font-mono text-xs text-gray-500 dark:text-gray-400">#{{ value }}</span>
@@ -267,7 +370,7 @@
                 </span>
               </div>
               <div
-                v-if="getOpenAICompactMeta(row)"
+                v-if="getOpenAICompactMeta(row) && getOpenAICompactState(row) !== 'auto'"
                 :class="[
                   'inline-flex items-center gap-1.5 pl-0.5 text-[11px] font-medium leading-4',
                   getOpenAICompactMeta(row)?.className
@@ -288,8 +391,18 @@
             </div>
           </template>
           <template #cell-schedulable="{ row }">
-            <button @click="handleToggleSchedulable(row)" :disabled="togglingSchedulable === row.id" class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-dark-800" :class="[row.schedulable ? 'bg-primary-500 hover:bg-primary-600' : 'bg-gray-200 hover:bg-gray-300 dark:bg-dark-600 dark:hover:bg-dark-500']" :title="row.schedulable ? t('admin.accounts.schedulableEnabled') : t('admin.accounts.schedulableDisabled')">
-              <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" :class="[row.schedulable ? 'translate-x-4' : 'translate-x-0']" />
+            <button
+              type="button"
+              role="switch"
+              :aria-checked="row.schedulable"
+              :aria-label="row.schedulable ? t('admin.accounts.schedulableEnabled') : t('admin.accounts.schedulableDisabled')"
+              @click="handleToggleSchedulable(row)"
+              :disabled="togglingSchedulable === row.id"
+              class="account-schedule-switch"
+              :class="row.schedulable ? 'account-schedule-switch--on' : ''"
+              :title="row.schedulable ? t('admin.accounts.schedulableEnabled') : t('admin.accounts.schedulableDisabled')"
+            >
+              <span class="account-schedule-switch__thumb" />
             </button>
           </template>
           <template #cell-today_stats="{ row }">
@@ -411,18 +524,33 @@
             </div>
           </template>
           <template #cell-actions="{ row }">
-            <div class="flex items-center gap-1">
-              <button @click="handleEdit(row)" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
-                <span class="text-xs">{{ t('common.edit') }}</span>
+            <div class="account-row-actions">
+              <button
+                type="button"
+                @click="handleEdit(row)"
+                class="account-row-action"
+                :title="t('common.edit')"
+                :aria-label="t('common.edit')"
+              >
+                <Icon name="edit" size="sm" />
               </button>
-              <button @click="handleDelete(row)" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
-                <span class="text-xs">{{ t('common.delete') }}</span>
+              <button
+                type="button"
+                @click="handleDelete(row)"
+                class="account-row-action account-row-action--danger"
+                :title="t('common.delete')"
+                :aria-label="t('common.delete')"
+              >
+                <Icon name="trash" size="sm" />
               </button>
-              <button @click="openMenu(row, $event)" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-dark-700 dark:hover:text-white">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
-                <span class="text-xs">{{ t('common.more') }}</span>
+              <button
+                type="button"
+                @click="openMenu(row, $event)"
+                class="account-row-action"
+                :title="t('common.more')"
+                :aria-label="t('common.more')"
+              >
+                <Icon name="more" size="sm" />
               </button>
             </div>
           </template>
@@ -613,11 +741,14 @@ const accountToolsDropdownStyle = computed(() => ({
   width: `${accountToolsDropdownPosition.width}px`
 }))
 const hiddenColumns = reactive<Set<string>>(new Set())
-const DEFAULT_HIDDEN_COLUMNS = ['today_stats', 'proxy', 'notes', 'priority', 'scheduler_score', 'rate_multiplier']
+const DEFAULT_HIDDEN_COLUMNS = ['id', 'notes', 'scheduler_score']
 const HIDDEN_COLUMNS_KEY = 'account-hidden-columns'
 // One-time migration: hide scheduler score for existing admins too, because showing it opt-ins to heavy backend scoring.
 const HIDDEN_COLUMNS_VERSION_KEY = 'account-hidden-columns-version'
 const HIDDEN_COLUMNS_CURRENT_VERSION = 'scheduler-score-hidden-by-default'
+const APPLE_COLUMNS_VERSION_KEY = 'account-columns-apple-reference-version'
+const APPLE_COLUMNS_CURRENT_VERSION = 'apple-reference-core-columns-v1'
+const APPLE_REFERENCE_VISIBLE_COLUMNS = ['today_stats', 'proxy', 'priority', 'rate_multiplier']
 
 // Sorting settings
 const ACCOUNT_SORT_STORAGE_KEY = 'account-table-sort'
@@ -780,11 +911,17 @@ const loadSavedColumns = () => {
         localStorage.setItem(HIDDEN_COLUMNS_KEY, JSON.stringify([...hiddenColumns]))
         localStorage.setItem(HIDDEN_COLUMNS_VERSION_KEY, HIDDEN_COLUMNS_CURRENT_VERSION)
       }
+      if (localStorage.getItem(APPLE_COLUMNS_VERSION_KEY) !== APPLE_COLUMNS_CURRENT_VERSION) {
+        APPLE_REFERENCE_VISIBLE_COLUMNS.forEach(key => hiddenColumns.delete(key))
+        localStorage.setItem(HIDDEN_COLUMNS_KEY, JSON.stringify([...hiddenColumns]))
+        localStorage.setItem(APPLE_COLUMNS_VERSION_KEY, APPLE_COLUMNS_CURRENT_VERSION)
+      }
     } else {
       DEFAULT_HIDDEN_COLUMNS.forEach(key => {
         hiddenColumns.add(key)
       })
       localStorage.setItem(HIDDEN_COLUMNS_VERSION_KEY, HIDDEN_COLUMNS_CURRENT_VERSION)
+      localStorage.setItem(APPLE_COLUMNS_VERSION_KEY, APPLE_COLUMNS_CURRENT_VERSION)
     }
   } catch (e) {
     console.error('Failed to load saved columns:', e)
@@ -911,6 +1048,49 @@ const {
     sort_order: sortState.sort_order
   }
 })
+
+const hasFutureAccountState = (value?: string | null) => {
+  if (!value) return false
+  const timestamp = new Date(value).getTime()
+  return Number.isFinite(timestamp) && timestamp > Date.now()
+}
+
+const isAccountCurrentlyLimited = (account: Account) =>
+  hasFutureAccountState(account.rate_limit_reset_at) ||
+  hasFutureAccountState(account.overload_until) ||
+  hasFutureAccountState(account.temp_unschedulable_until)
+
+const accountOverview = computed(() => {
+  const pageCount = accounts.value.length
+  const schedulable = accounts.value.filter(
+    account =>
+      account.status === 'active' &&
+      account.schedulable &&
+      !isAccountCurrentlyLimited(account)
+  ).length
+  const limited = accounts.value.filter(isAccountCurrentlyLimited).length
+  const errors = accounts.value.filter(account => account.status === 'error').length
+
+  return {
+    schedulable,
+    limited,
+    errors,
+    healthRate: pageCount === 0 ? '0.0' : ((schedulable / pageCount) * 100).toFixed(1)
+  }
+})
+
+const platformSegments = computed(() => [
+  { value: '', label: t('common.all') },
+  { value: 'openai', label: 'OpenAI' },
+  { value: 'anthropic', label: 'Claude' },
+  { value: 'gemini', label: 'Gemini' }
+])
+
+const selectPlatformSegment = (platform: string) => {
+  if (params.platform === platform) return
+  params.platform = platform
+  debouncedReload()
+}
 
 const {
   selectedIds: selIds,
@@ -2121,11 +2301,315 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.account-overview-grid {
+  @apply grid grid-cols-2 gap-4 xl:grid-cols-4;
+}
+
+.account-overview-card {
+  @apply relative overflow-hidden rounded-[1.125rem] border border-black/[0.06] bg-white px-5 py-[1.125rem] shadow-card;
+  @apply dark:border-white/10 dark:bg-dark-900;
+  min-height: 10.375rem;
+  transition:
+    transform 280ms cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 280ms cubic-bezier(0.32, 0.72, 0, 1),
+    border-color 280ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.account-overview-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px rgb(0 0 0 / 0.09);
+}
+
+:global(.dark) .account-overview-card:hover {
+  box-shadow: 0 16px 42px rgb(0 0 0 / 0.45);
+}
+
+.account-overview-card__content {
+  @apply flex h-full min-w-0 flex-col;
+}
+
+.account-overview-card__topline {
+  @apply flex items-start justify-between gap-3;
+}
+
+.account-overview-icon {
+  @apply inline-flex h-[2.375rem] w-[2.375rem] items-center justify-center rounded-[0.6875rem];
+}
+
+.account-overview-icon--primary {
+  @apply bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300;
+}
+
+.account-overview-icon--success {
+  color: #248a3d;
+  background: rgb(52 199 89 / 0.13);
+}
+
+.account-overview-icon--warning {
+  color: #c93400;
+  background: rgb(255 159 10 / 0.14);
+}
+
+.account-overview-icon--danger {
+  color: #d70015;
+  background: rgb(255 59 48 / 0.13);
+}
+
+:global(.dark) .account-overview-icon--success {
+  color: #30d158;
+}
+
+:global(.dark) .account-overview-icon--warning {
+  color: #ff9f0a;
+}
+
+:global(.dark) .account-overview-icon--danger {
+  color: #ff453a;
+}
+
+.account-overview-scope {
+  @apply rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold tracking-wide text-gray-500;
+  @apply dark:bg-dark-800 dark:text-dark-300;
+}
+
+.account-overview-label {
+  @apply mt-3 text-[13px] font-medium text-gray-500 dark:text-dark-300;
+}
+
+.account-overview-value {
+  @apply mt-0.5 text-[1.75rem] font-bold leading-none tracking-[-0.035em] text-[#1d1d1f] dark:text-[#f5f5f7];
+}
+
+.account-overview-detail {
+  @apply mt-auto pt-2 text-xs font-medium text-gray-500 dark:text-dark-400;
+}
+
+.account-overview-detail--success {
+  color: #248a3d;
+}
+
+.account-overview-detail--warning {
+  color: #c93400;
+}
+
+.account-overview-detail--danger {
+  color: #d70015;
+}
+
+:global(.dark) .account-overview-detail--success {
+  color: #30d158;
+}
+
+:global(.dark) .account-overview-detail--warning {
+  color: #ff9f0a;
+}
+
+:global(.dark) .account-overview-detail--danger {
+  color: #ff453a;
+}
+
+.accounts-command-bar {
+  @apply flex flex-wrap items-start justify-between gap-3;
+}
+
+.account-platform-segmented {
+  @apply flex w-fit items-center gap-0.5 rounded-xl p-0.5;
+  background: rgb(120 120 128 / 0.10);
+}
+
+.account-platform-segmented__option {
+  @apply rounded-[0.625rem] px-3.5 py-1.5 text-[13px] font-medium text-gray-500;
+  @apply transition-all duration-200 hover:text-gray-800 dark:text-dark-300 dark:hover:text-white;
+}
+
+.account-platform-segmented__option--active {
+  @apply bg-white text-gray-900 shadow-sm dark:bg-dark-700 dark:text-white;
+}
+
+.accounts-command-bar :deep(.account-table-filters) {
+  flex: 1 1 42rem;
+  width: auto;
+}
+
+.accounts-command-bar :deep(.account-table-actions) {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.account-command-button {
+  min-height: 2.25rem;
+  padding-top: 0.4375rem;
+  padding-bottom: 0.4375rem;
+  border-color: rgb(0 0 0 / 0.08);
+  background: rgb(255 255 255 / 0.82);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+}
+
+:global(.dark) .account-command-button {
+  border-color: rgb(255 255 255 / 0.10);
+  background: rgb(44 44 46 / 0.72);
+}
+
+.account-command-popover,
+.account-tools-popover {
+  @apply rounded-2xl border border-black/10 bg-white/90 shadow-2xl shadow-black/15;
+  @apply dark:border-white/10 dark:bg-dark-800/90 dark:shadow-black/50;
+  backdrop-filter: saturate(180%) blur(24px);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+}
+
+.account-command-menu-item {
+  @apply flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm text-gray-700 transition-colors;
+  @apply hover:bg-black/[0.05] dark:text-gray-200 dark:hover:bg-white/[0.08];
+}
+
+.account-checkbox {
+  @apply h-[18px] w-[18px] cursor-pointer border-gray-300 text-primary-600 focus:ring-primary-500/50;
+  border-radius: 6px;
+  accent-color: #0071e3;
+}
+
+.account-schedule-switch {
+  @apply relative inline-flex h-6 w-10 flex-shrink-0 cursor-pointer rounded-full border-0 bg-gray-200;
+  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 focus-visible:ring-offset-2;
+  @apply disabled:cursor-not-allowed disabled:opacity-50 dark:bg-dark-600 dark:focus-visible:ring-offset-dark-900;
+  transition: background-color 280ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.account-schedule-switch--on {
+  background: #34c759;
+}
+
+.account-schedule-switch__thumb {
+  @apply pointer-events-none absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm;
+  transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.account-schedule-switch--on .account-schedule-switch__thumb {
+  transform: translateX(1rem);
+}
+
+.account-row-actions {
+  @apply flex items-center justify-end gap-0.5;
+}
+
+.account-row-action {
+  @apply inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-500;
+  @apply transition-all duration-200 hover:bg-gray-100 hover:text-primary-600;
+  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50;
+  @apply dark:text-dark-300 dark:hover:bg-dark-700 dark:hover:text-primary-300;
+}
+
+.account-row-action:active {
+  transform: scale(0.92);
+}
+
+.account-row-action--danger:hover {
+  @apply bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400;
+}
+
+.accounts-page-layout :deep(.table-wrapper) {
+  @apply bg-white dark:bg-dark-900;
+}
+
+.accounts-page-layout :deep(.layout-section-fixed:first-child) {
+  margin-bottom: 0.375rem;
+}
+
+.accounts-page-layout :deep(.table-header) {
+  @apply bg-white/90 dark:bg-dark-900/90;
+}
+
+.accounts-page-layout :deep(.table-header th) {
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
+
+.accounts-page-layout :deep(.table-header th),
+.accounts-page-layout :deep(.table-body td) {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.accounts-page-layout :deep(.table-body) {
+  @apply bg-white dark:bg-dark-900;
+}
+
+.accounts-page-layout :deep(.table-body > tr) {
+  transition: background-color 160ms ease;
+}
+
+.accounts-page-layout :deep(.table-body > tr:hover) {
+  @apply bg-gray-50/80 dark:bg-dark-800/45;
+}
+
 .account-tools-menu-item {
-  @apply flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-dark-700;
+  @apply flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-700 transition-colors;
+  @apply hover:bg-black/[0.05] dark:text-gray-200 dark:hover:bg-white/[0.08];
 }
 
 .account-tools-menu-icon {
-  @apply inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md;
+  @apply inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[0.625rem];
+}
+
+@media (max-width: 1023px) {
+  .accounts-page-layout {
+    height: auto;
+  }
+
+  .accounts-page-layout :deep(.layout-section-fixed:first-child) {
+    margin-bottom: 0;
+  }
+
+  .accounts-command-bar :deep(.account-table-filters),
+  .accounts-command-bar :deep(.account-table-actions) {
+    flex-basis: 100%;
+  }
+
+  .accounts-command-bar :deep(.account-table-actions) {
+    @apply justify-start;
+  }
+}
+
+@media (max-width: 767px) {
+  .account-overview-card {
+    @apply px-4 py-3.5;
+    min-height: 8.5rem;
+  }
+
+  .account-overview-icon {
+    @apply h-9 w-9 rounded-[0.625rem];
+  }
+
+  .account-overview-label {
+    @apply mt-2.5;
+  }
+
+  .account-overview-detail {
+    @apply text-[11px] leading-4;
+  }
+
+  .accounts-page-layout :deep(.table-wrapper) {
+    @apply bg-transparent dark:bg-transparent;
+  }
+
+  .accounts-page-layout :deep(.table-wrapper > div) {
+    @apply rounded-2xl border-black/[0.06] shadow-card dark:border-white/10;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-overview-card,
+  .account-schedule-switch,
+  .account-schedule-switch__thumb,
+  .account-row-action {
+    transition-duration: 1ms;
+  }
+
+  .account-overview-card:hover,
+  .account-row-action:active {
+    transform: none;
+  }
 }
 </style>

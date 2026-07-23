@@ -2,6 +2,19 @@ export default {
     accounts: {
       title: 'Account Management',
       description: 'Manage AI platform accounts and credentials',
+      overview: {
+        label: 'Account overview',
+        total: 'Total accounts',
+        schedulable: 'Schedulable',
+        limited: 'Cooldown / limited',
+        errors: 'Errors',
+        filteredScope: 'Current filter',
+        pageScope: 'Current page',
+        visibleCount: '{count} accounts shown on this page',
+        healthRate: '{percent}% health rate',
+        attention: '{count} accounts need attention',
+        errorHint: 'Review authorization and credentials'
+      },
       createAccount: 'Create Account',
       autoRefresh: 'Auto Refresh',
       enableAutoRefresh: 'Enable auto refresh',
