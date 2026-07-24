@@ -27,7 +27,7 @@
             </div>
             <div class="text-xs text-gray-500 dark:text-dark-400">JSON (.json)</div>
           </div>
-          <button type="button" class="btn btn-secondary shrink-0" @click="openFilePicker">
+          <button type="button" class="btn btn-secondary press-feedback shrink-0" @click="openFilePicker">
             {{ t('common.chooseFile') }}
           </button>
         </div>

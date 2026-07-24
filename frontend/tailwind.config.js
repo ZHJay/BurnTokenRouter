@@ -129,6 +129,18 @@ export default {
       },
       borderRadius: {
         '4xl': '2rem'
+      },
+      transitionTimingFunction: {
+        // Apple 系统级缓动（apple.com / iOS 弹性感，无 keyframe 弹簧时的近似）
+        apple: 'cubic-bezier(0.32, 0.72, 0, 1)',
+        'apple-in': 'cubic-bezier(0.4, 0, 1, 1)',
+        'apple-out': 'cubic-bezier(0, 0, 0.2, 1)',
+        'apple-spring': 'cubic-bezier(0.34, 1.56, 0.64, 1)'
+      },
+      transitionDuration: {
+        250: '250ms',
+        350: '350ms',
+        400: '400ms'
       }
     }
   },

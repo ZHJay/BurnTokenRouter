@@ -38,7 +38,7 @@
             <button
               @click="handleThresholdUpdate"
               :disabled="savingThreshold"
-              class="btn btn-primary btn-sm whitespace-nowrap"
+              class="btn btn-primary btn-sm press-feedback whitespace-nowrap"
             >
               {{ savingThreshold ? t('common.saving') : t('common.save') }}
             </button>
@@ -142,7 +142,7 @@
             <button
               @click="addPendingEmail"
               :disabled="!newEmail"
-              class="btn btn-secondary whitespace-nowrap"
+              class="btn btn-secondary press-feedback whitespace-nowrap"
             >
               {{ t('common.add') }}
             </button>

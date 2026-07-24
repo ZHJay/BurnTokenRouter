@@ -2,6 +2,77 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =========================================================================
+   Apple Design Language — 单一设计 token 源（CSS 变量）
+   iOS / apple.com 系统蓝 · Liquid Glass 材质 · 三级灰阶 · 弹簧动效
+   键名全站硬依赖处只改值；新语言集中在此文件，避免上游 rebase 分散冲突。
+   ========================================================================= */
+:root {
+  /* 品牌蓝 */
+  --apple-blue: #0071e3;
+  --apple-blue-hover: #0060c0;
+  --apple-blue-soft: rgba(0, 113, 227, 0.1);
+
+  /* 语义色（iOS 系统色） */
+  --apple-green: #34c759;
+  --apple-orange: #ff9f0a;
+  --apple-red: #ff3b30;
+  --apple-purple: #af52de;
+
+  /* 中性 / 表面 */
+  --surface-bg: #f5f5f7;
+  --surface-elevated: #ffffff;
+  --text-primary: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-tertiary: #86868b;
+  --separator: rgba(0, 0, 0, 0.08);
+  --separator-strong: rgba(0, 0, 0, 0.12);
+  --fill: rgba(120, 120, 128, 0.08);
+  --fill-hover: rgba(120, 120, 128, 0.14);
+
+  /* Liquid Glass 材质 */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --glass-blur: saturate(180%) blur(20px);
+
+  /* 圆角阶 */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --r-pill: 980px;
+
+  /* 阴影阶（材质越大越"厚"） */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.05);
+  --shadow-pop: 0 12px 40px rgba(0, 0, 0, 0.14);
+  --shadow-blue: 0 6px 20px rgba(0, 113, 227, 0.28);
+
+  /* 动效：弹簧默认 damping 1.0 / response 0.3–0.4 的缓动近似 */
+  --ease-apple: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 0.2s;
+  --dur: 0.35s;
+}
+
+html.dark {
+  --apple-blue: #0a84ff;
+  --apple-blue-hover: #3b9dff;
+  --apple-blue-soft: rgba(10, 132, 255, 0.16);
+  --surface-bg: #000000;
+  --surface-elevated: #1c1c1e;
+  --text-primary: #f5f5f7;
+  --text-secondary: #aeaeb2;
+  --text-tertiary: #8e8e93;
+  --separator: rgba(255, 255, 255, 0.1);
+  --separator-strong: rgba(255, 255, 255, 0.16);
+  --fill: rgba(120, 120, 128, 0.24);
+  --fill-hover: rgba(120, 120, 128, 0.36);
+  --glass-bg: rgba(28, 28, 30, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-pop: 0 16px 48px rgba(0, 0, 0, 0.6);
+}
+
 @layer base {
   * {
     @apply border-gray-200 dark:border-dark-700;
@@ -68,10 +139,12 @@
   .btn {
     @apply inline-flex items-center justify-center gap-2;
     @apply rounded-full px-5 py-2.5 text-sm font-medium;
-    @apply transition-all duration-200 ease-out;
+    @apply transition-all duration-200;
+    transition-timing-function: var(--ease-apple);
     @apply focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:ring-offset-2;
     @apply disabled:transform-none disabled:cursor-not-allowed disabled:opacity-50;
-    @apply active:scale-[0.97];
+    @apply active:scale-[0.96];
+    letter-spacing: -0.01em;
   }
 
   .btn-primary {
@@ -222,14 +295,15 @@
   /* ============ 卡片样式 ============ */
   .card {
     @apply bg-white dark:bg-dark-800/50;
-    @apply rounded-2xl;
+    @apply rounded-[18px];
     @apply border border-gray-100 dark:border-dark-700/50;
     @apply shadow-card;
     @apply transition-all duration-300;
+    transition-timing-function: var(--ease-apple);
   }
 
   .card-hover {
-    @apply hover:-translate-y-0.5 hover:shadow-card-hover;
+    @apply hover:-translate-y-[2px] hover:shadow-card-hover;
     @apply hover:border-gray-200 dark:hover:border-dark-600;
   }
 
@@ -442,23 +516,25 @@
   }
 
   .modal-enter-active .modal-content {
-    transition: transform 250ms ease-out, opacity 250ms ease-out;
+    transition: transform 350ms var(--ease-apple), opacity 250ms ease-out, filter 350ms var(--ease-apple);
   }
 
   .modal-leave-active .modal-content {
-    transition: transform 200ms ease-in, opacity 200ms ease-in;
+    transition: transform 220ms var(--ease-apple), opacity 200ms ease-in, filter 220ms var(--ease-apple);
   }
 
   .modal-enter-from .modal-content,
   .modal-leave-to .modal-content {
-    transform: scale(0.95);
+    transform: scale(0.94);
     opacity: 0;
+    filter: blur(6px);
   }
 
   .modal-enter-to .modal-content,
   .modal-leave-from .modal-content {
     transform: scale(1);
     opacity: 1;
+    filter: blur(0);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -503,6 +579,11 @@
     @apply border-t border-gray-100 px-6 py-4 dark:border-dark-700;
     @apply bg-gray-50/60 dark:bg-dark-900/40;
     @apply flex items-center justify-end gap-3;
+  }
+
+  /* Dialog materialize 进出（blur+scale 联动，非纯淡入） */
+  .dialog-container {
+    transform-origin: center;
   }
 
   /* ============ Toast 通知 ============ */
@@ -688,7 +769,7 @@
   .switch-thumb {
     @apply absolute left-0.5 top-0.5 h-[27px] w-[27px] rounded-full;
     @apply bg-white shadow-sm;
-    transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: transform 320ms var(--ease-spring);
   }
 
   .switch-active .switch-thumb {
@@ -787,5 +868,56 @@
 
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* ============ Apple 新交互语言工具类 ============ */
+  /* Liquid Glass 材质面（半透明 + 模糊 + 亮边） */
+  .material-glass {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+  }
+
+  /* 发丝分隔线（替代 1px 硬线，随主题） */
+  .hairline {
+    border-color: var(--separator);
+  }
+  .hairline-strong {
+    border-color: var(--separator-strong);
+  }
+
+  /* 滚动边缘渐隐遮罩（内容与浮层交界处，替代硬分割线） */
+  .scroll-edge-fade {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      #000 12px,
+      #000 calc(100% - 12px),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      #000 12px,
+      #000 calc(100% - 12px),
+      transparent 100%
+    );
+  }
+
+  /* 按下即反馈：pointer-down 瞬时缩放（配合 :active） */
+  .press-feedback {
+    transition: transform 120ms var(--ease-apple);
+  }
+  .press-feedback:active {
+    transform: scale(0.97);
+  }
+
+  /* 弹层从触发点锚定生长 */
+  .pop-origin-top {
+    transform-origin: top center;
+  }
+  .pop-origin-top-right {
+    transform-origin: top right;
   }
 }

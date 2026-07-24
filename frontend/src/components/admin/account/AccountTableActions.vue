@@ -39,6 +39,26 @@ const { t } = useI18n()
   @apply h-9 w-9 p-0;
 }
 
+/*
+ * In dark mode the plain `.btn-secondary` surface reads a touch flat next to
+ * the translucent glass command buttons in the same bar. Match the Apple
+ * dark language (translucent elevated surface + hairline) without altering
+ * light mode. `.dark` (not `:global(.dark)`) is used so the scoped-CSS
+ * transform keeps the descendant selector intact.
+ */
+.dark .account-refresh-button {
+  background: rgba(44, 44, 46, 0.72);
+  border-color: var(--separator);
+  color: var(--text-primary);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+}
+
+.dark .account-refresh-button:hover {
+  background: rgba(58, 58, 60, 0.82);
+  border-color: var(--separator-strong);
+}
+
 .account-create-button {
   min-height: 2.25rem;
   padding-top: 0.4375rem;

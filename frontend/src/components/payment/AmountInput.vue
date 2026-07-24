@@ -2,19 +2,20 @@
   <div class="space-y-4">
     <!-- Quick Amount Buttons -->
     <div>
-      <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+      <label class="mb-2.5 block text-[13px] font-semibold tracking-[-0.01em] text-gray-700 dark:text-gray-300">
         {{ t('payment.quickAmounts') }}
       </label>
-      <div class="grid grid-cols-3 gap-2">
+      <div class="grid grid-cols-3 gap-2.5">
         <button
           v-for="amt in filteredAmounts"
           :key="amt"
           type="button"
           :class="[
-            'rounded-lg border-2 px-4 py-3 text-center font-medium transition-colors',
+            'press-feedback rounded-2xl border px-4 py-3 text-center font-semibold tabular-nums',
+            'transition-[transform,box-shadow,border-color,background-color] duration-200 ease-[var(--ease-apple)]',
             modelValue === amt
-              ? 'border-primary-500 bg-primary-50 text-primary-700 dark:border-primary-400 dark:bg-primary-900/40 dark:text-primary-300'
-              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 dark:border-dark-600 dark:bg-dark-800 dark:text-gray-200 dark:hover:border-dark-500',
+              ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-[var(--shadow-card)] dark:border-primary-400 dark:bg-primary-900/40 dark:text-primary-300'
+              : 'hairline bg-white text-gray-700 hover:-translate-y-px hover:shadow-[var(--shadow-card)] dark:bg-dark-800 dark:text-gray-200',
           ]"
           @click="selectAmount(amt)"
         >
@@ -25,11 +26,11 @@
 
     <!-- Custom Amount Input -->
     <div>
-      <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+      <label class="mb-2.5 block text-[13px] font-semibold tracking-[-0.01em] text-gray-700 dark:text-gray-300">
         {{ t('payment.customAmount') }}
       </label>
       <div class="relative">
-        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-dark-500">
+        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-dark-500">
           $
         </span>
         <input
@@ -37,7 +38,7 @@
           inputmode="decimal"
           :value="customText"
           :placeholder="placeholderText"
-          class="input w-full py-3 pl-8 pr-4"
+          class="input w-full py-3 pl-8 pr-4 tabular-nums"
           @input="handleInput"
         />
       </div>

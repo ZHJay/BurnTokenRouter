@@ -42,7 +42,7 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
-          <label class="btn btn-secondary btn-sm cursor-pointer">
+          <label class="btn btn-secondary btn-sm press-feedback cursor-pointer">
             <input
               data-testid="profile-avatar-file-input"
               type="file"
@@ -56,7 +56,7 @@
           <button
             data-testid="profile-avatar-save"
             type="button"
-            class="btn btn-primary btn-sm"
+            class="btn btn-primary btn-sm press-feedback"
             :disabled="avatarSaving || !avatarDraft"
             @click="handleAvatarSave"
           >
@@ -66,7 +66,7 @@
           <button
             data-testid="profile-avatar-delete"
             type="button"
-            class="btn btn-secondary btn-sm"
+            class="btn btn-secondary btn-sm press-feedback"
             :disabled="avatarSaving"
             @click="handleAvatarDelete"
           >

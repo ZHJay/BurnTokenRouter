@@ -49,7 +49,7 @@
             <button
               type="submit"
               :disabled="!redeemCode || submitting"
-              class="btn btn-primary w-full py-3"
+              class="btn btn-primary press-feedback w-full py-3"
             >
               <svg
                 v-if="submitting"

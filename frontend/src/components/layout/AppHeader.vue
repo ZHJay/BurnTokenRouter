@@ -376,13 +376,21 @@ onBeforeUnmount(() => {
 <style scoped>
 .app-header {
   @apply sticky top-0 z-30 border-b border-black/[0.06] dark:border-white/[0.08];
-  background: rgb(255 255 255 / 0.72);
+  background: var(--glass-bg);
   backdrop-filter: saturate(180%) blur(24px);
   -webkit-backdrop-filter: saturate(180%) blur(24px);
 }
 
-:global(.dark) .app-header {
-  background: rgb(0 0 0 / 0.68);
+/*
+ * NOTE: `:global(.dark) .app-header { ... }` compiles down to a bare
+ * `.dark { ... }` rule under Vue's scoped-CSS transform — the descendant
+ * selector is dropped, so the dark background never reached the header and
+ * the light `--glass-bg` value showed through as a light-gray band.
+ * Use `.dark` + scoped-preserving descendant instead.
+ */
+.dark .app-header {
+  background: rgba(28, 28, 30, 0.72);
+  border-bottom-color: var(--separator);
 }
 
 .app-header__inner {

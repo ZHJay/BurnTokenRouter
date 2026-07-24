@@ -51,7 +51,7 @@
             <button
               @click="loadGroups"
               :disabled="loading"
-              class="btn btn-secondary"
+              class="btn btn-secondary press-feedback"
               :title="t('common.refresh')"
             >
               <Icon
@@ -63,7 +63,7 @@
             <div class="relative" ref="columnDropdownRef">
               <button
                 @click="showColumnDropdown = !showColumnDropdown"
-                class="btn btn-secondary"
+                class="btn btn-secondary press-feedback"
                 :title="t('admin.groups.columnSettings')"
               >
                 <Icon name="grid" size="md" class="mr-2" />
@@ -73,13 +73,13 @@
               </button>
               <div
                 v-if="showColumnDropdown"
-                class="absolute right-0 top-full z-50 mt-1 max-h-80 w-48 overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-dark-600 dark:bg-dark-800"
+                class="material-glass pop-origin-top-right scroll-edge-fade absolute right-0 top-full z-50 mt-1 max-h-80 w-48 animate-scale-in overflow-y-auto rounded-xl py-1 shadow-[var(--shadow-pop)]"
               >
                 <button
                   v-for="col in toggleableColumns"
                   :key="col.key"
                   @click="toggleColumn(col.key)"
-                  class="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-700"
+                  class="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-black/[0.04] dark:text-gray-300 dark:hover:bg-white/[0.06]"
                 >
                   <span>{{ col.label }}</span>
                   <Icon
@@ -94,7 +94,7 @@
             </div>
             <button
               @click="openSortModal"
-              class="btn btn-secondary"
+              class="btn btn-secondary press-feedback"
               :title="t('admin.groups.sortOrder')"
             >
               <Icon name="arrowsUpDown" size="md" class="mr-2" />
@@ -102,7 +102,7 @@
             </button>
             <button
               @click="openCreateModal"
-              class="btn btn-primary"
+              class="btn btn-primary press-feedback"
               data-tour="groups-create-btn"
             >
               <Icon name="plus" size="md" class="mr-2" />
@@ -361,7 +361,7 @@
             <div class="flex items-center gap-1">
               <button
                 @click="handleEdit(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+                class="press-feedback flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
               >
                 <Icon name="edit" size="sm" />
                 <span class="text-xs">{{ t("common.edit") }}</span>
@@ -375,7 +375,7 @@
                 "
                 :disabled="duplicatingGroupIds.has(row.id)"
                 @click="handleDuplicate(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+                class="press-feedback flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-dark-700 dark:hover:text-primary-400"
               >
                 <Icon name="copy" size="sm" />
                 <span class="text-xs">
@@ -389,7 +389,7 @@
               <button
                 v-if="row.platform === 'composite'"
                 @click="handleCompositeRoutes(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-cyan-600 dark:hover:bg-dark-700 dark:hover:text-cyan-400"
+                class="press-feedback flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-cyan-600 dark:hover:bg-dark-700 dark:hover:text-cyan-400"
               >
                 <Icon name="swap" size="sm" />
                 <span class="text-xs">{{
@@ -398,7 +398,7 @@
               </button>
               <button
                 @click="handleRateMultipliers(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-purple-600 dark:hover:bg-dark-700 dark:hover:text-purple-400"
+                class="press-feedback flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-purple-600 dark:hover:bg-dark-700 dark:hover:text-purple-400"
               >
                 <Icon name="dollar" size="sm" />
                 <span class="text-xs">{{
@@ -407,7 +407,7 @@
               </button>
               <button
                 @click="handleRPMOverrides(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-orange-600 dark:hover:bg-dark-700 dark:hover:text-orange-400"
+                class="press-feedback flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-orange-600 dark:hover:bg-dark-700 dark:hover:text-orange-400"
               >
                 <Icon name="bolt" size="sm" />
                 <span class="text-xs">{{
@@ -416,7 +416,7 @@
               </button>
               <button
                 @click="handleDelete(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                class="press-feedback flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
               >
                 <Icon name="trash" size="sm" />
                 <span class="text-xs">{{ t("common.delete") }}</span>
@@ -1870,7 +1870,7 @@
                           accountSearchResults[getCreateRuleSearchKey(rule)]
                             ?.length > 0
                         "
-                        class="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-lg border bg-white shadow-lg dark:border-dark-600 dark:bg-dark-800"
+                        class="material-glass pop-origin-top scroll-edge-fade absolute z-50 mt-1 max-h-48 w-full animate-scale-in overflow-auto rounded-xl shadow-[var(--shadow-pop)]"
                       >
                         <button
                           v-for="account in accountSearchResults[
@@ -1879,7 +1879,7 @@
                           :key="account.id"
                           type="button"
                           @click="selectAccount(rule, account)"
-                          class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-dark-700"
+                          class="w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                           :class="{
                             'opacity-50': rule.accounts.some(
                               (a) => a.id === account.id,
@@ -1930,7 +1930,7 @@
           <button
             @click="closeCreateModal"
             type="button"
-            class="btn btn-secondary"
+            class="btn btn-secondary press-feedback"
           >
             {{ t("common.cancel") }}
           </button>
@@ -1938,7 +1938,7 @@
             type="submit"
             form="create-group-form"
             :disabled="submitting"
-            class="btn btn-primary"
+            class="btn btn-primary press-feedback"
             data-tour="group-form-submit"
           >
             <svg
@@ -3387,7 +3387,7 @@
                           accountSearchResults[getEditRuleSearchKey(rule)]
                             ?.length > 0
                         "
-                        class="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-lg border bg-white shadow-lg dark:border-dark-600 dark:bg-dark-800"
+                        class="material-glass pop-origin-top scroll-edge-fade absolute z-50 mt-1 max-h-48 w-full animate-scale-in overflow-auto rounded-xl shadow-[var(--shadow-pop)]"
                       >
                         <button
                           v-for="account in accountSearchResults[
@@ -3396,7 +3396,7 @@
                           :key="account.id"
                           type="button"
                           @click="selectAccount(rule, account, true)"
-                          class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-dark-700"
+                          class="w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                           :class="{
                             'opacity-50': rule.accounts.some(
                               (a) => a.id === account.id,
@@ -3447,7 +3447,7 @@
           <button
             @click="closeEditModal"
             type="button"
-            class="btn btn-secondary"
+            class="btn btn-secondary press-feedback"
           >
             {{ t("common.cancel") }}
           </button>
@@ -3455,7 +3455,7 @@
             type="submit"
             form="edit-group-form"
             :disabled="submitting"
-            class="btn btn-primary"
+            class="btn btn-primary press-feedback"
             data-tour="group-form-submit"
           >
             <svg
@@ -3515,7 +3515,7 @@
           <div
             v-for="group in sortableGroups"
             :key="group.id"
-            class="flex cursor-grab items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 transition-shadow hover:shadow-md active:cursor-grabbing dark:border-dark-600 dark:bg-dark-700"
+            class="hairline flex cursor-grab items-center gap-3 rounded-xl border bg-white p-3 transition-all duration-200 ease-apple hover:-translate-y-px hover:shadow-[var(--shadow-card)] active:cursor-grabbing dark:bg-dark-700"
           >
             <div class="text-gray-400">
               <Icon name="menu" size="md" />
@@ -3553,14 +3553,14 @@
           <button
             @click="closeSortModal"
             type="button"
-            class="btn btn-secondary"
+            class="btn btn-secondary press-feedback"
           >
             {{ t("common.cancel") }}
           </button>
           <button
             @click="saveSortOrder"
             :disabled="sortSubmitting"
-            class="btn btn-primary"
+            class="btn btn-primary press-feedback"
           >
             <svg
               v-if="sortSubmitting"
@@ -3609,7 +3609,7 @@
             </h3>
             <button
               type="button"
-              class="btn btn-secondary btn-sm"
+              class="btn btn-secondary press-feedback btn-sm"
               :disabled="compositeRoutesLoading"
               @click="loadCompositeRoutes"
             >
@@ -3833,7 +3833,7 @@
               </label>
               <button
                 type="submit"
-                class="btn btn-primary"
+                class="btn btn-primary press-feedback"
                 :disabled="compositeRouteSaving"
               >
                 <Icon
@@ -3867,7 +3867,7 @@
                 />
                 <button
                   type="button"
-                  class="btn btn-secondary"
+                  class="btn btn-secondary press-feedback"
                   :disabled="compositePreviewLoading || !compositePreviewModel"
                   @click="previewCompositeRoute"
                 >
@@ -3935,7 +3935,7 @@
         <div class="flex justify-end pt-4">
           <button
             type="button"
-            class="btn btn-secondary"
+            class="btn btn-secondary press-feedback"
             @click="closeCompositeRoutesModal"
           >
             {{ t("common.close") }}

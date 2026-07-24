@@ -41,3 +41,15 @@ const handleInput = (event: Event) => {
   debouncedEmitSearch(value)
 }
 </script>
+
+<style scoped>
+/*
+ * The shared `.input` class (global, in style.css) uses a fairly heavy
+ * `dark:border-dark-600` border. Normalize just the dark variant to the
+ * Apple hairline language here. `.input` carries this component's scope
+ * attribute, so this only affects SearchInput and leaves light mode intact.
+ */
+.dark .input {
+  border-color: var(--separator);
+}
+</style>

@@ -19,7 +19,8 @@
 @media (prefers-reduced-transparency: reduce) {
   .glass,
   .glass-card,
-  .card-glass {
+  .card-glass,
+  .material-glass {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     background-color: #ffffff !important;
@@ -27,7 +28,8 @@
 
   .dark .glass,
   .dark .glass-card,
-  .dark .card-glass {
+  .dark .card-glass,
+  .dark .material-glass {
     background-color: #1c1c1e !important;
   }
 }
@@ -36,7 +38,21 @@
   .btn,
   .input,
   .card,
-  .glass-card {
+  .glass-card,
+  .material-glass {
     border: 1px solid currentColor;
+  }
+}
+
+/* 弹层生长动画在减弱动效时退化为静态呈现 */
+@media (prefers-reduced-motion: reduce) {
+  .pop-origin-top,
+  .pop-origin-top-right,
+  .press-feedback {
+    animation: none !important;
+  }
+
+  .press-feedback:active {
+    transform: none !important;
   }
 }

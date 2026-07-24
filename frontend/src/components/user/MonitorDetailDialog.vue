@@ -51,7 +51,7 @@
 
     <template #footer>
       <div class="flex justify-end">
-        <button @click="$emit('close')" class="btn btn-secondary">
+        <button @click="$emit('close')" class="btn btn-secondary press-feedback">
           {{ t('channelStatus.closeDetail') }}
         </button>
       </div>

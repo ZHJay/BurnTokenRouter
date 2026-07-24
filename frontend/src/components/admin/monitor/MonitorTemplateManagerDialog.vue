@@ -6,7 +6,7 @@
     @close="$emit('close')"
   >
     <!-- provider tabs -->
-    <div class="mb-4 border-b border-gray-200 dark:border-dark-700">
+    <div class="hairline mb-4 border-b">
       <div role="tablist" class="flex flex-wrap gap-1">
         <button
           v-for="tab in providerTabs"
@@ -14,14 +14,14 @@
           type="button"
           role="tab"
           :aria-selected="activeProvider === tab.value"
-          class="px-4 py-2 text-sm font-medium transition-colors"
+          class="px-4 py-2 text-sm font-medium transition-colors duration-200 ease-apple"
           :class="tabClass(tab.value)"
           @click="activeProvider = tab.value"
         >
           {{ tab.label }}
           <span
             v-if="countByProvider[tab.value] > 0"
-            class="ml-1.5 rounded-full bg-gray-100 px-2 py-0.5 text-xs dark:bg-dark-700"
+            class="ml-1.5 rounded-full bg-gray-100 px-2 py-0.5 text-xs tabular-nums dark:bg-dark-700"
           >
             {{ countByProvider[tab.value] }}
           </span>
@@ -32,7 +32,7 @@
     <!-- active provider list -->
     <div v-if="!editing" class="space-y-2">
       <div class="flex justify-end">
-        <button class="btn btn-primary btn-sm" @click="openCreateForm">
+        <button class="btn btn-primary btn-sm press-feedback" @click="openCreateForm">
           <Icon name="plus" size="sm" class="mr-1" />
           {{ t('admin.channelMonitor.template.createButton') }}
         </button>
@@ -53,7 +53,7 @@
         v-for="tpl in templatesForActiveProvider"
         v-else
         :key="tpl.id"
-        class="rounded-lg border border-gray-200 bg-white p-4 dark:border-dark-700 dark:bg-dark-800"
+        class="hairline rounded-xl border bg-white p-4 transition-shadow duration-200 ease-apple hover:shadow-card dark:bg-dark-800"
       >
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0 flex-1">
@@ -90,7 +90,7 @@
           </div>
           <div class="flex flex-shrink-0 gap-2">
             <button
-              class="btn btn-secondary btn-sm"
+              class="btn btn-secondary btn-sm press-feedback"
               :disabled="tpl.associated_monitors === 0"
               :title="t('admin.channelMonitor.template.applyTooltip')"
               @click="confirmApply(tpl)"
@@ -98,10 +98,10 @@
               <Icon name="refresh" size="sm" class="mr-1" />
               {{ t('admin.channelMonitor.template.applyButton') }}
             </button>
-            <button class="btn btn-secondary btn-sm" @click="openEditForm(tpl)">
+            <button class="btn btn-secondary btn-sm press-feedback" @click="openEditForm(tpl)">
               {{ t('common.edit') }}
             </button>
-            <button class="btn btn-secondary btn-sm text-red-600" @click="handleDelete(tpl)">
+            <button class="btn btn-secondary btn-sm press-feedback text-red-600" @click="handleDelete(tpl)">
               {{ t('common.delete') }}
             </button>
           </div>
@@ -135,7 +135,7 @@
             v-for="opt in providerTabs"
             :key="opt.value"
             type="button"
-            class="rounded-lg border-2 px-3 py-2 text-sm font-medium transition-colors"
+            class="press-feedback rounded-xl border-2 px-3 py-2 text-sm font-medium transition-colors duration-200 ease-apple"
             :class="providerPickerClass(opt.value, form.provider === opt.value)"
             @click="form.provider = opt.value"
           >
@@ -144,14 +144,14 @@
         </div>
       </div>
 
-      <div v-if="form.provider === PROVIDER_OPENAI" class="rounded-lg border border-blue-100 bg-blue-50/50 p-3 dark:border-blue-500/20 dark:bg-blue-500/10">
+      <div v-if="form.provider === PROVIDER_OPENAI" class="rounded-xl border border-blue-100 bg-blue-50/50 p-3 dark:border-blue-500/20 dark:bg-blue-500/10">
         <label class="input-label">{{ t('admin.channelMonitor.form.apiMode') }}</label>
         <div class="grid gap-3 sm:grid-cols-2">
           <button
             v-for="opt in apiModeOptions"
             :key="opt.value"
             type="button"
-            class="rounded-lg border-2 px-3 py-2 text-left transition-colors"
+            class="press-feedback rounded-xl border-2 px-3 py-2 text-left transition-colors duration-200 ease-apple"
             :class="apiModeButtonClass(opt.value)"
             @click="form.api_mode = opt.value"
           >

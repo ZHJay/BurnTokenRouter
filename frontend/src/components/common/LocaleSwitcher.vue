@@ -3,7 +3,8 @@
     <button
       @click="toggleDropdown"
       :disabled="switching"
-      class="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-700"
+      class="locale-trigger press-feedback flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50"
+      :class="{ 'is-open': isOpen }"
       :title="currentLocale?.name"
     >
       <span class="text-base">{{ currentLocale?.flag }}</span>
@@ -11,7 +12,7 @@
       <Icon
         name="chevronDown"
         size="xs"
-        class="text-gray-400 transition-transform duration-200"
+        class="locale-chevron transition-transform duration-200"
         :class="{ 'rotate-180': isOpen }"
       />
     </button>
@@ -19,22 +20,20 @@
     <transition name="dropdown">
       <div
         v-if="isOpen"
-        class="absolute right-0 z-50 mt-1 w-32 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-dark-700 dark:bg-dark-800"
+        class="material-glass pop-origin-top-right absolute right-0 z-50 mt-2 w-36 overflow-hidden rounded-2xl"
+        style="box-shadow: var(--shadow-pop)"
       >
         <button
           v-for="locale in availableLocales"
           :key="locale.code"
           :disabled="switching"
           @click="selectLocale(locale.code)"
-          class="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-dark-700"
-          :class="{
-            'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400':
-              locale.code === currentLocaleCode
-          }"
+          class="locale-item flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm transition-colors"
+          :class="{ 'is-active': locale.code === currentLocaleCode }"
         >
           <span class="text-base">{{ locale.flag }}</span>
           <span>{{ locale.name }}</span>
-          <Icon v-if="locale.code === currentLocaleCode" name="check" size="sm" class="ml-auto text-primary-500" />
+          <Icon v-if="locale.code === currentLocaleCode" name="check" size="sm" class="locale-check ml-auto" />
         </button>
       </div>
     </transition>
@@ -90,14 +89,51 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.dropdown-enter-active,
+/* Trigger — token-driven neutral text with soft fill on hover/open. */
+.locale-trigger {
+  color: var(--text-secondary);
+}
+.locale-trigger:hover:not(:disabled),
+.locale-trigger.is-open {
+  background: var(--fill);
+  color: var(--text-primary);
+}
+
+.locale-chevron {
+  color: var(--text-tertiary);
+}
+
+/* Menu items */
+.locale-item {
+  color: var(--text-secondary);
+}
+.locale-item:hover:not(:disabled) {
+  background: var(--fill-hover);
+  color: var(--text-primary);
+}
+.locale-item.is-active {
+  color: var(--apple-blue);
+  background: var(--apple-blue-soft);
+}
+.locale-check {
+  color: var(--apple-blue);
+}
+
+/* Dropdown enter/leave — spring pop anchored to the trigger corner. */
+.dropdown-enter-active {
+  transition:
+    opacity 0.2s ease-out,
+    transform 0.28s var(--ease-spring);
+}
 .dropdown-leave-active {
-  transition: all 0.15s ease;
+  transition:
+    opacity 0.15s ease-in,
+    transform 0.18s var(--ease-apple);
 }
 
 .dropdown-enter-from,
 .dropdown-leave-to {
   opacity: 0;
-  transform: scale(0.95) translateY(-4px);
+  transform: scale(0.92) translateY(-6px);
 }
 </style>

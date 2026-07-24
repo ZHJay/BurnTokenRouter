@@ -39,20 +39,20 @@
       <button
         @click="$emit('reload')"
         :disabled="loading"
-        class="btn btn-secondary"
+        class="btn btn-secondary press-feedback"
         :title="t('common.refresh')"
       >
         <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
       </button>
       <button
         @click="$emit('manage-templates')"
-        class="btn btn-secondary"
+        class="btn btn-secondary press-feedback"
         :title="t('admin.channelMonitor.template.manageButton')"
       >
         <Icon name="cog" size="md" class="mr-2" />
         {{ t('admin.channelMonitor.template.manageButton') }}
       </button>
-      <button @click="$emit('create')" class="btn btn-primary">
+      <button @click="$emit('create')" class="btn btn-primary press-feedback">
         <Icon name="plus" size="md" class="mr-2" />
         {{ t('admin.channelMonitor.createButton') }}
       </button>

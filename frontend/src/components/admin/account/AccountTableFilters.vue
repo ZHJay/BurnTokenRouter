@@ -207,10 +207,23 @@ const gOpts = computed(() => [
   -webkit-backdrop-filter: saturate(180%) blur(14px);
 }
 
-:global(.dark) .account-table-filters :deep(.input),
-:global(.dark) .account-table-filters :deep(.select-trigger) {
-  border-color: rgb(255 255 255 / 0.10);
-  background: rgb(44 44 46 / 0.72);
+/*
+ * `:global(.dark) .account-table-filters :deep(...)` collapses to a bare
+ * `.dark { ... }` rule under Vue's scoped-CSS transform (the descendant part
+ * is dropped), so these dark overrides never applied and the light pill
+ * backgrounds bled through in dark mode. Use `.dark` with a scope-preserving
+ * descendant instead.
+ */
+.dark .account-table-filters :deep(.input),
+.dark .account-table-filters :deep(.select-trigger) {
+  border-color: var(--separator);
+  background: rgba(44, 44, 46, 0.72);
+  color: var(--text-primary);
+  box-shadow: none;
+}
+
+.dark .account-table-filters :deep(.input)::placeholder {
+  color: var(--text-tertiary);
 }
 
 .account-advanced-filters-enter-active,

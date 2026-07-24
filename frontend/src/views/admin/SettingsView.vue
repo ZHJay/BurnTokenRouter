@@ -28,6 +28,7 @@
                 :tabindex="activeTab === tab.key ? 0 : -1"
                 :class="[
                   'settings-tab',
+                  'press-feedback',
                   activeTab === tab.key && 'settings-tab-active',
                 ]"
                 @click="selectSettingsTab(tab.key)"
@@ -7661,7 +7662,7 @@
           <button
             type="submit"
             :disabled="saving || loadFailed"
-            class="btn btn-primary"
+            class="btn btn-primary press-feedback"
           >
             <svg
               v-if="saving"
@@ -11669,11 +11670,9 @@ watch(
 
 /* ============ 系统设置 Tab 导航 ============ */
 .settings-tabs-shell {
-  @apply sticky z-20 -mx-1 rounded-2xl border border-white/80 bg-white/90 p-1.5 backdrop-blur-xl;
+  @apply material-glass sticky z-20 -mx-1 rounded-2xl p-1.5;
   top: 4.75rem;
-  box-shadow:
-    0 12px 28px rgb(15 23 42 / 0.07),
-    0 1px 0 rgb(255 255 255 / 0.9) inset;
+  box-shadow: var(--shadow-card);
 }
 
 .settings-tabs-scroll {
@@ -11691,7 +11690,9 @@ watch(
 }
 
 .settings-tab {
-  @apply relative isolate flex h-10 min-w-[6.75rem] shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-transparent px-3 text-sm font-medium text-gray-600 outline-none transition-colors duration-200 ease-out dark:text-gray-300;
+  @apply relative isolate flex h-10 min-w-[6.75rem] shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-transparent px-3 text-sm font-medium text-gray-600 outline-none transition-colors duration-200 dark:text-gray-300;
+  letter-spacing: -0.01em;
+  transition-timing-function: var(--ease-apple);
 }
 
 @media (min-width: 768px) {
@@ -11711,7 +11712,7 @@ watch(
 .settings-tab::before {
   @apply absolute inset-0 -z-10 rounded-xl opacity-0 transition-opacity duration-200;
   content: "";
-  background: linear-gradient(135deg, rgb(248 250 252 / 0.95), rgb(241 245 249 / 0.8));
+  background: var(--fill);
 }
 
 .settings-tab:hover::before,
@@ -11724,10 +11725,8 @@ watch(
 }
 
 .settings-tab-active {
-  @apply border-primary-200/80 bg-white text-primary-700 shadow-sm dark:border-primary-400/30 dark:bg-dark-700/95 dark:text-primary-200;
-  box-shadow:
-    0 8px 18px rgb(15 23 42 / 0.08),
-    0 1px 0 rgb(255 255 255 / 0.92) inset;
+  @apply border-primary-200/80 bg-white text-primary-700 dark:border-primary-400/30 dark:bg-dark-700/95 dark:text-primary-200;
+  box-shadow: var(--shadow-card);
 }
 
 .settings-tab-active::before {
@@ -11742,7 +11741,7 @@ watch(
   height: 2px;
   border-radius: 9999px;
   content: "";
-  background: linear-gradient(90deg, #14b8a6, #0ea5e9);
+  background: var(--apple-blue);
 }
 
 .settings-tab-icon {
@@ -11768,20 +11767,14 @@ watch(
    because Vue's scoped-CSS compiler was dropping the `:global(.dark) ...`
    rules in the production build, leaving inactive tabs unreadable on dark. */
 .dark .settings-tabs-shell {
-  border-color: rgb(51 65 85 / 0.65);
-  background: rgb(15 23 42 / 0.86);
-  box-shadow:
-    0 16px 36px rgb(0 0 0 / 0.28),
-    0 1px 0 rgb(255 255 255 / 0.06) inset;
+  box-shadow: var(--shadow-card);
 }
 
 .dark .settings-tab::before {
-  background: linear-gradient(135deg, rgb(30 41 59 / 0.9), rgb(51 65 85 / 0.62));
+  background: var(--fill);
 }
 
 .dark .settings-tab-active {
-  box-shadow:
-    0 12px 26px rgb(0 0 0 / 0.22),
-    0 1px 0 rgb(255 255 255 / 0.08) inset;
+  box-shadow: var(--shadow-card);
 }
 </style>

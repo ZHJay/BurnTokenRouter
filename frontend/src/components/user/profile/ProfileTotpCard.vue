@@ -50,7 +50,7 @@
         </div>
         <button
           type="button"
-          class="btn btn-outline-danger"
+          class="btn btn-outline-danger press-feedback"
           @click="showDisableDialog = true"
         >
           {{ t('profile.totp.disable') }}
@@ -76,7 +76,7 @@
         </div>
         <button
           type="button"
-          class="btn btn-primary"
+          class="btn btn-primary press-feedback"
           @click="showSetupModal = true"
         >
           {{ t('profile.totp.enable') }}

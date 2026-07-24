@@ -1,21 +1,5 @@
 <template>
   <AppLayout>
-    <template #header-context>
-      <div class="account-platform-segmented" data-test="account-platform-segmented">
-        <button
-          v-for="platform in platformSegments"
-          :key="platform.value || 'all'"
-          type="button"
-          class="account-platform-segmented__option"
-          :class="{ 'account-platform-segmented__option--active': params.platform === platform.value }"
-          :aria-pressed="params.platform === platform.value"
-          @click="selectPlatformSegment(platform.value)"
-        >
-          {{ platform.label }}
-        </button>
-      </div>
-    </template>
-
     <TablePageLayout class="accounts-page-layout">
       <template #actions>
         <section class="account-overview-grid" :aria-label="t('admin.accounts.overview.label')">
@@ -1078,19 +1062,6 @@ const accountOverview = computed(() => {
     healthRate: pageCount === 0 ? '0.0' : ((schedulable / pageCount) * 100).toFixed(1)
   }
 })
-
-const platformSegments = computed(() => [
-  { value: '', label: t('common.all') },
-  { value: 'openai', label: 'OpenAI' },
-  { value: 'anthropic', label: 'Claude' },
-  { value: 'gemini', label: 'Gemini' }
-])
-
-const selectPlatformSegment = (platform: string) => {
-  if (params.platform === platform) return
-  params.platform = platform
-  debouncedReload()
-}
 
 const {
   selectedIds: selIds,
@@ -2320,7 +2291,7 @@ onUnmounted(() => {
   box-shadow: 0 14px 36px rgb(0 0 0 / 0.09);
 }
 
-:global(.dark) .account-overview-card:hover {
+.dark .account-overview-card:hover {
   box-shadow: 0 16px 42px rgb(0 0 0 / 0.45);
 }
 
@@ -2355,15 +2326,15 @@ onUnmounted(() => {
   background: rgb(255 59 48 / 0.13);
 }
 
-:global(.dark) .account-overview-icon--success {
+.dark .account-overview-icon--success {
   color: #30d158;
 }
 
-:global(.dark) .account-overview-icon--warning {
+.dark .account-overview-icon--warning {
   color: #ff9f0a;
 }
 
-:global(.dark) .account-overview-icon--danger {
+.dark .account-overview-icon--danger {
   color: #ff453a;
 }
 
@@ -2396,34 +2367,20 @@ onUnmounted(() => {
   color: #d70015;
 }
 
-:global(.dark) .account-overview-detail--success {
+.dark .account-overview-detail--success {
   color: #30d158;
 }
 
-:global(.dark) .account-overview-detail--warning {
+.dark .account-overview-detail--warning {
   color: #ff9f0a;
 }
 
-:global(.dark) .account-overview-detail--danger {
+.dark .account-overview-detail--danger {
   color: #ff453a;
 }
 
 .accounts-command-bar {
   @apply flex flex-wrap items-start justify-between gap-3;
-}
-
-.account-platform-segmented {
-  @apply flex w-fit items-center gap-0.5 rounded-xl p-0.5;
-  background: rgb(120 120 128 / 0.10);
-}
-
-.account-platform-segmented__option {
-  @apply rounded-[0.625rem] px-3.5 py-1.5 text-[13px] font-medium text-gray-500;
-  @apply transition-all duration-200 hover:text-gray-800 dark:text-dark-300 dark:hover:text-white;
-}
-
-.account-platform-segmented__option--active {
-  @apply bg-white text-gray-900 shadow-sm dark:bg-dark-700 dark:text-white;
 }
 
 .accounts-command-bar :deep(.account-table-filters) {
@@ -2440,23 +2397,43 @@ onUnmounted(() => {
   min-height: 2.25rem;
   padding-top: 0.4375rem;
   padding-bottom: 0.4375rem;
-  border-color: rgb(0 0 0 / 0.08);
-  background: rgb(255 255 255 / 0.82);
+  border-color: var(--separator);
+  background: var(--glass-bg);
+  color: var(--text-primary);
   backdrop-filter: saturate(180%) blur(14px);
   -webkit-backdrop-filter: saturate(180%) blur(14px);
 }
 
-:global(.dark) .account-command-button {
-  border-color: rgb(255 255 255 / 0.10);
-  background: rgb(44 44 46 / 0.72);
-}
-
 .account-command-popover,
 .account-tools-popover {
-  @apply rounded-2xl border border-black/10 bg-white/90 shadow-2xl shadow-black/15;
-  @apply dark:border-white/10 dark:bg-dark-800/90 dark:shadow-black/50;
+  @apply rounded-2xl border shadow-2xl shadow-black/15 dark:shadow-black/50;
+  border-color: var(--separator);
+  background: var(--glass-bg);
+  color: var(--text-primary);
   backdrop-filter: saturate(180%) blur(24px);
   -webkit-backdrop-filter: saturate(180%) blur(24px);
+  transform-origin: top right;
+  animation: account-pop-in 220ms var(--ease-apple);
+}
+
+@keyframes account-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(-4px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-command-popover,
+  .account-tools-popover {
+    animation: none;
+  }
 }
 
 .account-command-menu-item {

@@ -39,7 +39,7 @@
       <button
         :data-testid="`${testIdPrefix}-create-account-send-code`"
         type="button"
-        class="btn btn-secondary shrink-0"
+        class="btn btn-secondary press-feedback shrink-0"
         :disabled="isSubmitting || isSendingCode || countdown > 0 || !email.trim() || (turnstileEnabled && !turnstileToken)"
         @click="handleSendCode"
       >
@@ -55,7 +55,7 @@
     <p v-if="emailVerifyEnabled && sendCodeSuccess" class="text-sm text-green-600 dark:text-green-400">
       {{ t('auth.codeSentSuccess') }}
     </p>
-    <p v-else-if="emailVerifyEnabled" class="text-xs text-gray-500 dark:text-dark-400">
+    <p v-else-if="emailVerifyEnabled" class="text-xs text-[color:var(--text-tertiary)]">
       {{ t('auth.verificationCodeHint') }}
     </p>
     <input
@@ -70,7 +70,7 @@
     <button
       :data-testid="`${testIdPrefix}-create-account-submit`"
       type="button"
-      class="btn btn-primary w-full"
+      class="btn btn-primary press-feedback w-full"
       :disabled="isSubmitting || !email.trim() || password.length < 6 || (invitationCodeEnabled && !invitationCode.trim())"
       @click="handleSubmit"
     >
@@ -78,7 +78,7 @@
     </button>
     <button
       type="button"
-      class="btn btn-secondary w-full"
+      class="btn btn-secondary press-feedback w-full"
       :disabled="isSubmitting"
       @click="emitSwitchToBind"
     >

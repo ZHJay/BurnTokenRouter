@@ -1,12 +1,12 @@
 <template>
-  <div class="min-h-screen bg-gray-50 px-4 py-10 dark:bg-dark-900">
+  <div class="min-h-screen bg-[color:var(--surface-bg)] px-4 py-10">
     <div class="mx-auto max-w-2xl">
       <div v-if="isProcessing" class="card p-6 text-center">
         <div class="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"></div>
-        <h1 class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
+        <h1 class="mt-4 text-lg font-semibold tracking-tight text-[color:var(--text-primary)] dark:text-white">
           {{ t('auth.oauth.callbackTitle') }}
         </h1>
-        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+        <p class="mt-2 text-sm text-[color:var(--text-secondary)]">
           {{ t('auth.oauth.callbackHint') }}
         </p>
       </div>
@@ -69,7 +69,7 @@
             {{ registrationError }}
           </p>
           <button
-            class="btn btn-primary w-full"
+            class="btn btn-primary press-feedback w-full"
             type="button"
             :disabled="isSubmitting || !canSubmitRegistration"
             @click="handleSubmitRegistration"
@@ -86,7 +86,7 @@
         <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
           {{ t('auth.oauth.invalidCallbackHint') }}
         </p>
-        <button class="btn btn-primary mt-6" type="button" @click="router.replace('/login')">
+        <button class="btn btn-primary press-feedback mt-6" type="button" @click="router.replace('/login')">
           {{ t('auth.backToLogin') }}
         </button>
       </div>
@@ -104,7 +104,7 @@
             <label class="input-label">{{ t('auth.oauth.code') }}</label>
             <div class="flex gap-2">
               <input class="input flex-1 font-mono text-sm" :value="code" readonly />
-              <button class="btn btn-secondary" type="button" :disabled="!code" @click="copy(code)">
+              <button class="btn btn-secondary press-feedback" type="button" :disabled="!code" @click="copy(code)">
                 {{ t('common.copy') }}
               </button>
             </div>
@@ -115,7 +115,7 @@
             <div class="flex gap-2">
               <input class="input flex-1 font-mono text-sm" :value="state" readonly />
               <button
-                class="btn btn-secondary"
+                class="btn btn-secondary press-feedback"
                 type="button"
                 :disabled="!state"
                 @click="copy(state)"
@@ -130,7 +130,7 @@
             <div class="flex gap-2">
               <input class="input flex-1 font-mono text-xs" :value="fullUrl" readonly />
               <button
-                class="btn btn-secondary"
+                class="btn btn-secondary press-feedback"
                 type="button"
                 :disabled="!fullUrl"
                 @click="copy(fullUrl)"

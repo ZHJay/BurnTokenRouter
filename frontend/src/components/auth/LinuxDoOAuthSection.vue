@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-4">
-    <button type="button" :disabled="disabled" class="btn btn-secondary w-full" @click="startLogin">
+    <button type="button" :disabled="disabled" class="btn btn-secondary press-feedback h-12 w-full" @click="startLogin">
       <svg
         class="icon mr-2"
         viewBox="0 0 16 16"
@@ -26,15 +26,15 @@
           ></path>
         </g>
       </svg>
-      {{ t('auth.linuxdo.signIn') }}
+      <span class="font-medium">{{ t('auth.linuxdo.signIn') }}</span>
     </button>
 
     <div v-if="showDivider" class="flex items-center gap-3">
-      <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
-      <span class="text-xs text-gray-500 dark:text-dark-400">
+      <div class="h-px flex-1 border-t hairline"></div>
+      <span class="text-xs tracking-[-0.01em] text-[color:var(--text-tertiary)]">
         {{ t('auth.oauthOrContinue') }}
       </span>
-      <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
+      <div class="h-px flex-1 border-t hairline"></div>
     </div>
   </div>
 </template>

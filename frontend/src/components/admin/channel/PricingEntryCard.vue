@@ -1,15 +1,15 @@
 <template>
-  <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-dark-600 dark:bg-dark-800">
+  <div class="hairline rounded-xl border bg-gray-50 p-3 transition-shadow duration-200 ease-apple hover:shadow-card dark:bg-dark-800">
     <!-- Collapsed summary header (clickable) -->
     <div
-      class="flex cursor-pointer select-none items-center gap-2"
+      class="press-feedback flex cursor-pointer select-none items-center gap-2"
       @click="collapsed = !collapsed"
     >
       <Icon
         :name="collapsed ? 'chevronRight' : 'chevronDown'"
         size="sm"
         :stroke-width="2"
-        class="flex-shrink-0 text-gray-400 transition-transform duration-200"
+        class="flex-shrink-0 text-gray-400 transition-transform duration-200 ease-apple"
       />
 
       <!-- Summary: model tags + billing badge -->
@@ -55,7 +55,7 @@
       <button
         type="button"
         @click.stop="emit('remove')"
-        class="flex-shrink-0 rounded p-1 text-gray-400 hover:text-red-500"
+        class="press-feedback flex-shrink-0 rounded-md p-1 text-gray-400 transition-colors duration-150 ease-apple hover:text-red-500"
       >
         <Icon name="trash" size="sm" />
       </button>
@@ -347,7 +347,7 @@ async function onModelsUpdate(newModels: string[]) {
 .collapsible-content {
   display: grid;
   grid-template-rows: 1fr;
-  transition: grid-template-rows 0.25s ease;
+  transition: grid-template-rows 0.25s var(--ease-apple);
 }
 
 .collapsible-content--collapsed {

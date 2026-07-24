@@ -229,9 +229,12 @@ describe('admin AccountsView Apple overview', () => {
     expect(componentSource).toContain('margin-bottom: 0.375rem')
   })
 
-  it('exposes the accepted platform segmented control without removing advanced filters', () => {
-    expect(componentSource).toContain('data-test="account-platform-segmented"')
-    expect(componentSource).toContain('v-for="platform in platformSegments"')
-    expect(componentSource).toContain('selectPlatformSegment(platform.value)')
+  it('removes the platform segmented control while preserving the platform filter param', () => {
+    // The upstream open-source repo has no top platform switcher; it was removed here.
+    expect(componentSource).not.toContain('data-test="account-platform-segmented"')
+    expect(componentSource).not.toContain('v-for="platform in platformSegments"')
+    expect(componentSource).not.toContain('selectPlatformSegment')
+    // params.platform must remain so the data layer / AccountTableFilters keep filtering by platform.
+    expect(componentSource).toContain("platform: params.platform || ''")
   })
 })

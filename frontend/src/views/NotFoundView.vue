@@ -1,14 +1,32 @@
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-[#f5f5f7] px-4 dark:bg-black">
-    <div class="w-full max-w-md text-center">
+  <div
+    class="relative flex min-h-screen items-center justify-center overflow-hidden px-4"
+    style="background: var(--surface-bg)"
+  >
+    <!-- Ambient blurred glow, softly anchored behind the glyph -->
+    <div class="pointer-events-none absolute inset-0" aria-hidden="true">
+      <div
+        class="absolute left-1/2 top-1/2 h-[38rem] w-[38rem] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-3xl"
+        style="background: radial-gradient(circle, var(--apple-blue-soft) 0%, transparent 70%)"
+      ></div>
+    </div>
+
+    <div class="relative z-10 w-full max-w-md text-center">
       <!-- 404 Display -->
       <div class="mb-10">
         <div class="relative inline-block">
-          <span class="text-[9rem] font-semibold leading-none tracking-tight text-gray-200 dark:text-dark-800">404</span>
+          <span
+            class="select-none text-[9.5rem] font-bold leading-none text-gray-900/10 dark:text-white/10"
+            style="letter-spacing: -0.04em"
+            >404</span
+          >
           <div class="absolute inset-0 flex items-center justify-center">
-            <div class="flex h-20 w-20 items-center justify-center rounded-[22px] bg-primary-500 shadow-md shadow-primary-500/30">
+            <div
+              class="flex h-20 w-20 items-center justify-center rounded-[22px] text-white"
+              style="background: var(--apple-blue); box-shadow: var(--shadow-blue)"
+            >
               <svg
-                class="h-10 w-10 text-white"
+                class="h-10 w-10"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -27,21 +45,24 @@
 
       <!-- Text Content -->
       <div class="mb-9">
-        <h1 class="mb-3 text-3xl font-semibold tracking-tight text-[#1d1d1f] dark:text-white">
+        <h1
+          class="mb-3 text-4xl font-bold"
+          style="letter-spacing: -0.025em; color: var(--text-primary)"
+        >
           {{ t('errors.pageNotFound') }}
         </h1>
-        <p class="text-base text-gray-500 dark:text-dark-400">
+        <p class="text-base" style="color: var(--text-secondary)">
           The page you are looking for doesn't exist or has been moved.
         </p>
       </div>
 
       <!-- Action Buttons -->
       <div class="flex flex-col items-center justify-center gap-3 sm:flex-row">
-        <AppleButton variant="secondary" @click="goBack">
+        <AppleButton class="press-feedback" variant="secondary" @click="goBack">
           <template #icon><Icon name="arrowLeft" size="md" /></template>
           Go Back
         </AppleButton>
-        <AppleButton tag="router-link" :to="'/dashboard'" variant="primary">
+        <AppleButton class="press-feedback" tag="router-link" :to="'/dashboard'" variant="primary">
           <template #icon><Icon name="home" size="md" /></template>
           Go to Dashboard
         </AppleButton>

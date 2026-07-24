@@ -103,7 +103,7 @@
                 <button
                   data-testid="profile-binding-email-send-code"
                   type="button"
-                  class="btn btn-secondary btn-sm"
+                  class="btn btn-secondary btn-sm press-feedback"
                   :disabled="isSendingEmailCode || isBindingEmail"
                   @click="sendEmailCode"
                 >
@@ -134,7 +134,7 @@
                 <button
                   data-testid="profile-binding-email-submit"
                   type="button"
-                  class="btn btn-primary btn-sm sm:col-span-2"
+                  class="btn btn-primary btn-sm press-feedback sm:col-span-2"
                   :disabled="isBindingEmail"
                   @click="bindEmail"
                 >
@@ -153,7 +153,7 @@
               v-if="item.provider === 'email' && compact"
               data-testid="profile-binding-email-toggle"
               type="button"
-              class="btn btn-secondary btn-sm"
+              class="btn btn-secondary btn-sm press-feedback"
               @click="toggleEmailForm"
             >
               {{
@@ -166,7 +166,7 @@
               v-if="item.canBind"
               :data-testid="`profile-binding-${item.provider}-action`"
               type="button"
-              class="btn btn-primary btn-sm"
+              class="btn btn-primary btn-sm press-feedback"
               @click="startBinding(item.provider)"
             >
               {{ t('profile.authBindings.bindAction', { providerName: item.label }) }}
@@ -175,7 +175,7 @@
               v-if="item.canUnbind"
               :data-testid="`profile-binding-${item.provider}-unbind`"
               type="button"
-              class="btn btn-secondary btn-sm"
+              class="btn btn-secondary btn-sm press-feedback"
               :disabled="unbindingProvider === item.provider"
               @click="handleUnbindForItem(item.provider, item.label)"
             >

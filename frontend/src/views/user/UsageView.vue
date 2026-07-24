@@ -122,17 +122,17 @@
           </div>
 
           <div class="flex w-full flex-wrap items-center justify-end gap-3 sm:w-auto">
-            <button type="button" @click="refreshData" :disabled="activeTab === 'errors' ? errorLoading : loading" class="btn btn-secondary">
+            <button type="button" @click="refreshData" :disabled="activeTab === 'errors' ? errorLoading : loading" class="btn btn-secondary press-feedback">
               {{ t('common.refresh') }}
             </button>
-            <button type="button" @click="resetFilters" class="btn btn-secondary">
+            <button type="button" @click="resetFilters" class="btn btn-secondary press-feedback">
               {{ t('common.reset') }}
             </button>
             <div class="relative" ref="columnDropdownRef">
               <button
                 type="button"
                 @click="showColumnDropdown = !showColumnDropdown"
-                class="btn btn-secondary px-2 md:px-3"
+                class="btn btn-secondary press-feedback px-2 md:px-3"
                 :title="t('admin.users.columnSettings')"
               >
                 <Icon name="grid" size="sm" />
@@ -140,31 +140,31 @@
               </button>
               <div
                 v-if="showColumnDropdown"
-                class="absolute right-0 top-full z-50 mt-2 max-h-80 w-52 overflow-y-auto rounded-2xl border border-gray-200 bg-white py-1.5 shadow-xl dark:border-dark-700 dark:bg-dark-800"
+                class="material-glass pop-origin-top-right absolute right-0 top-full z-50 mt-2 max-h-80 w-52 origin-top-right animate-scale-in overflow-y-auto rounded-2xl py-1.5 shadow-[var(--shadow-pop)]"
               >
                 <button
                   v-for="col in currentToggleableColumns"
                   :key="col.key"
                   type="button"
                   @click="toggleCurrentColumn(col.key)"
-                  class="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-[#1d1d1f] transition-colors hover:bg-gray-100 dark:text-[#f5f5f7] dark:hover:bg-dark-700"
+                  class="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-[#1d1d1f] transition-colors hover:bg-black/[0.04] dark:text-[#f5f5f7] dark:hover:bg-white/[0.06]"
                 >
                   <span>{{ col.label }}</span>
                   <Icon v-if="isCurrentColumnVisible(col.key)" name="check" size="sm" class="text-primary-500" />
                 </button>
               </div>
             </div>
-            <button v-if="activeTab !== 'errors'" type="button" @click="exportToCSV" :disabled="exporting" class="btn btn-primary">
+            <button v-if="activeTab !== 'errors'" type="button" @click="exportToCSV" :disabled="exporting" class="btn btn-primary press-feedback">
               {{ exporting ? t('usage.exporting') : t('usage.exportCsv') }}
             </button>
           </div>
         </div>
       </div>
 
-      <div v-if="errorViewEnabled" class="flex gap-8 border-b border-gray-200 dark:border-dark-700">
+      <div v-if="errorViewEnabled" class="flex gap-8 border-b hairline">
         <button
           type="button"
-          class="relative -mb-px border-b-2 px-1 pb-3 text-sm font-medium transition-colors"
+          class="press-feedback relative -mb-px border-b-2 px-1 pb-3 text-sm font-medium transition-colors duration-200 ease-[cubic-bezier(0.32,0.72,0,1)]"
           :class="activeTab === 'usage'
             ? 'border-primary-500 text-primary-600 dark:border-primary-500 dark:text-primary-400'
             : 'border-transparent text-gray-500 hover:text-[#1d1d1f] dark:text-dark-400 dark:hover:text-[#f5f5f7]'"
@@ -174,7 +174,7 @@
         </button>
         <button
           type="button"
-          class="relative -mb-px border-b-2 px-1 pb-3 text-sm font-medium transition-colors"
+          class="press-feedback relative -mb-px border-b-2 px-1 pb-3 text-sm font-medium transition-colors duration-200 ease-[cubic-bezier(0.32,0.72,0,1)]"
           :class="activeTab === 'errors'
             ? 'border-primary-500 text-primary-600 dark:border-primary-500 dark:text-primary-400'
             : 'border-transparent text-gray-500 hover:text-[#1d1d1f] dark:text-dark-400 dark:hover:text-[#f5f5f7]'"
