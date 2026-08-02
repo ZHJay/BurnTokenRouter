@@ -344,7 +344,10 @@
 
   @media (prefers-contrast: more) {
     .ambient-layer {
-      display: none;
+      /* !important 与 reduced-transparency 分支里的同一条对齐（那条已带）。
+         .ambient-layer 的基础规则同为 (0,1,0) 且就在几行之上，靠源码顺序取胜
+         能成立但很脆；这是可访问性分支，必须赢。 */
+      display: none !important;
     }
   }
 }
@@ -391,11 +394,30 @@
     background-color: var(--accent-pressed);
   }
 
-  /* 玻璃按钮：浮在材质上的控件，用最轻材质 + 四层边缘 */
+  /* 次级按钮：不透明填充 + 四层边缘。
+
+     此前是 background: var(--mat-thin) + backdrop-filter: blur(16px)，即一块玻璃。
+     但它的每一个使用场景都已经在玻璃之上：登录卡（.glass-card）里的 OAuth 按钮、
+     工具栏（.sidebar / .glass）、对话框页脚（.dialog-container / .modal-content）。
+     玻璃叠玻璃是 Apple HIG 明确禁止的 —— 两层材质各自采样同一背景，深度线索互相
+     抵消，结果不是"更有层次"而是糊。实测 16.5:1 说明它今天能读，但可读不等于层级
+     正确：模糊在这个尺寸的控件上不构成深度，只构成噪点。
+
+     为什么改默认值而不是新增 .btn-secondary-opaque：
+     新增变体等于承认"玻璃叠玻璃"在某些场景是对的，然后要求每个调用点判断自己
+     是否在玻璃上。上面已经枚举过：没有任何调用点是在非玻璃背景上的，所以那个
+     判断永远是同一个答案，变体只会带来漂移。一处定义，全部场景正确。
+
+     深度没有丢：四层边缘（外描边 / 内描边 / 底部反光 / 顶部高光）+ --shadow-1
+     全部保留，这些才是这颗按钮的立体感来源，材质从来不是。半径、阴影、字重、
+     过渡时长一律不动。
+
+     顺带修掉一处结构性例外：这里的 blur(16px) 是全文件唯一硬编码的表面模糊值
+     （其余都走 var(--mat-blur-*)），因此两个偏好分支把 --mat-blur-* 钉成 0px 的
+     结构性保证对它无效，只能靠选择器清单点名覆盖。删掉 backdrop-filter 后这个
+     例外不再存在。 */
   .btn-secondary {
-    background: var(--mat-thin);
-    backdrop-filter: blur(16px) var(--mat-diffuse);
-    -webkit-backdrop-filter: blur(16px) var(--mat-diffuse);
+    background: var(--surface);
     color: var(--label);
     box-shadow:
       0 0 0 0.5px var(--glass-edge-outer),
@@ -406,7 +428,9 @@
   }
 
   .btn-secondary:hover:not(:disabled) {
-    background: var(--surface);
+    /* 默认态已经是 --surface，悬停必须换一个落点否则没有反馈。
+       --surface-secondary 在浅色下略暗、深色下略亮，两种主题都是"被指到"的方向。 */
+    background: var(--surface-secondary);
   }
 
   .btn-ghost {
@@ -429,6 +453,43 @@
 
   .btn-danger:hover:not(:disabled) {
     filter: brightness(0.94);
+  }
+
+  /* 描边式破坏性按钮。此前 btn-outline-danger 在
+     src/components/user/profile/ProfileTotpCard.vue:53（"关闭 2FA"）已被使用，
+     但全仓没有任何定义 —— 它是惰性的，实测与裸 .btn 计算结果完全一致：一个会
+     关掉两步验证的按钮长得跟普通按钮一样，这是安全问题而不是外观问题。
+
+     为什么定义描边款而不是直接换成 .btn-danger：
+     这颗按钮不是提交点，它只打开 TotpDisableDialog，真正的提交在
+     src/components/user/profile/TotpDisableDialog.vue:73 上，那里已经是实心
+     .btn-danger。两级都用实心红会让升级链失去层次，用户在第一屏就看到最强
+     信号，到真正不可逆的那一步反而没有升级。描边红 = 破坏性但不是主操作，
+     实心红 = 不可逆的提交，这是 Apple 的既有分工。
+
+     颜色只用既有 token：--sys-red-text（浅色 #d70015 → 5.38:1，深色回落到
+     --sys-red），不新造值。文字与描边同色，因此描边也满足 1.4.11 的 3:1。 */
+  .btn-outline-danger {
+    background-color: transparent;
+    color: var(--sys-red-text);
+    box-shadow: inset 0 0 0 1px var(--sys-red-text);
+  }
+
+  .btn-outline-danger:hover:not(:disabled) {
+    /* 悬停填充到实心红并反白文字 —— 与 .btn-danger 的落点一致，读作"再往前一步" */
+    background-color: var(--sys-red-text);
+    color: #fff;
+    box-shadow: inset 0 0 0 1px var(--sys-red-text);
+  }
+
+  .btn-outline-danger:focus-visible {
+    /* .btn:focus-visible 用 --accent 描边，破坏性按钮沿用会丢掉红色语义；
+       这里保留焦点环的几何（3.5px + 1px），只把颜色换成同一红色 token。 */
+    outline: none;
+    box-shadow:
+      inset 0 0 0 1px var(--sys-red-text),
+      0 0 0 3.5px rgb(255 59 48 / 0.18),
+      0 0 0 1px var(--sys-red-text);
   }
 
   .btn-success {
@@ -547,6 +608,24 @@
     box-shadow:
       inset 0 0 0 1.5px var(--sys-red),
       0 0 0 3.5px rgb(255 59 48 / 0.18);
+  }
+
+  /* 紧凑输入框。此前 input-sm 在 4 处被使用但全仓无定义（惰性）：
+       src/views/admin/settings/OpenAIFastPolicyUserSelector.vue:41
+       src/views/admin/SettingsView.vue:715 / :927 / :1250
+     四处都是密集管理表单里与按钮同行的窄字段，紧凑档位是合理需求，
+     且 .btn 已有 btn-sm/btn-md/btn-lg 的尺寸阶梯 —— 输入框补上第一级与既有约定一致。
+
+     为什么定义 input-sm 而不删掉它，同时不定义 btn-xs：
+     .btn-sm 已经是 py-1 text-xs（约 24px 高），本就在触达目标下限，再加 btn-xs
+     只会让它更小 —— 那是往错误方向加一级。.input 的基线是 py-2（约 38px），
+     压到 py-1.5 仍有约 32px，是收紧而不是击穿下限。两个判断方向一致：
+     尺寸阶梯可以向下延伸到仍可用的一级，不能延伸到不可用的一级。
+
+     只改内距与圆角，字号保持 text-sm：text-xs 会让管理员在这些字段里读 API key
+     片段和 URL 更吃力，而高度已经由内距解决。 */
+  .input-sm {
+    @apply rounded-md px-2.5 py-1.5;
   }
 
   .input-label {
@@ -785,12 +864,27 @@
 
   /* 数据数字：等宽数位 + 收紧字距 —— 大字号必须负 tracking */
   .stat-value {
-    @apply truncate text-2xl;
+    @apply text-2xl;
     font-weight: 600;
     line-height: 1.08;
     letter-spacing: -0.026em;
     font-variant-numeric: tabular-nums;
     color: var(--label);
+    /* 此前是 @apply truncate。截断对姓名/邮箱是对的，对数值是错的：390px 下
+       余额 $44.9820 被渲染成 $44.982… —— 用户正拿它做决策的数字被静默改写了。
+       38 处调用点都继承这个 token，所以修在 token 上，而不是 38 个补丁。
+
+       只删 truncate 不够：货币串没有空格，属于单个不可断词，
+       白名单换行规则下它不会折行而是直接溢出到卡片外。overflow-wrap: break-word
+       只在确实会溢出时才在词内断开，正常文本仍按空格断行；且不同于 anywhere，
+       它不改变 min-content 尺寸，因此不会让 grid/flex 列宽塌缩 —— 既有布局不变。
+
+       调用点都在 min-w-0 flex-1 列里，旁边的图标磁贴是 shrink-0 固定尺寸，
+       折到第二行有空间，卡片没有固定高度。
+       tabular-nums 保留，列对齐不受影响。
+       需要截断的地方仍可在模板上自己加 truncate（见
+       src/views/admin/RiskControlView.vue:48，那里的值是名称类字符串）。 */
+    overflow-wrap: break-word;
   }
 
   .stat-label {
@@ -1636,11 +1730,30 @@
       -webkit-backdrop-filter: none !important;
     }
 
+    /* 组件里手写的遮罩。RedeemView / BackupView 的 .modal-scrim 与 PaymentView 的
+       .lightbox-scrim 已在各自 SFC 内处理，这里不与它们冲突（同值声明）；
+       但 .bell-scrim（src/components/common/AnnouncementBell.vue:425）与
+       .popup-scrim（src/components/common/AnnouncementPopup.vue:163）各带一条
+       blur(2px) 且**没有任何偏好分支** —— 实测漏网。两个文件都不在本次可写范围内，
+       因此在这里兜底。
+
+       !important 是必需的：scoped 样式编译后带 [data-v-*]，特异性 (0,2,0) 高于
+       裸类名 (0,1,0)。 */
+    .bell-scrim,
+    .popup-scrim,
+    .modal-scrim,
+    .lightbox-scrim {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
     /* ::after 早已停用而 ::before 没有 —— 这个不一致本身是 bug */
     .glass-lens::before,
     .glass-lens::after,
     .sidebar::after {
-      display: none;
+      /* !important：这三条都是装饰层，必须赢过同层里任何后续规则，
+         不能只靠源码顺序（与本分支其余声明的取胜方式保持一致）。 */
+      display: none !important;
     }
 
     /* 半透明渐变光层，此前完全不受本偏好影响 */
@@ -1716,13 +1829,25 @@
       -webkit-backdrop-filter: none !important;
     }
 
+    /* 组件手写遮罩在高对比下同样要去模糊。这四个类的 SFC 内分支只覆盖了
+       prefers-reduced-transparency，全仓没有任何组件处理 prefers-contrast
+       （已 grep 确认为 0 处），因此高对比用户此前会同时看到 1px 描边和背后的
+       模糊 —— 与本分支目标直接矛盾。 */
+    .bell-scrim,
+    .popup-scrim,
+    .modal-scrim,
+    .lightbox-scrim {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
     /* 装饰性镜面光泽同样只在 reduced-transparency 分支里停用过。它们是叠在表面
        之上的半透明渐变，会压低刚刚加上的 1px 描边与文字的实际对比度 —— 与本分支
        "近实色背景 + 明确描边"的目标直接冲突。 */
     .glass-lens::before,
     .glass-lens::after,
     .sidebar::after {
-      display: none;
+      display: none !important;
     }
   }
 }
