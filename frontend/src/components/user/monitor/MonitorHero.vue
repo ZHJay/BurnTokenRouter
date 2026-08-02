@@ -2,18 +2,20 @@
   <section class="py-3 md:py-4">
     <div class="flex items-center justify-end gap-3 flex-wrap">
       <div
-        role="tablist"
+        role="radiogroup"
+        :aria-label="t('dashboard.timeRange')"
         class="tabs"
       >
         <button
           v-for="opt in windowOptions"
           :key="opt.value"
           type="button"
-          role="tab"
-          :aria-selected="window === opt.value"
+          role="radio"
+          :aria-checked="window === opt.value"
           class="tab text-xs active:scale-[0.96]"
           :class="window === opt.value && 'tab-active'"
           @click="emit('update:window', opt.value)"
+          @keydown="handleRadioGroupKeydown"
         >
           {{ opt.label }}
         </button>
@@ -58,6 +60,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
 import AutoRefreshButton from '@/components/common/AutoRefreshButton.vue'
+import { handleRadioGroupKeydown } from '@/utils/radioGroupKeyboard'
 export type MonitorWindow = '7d' | '15d' | '30d'
 export type OverallStatus = 'operational' | 'degraded'
 

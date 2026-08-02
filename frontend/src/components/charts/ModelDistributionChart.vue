@@ -1,7 +1,7 @@
 <template>
   <div class="card p-4">
     <div class="mb-4 flex items-center justify-between gap-3">
-      <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+      <h3 :id="titleId" class="text-sm font-semibold text-gray-900 dark:text-white">
         {{ !enableRankingView || activeView === 'model_distribution'
           ? t('admin.dashboard.modelDistribution')
           : t('admin.dashboard.spendingRankingTitle') }}
@@ -10,35 +10,39 @@
         <div
           v-if="showSourceToggle"
           class="tabs"
-          role="tablist"
+          role="radiogroup"
+          :aria-labelledby="titleId"
         >
           <button
             type="button"
-            role="tab"
-            :aria-selected="source === 'requested'"
+            role="radio"
+            :aria-checked="source === 'requested'"
             class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
             :class="source === 'requested' && 'tab-active'"
             @click="emit('update:source', 'requested')"
+            @keydown="handleRadioGroupKeydown"
           >
             {{ t('usage.requestedModel') }}
           </button>
           <button
             type="button"
-            role="tab"
-            :aria-selected="source === 'upstream'"
+            role="radio"
+            :aria-checked="source === 'upstream'"
             class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
             :class="source === 'upstream' && 'tab-active'"
             @click="emit('update:source', 'upstream')"
+            @keydown="handleRadioGroupKeydown"
           >
             {{ t('usage.upstreamModel') }}
           </button>
           <button
             type="button"
-            role="tab"
-            :aria-selected="source === 'mapping'"
+            role="radio"
+            :aria-checked="source === 'mapping'"
             class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
             :class="source === 'mapping' && 'tab-active'"
             @click="emit('update:source', 'mapping')"
+            @keydown="handleRadioGroupKeydown"
           >
             {{ t('usage.mapping') }}
           </button>
@@ -46,25 +50,28 @@
         <div
           v-if="showMetricToggle"
           class="tabs"
-          role="tablist"
+          role="radiogroup"
+          :aria-labelledby="titleId"
         >
           <button
             type="button"
-            role="tab"
-            :aria-selected="metric === 'tokens'"
+            role="radio"
+            :aria-checked="metric === 'tokens'"
             class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
             :class="metric === 'tokens' && 'tab-active'"
             @click="emit('update:metric', 'tokens')"
+            @keydown="handleRadioGroupKeydown"
           >
             {{ t('admin.dashboard.metricTokens') }}
           </button>
           <button
             type="button"
-            role="tab"
-            :aria-selected="metric === 'actual_cost'"
+            role="radio"
+            :aria-checked="metric === 'actual_cost'"
             class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
             :class="metric === 'actual_cost' && 'tab-active'"
             @click="emit('update:metric', 'actual_cost')"
+            @keydown="handleRadioGroupKeydown"
           >
             {{ t('admin.dashboard.metricActualCost') }}
           </button>
@@ -239,7 +246,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Doughnut } from 'vue-chartjs'
@@ -253,10 +260,15 @@ import {
   neutralColor,
   useChartScheme
 } from './chartPalette'
+import { handleRadioGroupKeydown } from '@/utils/radioGroupKeyboard'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
 const { t } = useI18n()
+
+// 数据源 / 指标分段控件是「选值」而非切面板，用 radiogroup 语义并从可见标题取无障碍名称。
+// activeView 那一组是真正的面板切换，保留 tablist/tab 语义。
+const titleId = useId()
 
 type DistributionMetric = 'tokens' | 'actual_cost'
 type ModelSource = 'requested' | 'upstream' | 'mapping'

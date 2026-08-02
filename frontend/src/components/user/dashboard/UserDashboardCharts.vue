@@ -11,17 +11,19 @@
           {{ t('common.refresh') }}
         </button>
         <div class="ml-auto flex items-center gap-2">
-          <span class="text-xs font-medium tracking-[0.01em] text-gray-500 dark:text-gray-400">{{ t('dashboard.granularity') }}:</span>
+          <span :id="granularityLabelId" class="text-xs font-medium tracking-[0.01em] text-gray-500 dark:text-gray-400">{{ t('dashboard.granularity') }}:</span>
           <!-- Apple 分段控件：两个互斥选项用 segmented 比下拉更快也更好读 -->
-          <div class="tabs" role="tablist">
+          <!-- 选粒度是「选值」，不切换面板：radiogroup 语义 + 方向键遍历，补回原 Select 的键盘行为 -->
+          <div class="tabs" role="radiogroup" :aria-labelledby="granularityLabelId">
             <button
               v-for="opt in granularityOptions"
               :key="opt.value"
               type="button"
-              role="tab"
-              :aria-selected="granularity === opt.value"
+              role="radio"
+              :aria-checked="granularity === opt.value"
               :class="['tab active:scale-[0.96]', granularity === opt.value && 'tab-active']"
               @click="selectGranularity(opt.value)"
+              @keydown="handleRadioGroupKeydown"
             >
               {{ opt.label }}
             </button>
@@ -86,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import DateRangePicker from '@/components/common/DateRangePicker.vue'
@@ -94,12 +96,16 @@ import { Doughnut } from 'vue-chartjs'
 import TokenUsageTrend from '@/components/charts/TokenUsageTrend.vue'
 import type { TrendDataPoint, ModelStat } from '@/types'
 import { formatCostFixed as formatCost, formatNumberLocaleString as formatNumber, formatTokensK as formatTokens } from '@/utils/format'
+import { handleRadioGroupKeydown } from '@/utils/radioGroupKeyboard'
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, Filler } from 'chart.js'
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, Filler)
 
 const props = defineProps<{ loading: boolean, startDate: string, endDate: string, granularity: string, trend: TrendDataPoint[], models: ModelStat[] }>()
 const emit = defineEmits(['update:startDate', 'update:endDate', 'update:granularity', 'dateRangeChange', 'granularityChange', 'refresh'])
 const { t } = useI18n()
+
+// 分段控件的无障碍名称指向可见的「粒度」标签
+const granularityLabelId = useId()
 
 const granularityOptions = computed(() => [
   { value: 'day', label: t('dashboard.day') },

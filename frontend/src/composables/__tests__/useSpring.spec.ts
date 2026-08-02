@@ -1022,6 +1022,50 @@ describe('SpringCollapse · lifecycle', () => {
     warn.mockRestore()
   })
 
+  it('keeps two collapses independent instead of stopping each other', async () => {
+    // AppSidebar mounts one SpringCollapse per nav group. The spring registry
+    // and the carried in-flight height live in <script setup>, which Vue
+    // compiles per instance — if they were shared module state, opening one
+    // group would release the other group's spring and freeze it mid-height.
+    const Pair = defineComponent({
+      props: { openA: { type: Boolean, default: false }, openB: { type: Boolean, default: false } },
+      setup(props) {
+        return () =>
+          h('div', null, [
+            h(SpringCollapse, null, {
+              default: () => (props.openA ? [h('div', { class: 'a' }, 'A')] : [])
+            }),
+            h(SpringCollapse, null, {
+              default: () => (props.openB ? [h('div', { class: 'b' }, 'B')] : [])
+            })
+          ])
+      }
+    })
+
+    const wrapper = mount(Pair, { props: { openA: false, openB: false }, attachTo: document.body })
+
+    await wrapper.setProps({ openA: true })
+    step(3)
+    const aBeforeB = parseFloat(document.querySelector<HTMLElement>('.a')!.style.height)
+    expect(aBeforeB).toBeGreaterThan(0)
+
+    // Second instance starts while the first is still in flight.
+    await wrapper.setProps({ openB: true })
+    step(3)
+
+    const aAfterB = parseFloat(document.querySelector<HTMLElement>('.a')!.style.height)
+    const bAfterB = parseFloat(document.querySelector<HTMLElement>('.b')!.style.height)
+
+    // Both are still animating: A kept climbing, B started from 0.
+    expect(aAfterB).toBeGreaterThan(aBeforeB)
+    expect(bAfterB).toBeGreaterThan(0)
+
+    step(60)
+    expect(document.querySelector<HTMLElement>('.a')!.style.height).toBe('')
+    expect(document.querySelector<HTMLElement>('.b')!.style.height).toBe('')
+    wrapper.unmount()
+  })
+
   it('still delivers the final height under reduced motion', async () => {
     setReducedMotion(true)
     const wrapper = mount(Host, { props: { open: false }, attachTo: document.body })

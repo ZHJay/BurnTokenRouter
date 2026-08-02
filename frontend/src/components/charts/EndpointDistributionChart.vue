@@ -1,42 +1,46 @@
 <template>
   <div class="card p-4">
     <div class="mb-4 flex items-center justify-between gap-3">
-      <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+      <h3 :id="titleId" class="text-sm font-semibold text-gray-900 dark:text-white">
         {{ title || t('usage.endpointDistribution') }}
       </h3>
       <div class="flex flex-wrap items-center justify-end gap-2">
         <div
           v-if="showSourceToggle"
           class="tabs"
-          role="tablist"
+          role="radiogroup"
+          :aria-labelledby="titleId"
         >
           <button
             type="button"
-            role="tab"
-            :aria-selected="source === 'inbound'"
+            role="radio"
+            :aria-checked="source === 'inbound'"
             class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
             :class="source === 'inbound' && 'tab-active'"
             @click="emit('update:source', 'inbound')"
+            @keydown="handleRadioGroupKeydown"
           >
             {{ t('usage.inbound') }}
           </button>
           <button
             type="button"
-            role="tab"
-            :aria-selected="source === 'upstream'"
+            role="radio"
+            :aria-checked="source === 'upstream'"
             class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
             :class="source === 'upstream' && 'tab-active'"
             @click="emit('update:source', 'upstream')"
+            @keydown="handleRadioGroupKeydown"
           >
             {{ t('usage.upstream') }}
           </button>
           <button
             type="button"
-            role="tab"
-            :aria-selected="source === 'path'"
+            role="radio"
+            :aria-checked="source === 'path'"
             class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
             :class="source === 'path' && 'tab-active'"
             @click="emit('update:source', 'path')"
+            @keydown="handleRadioGroupKeydown"
           >
             {{ t('usage.path') }}
           </button>
@@ -45,25 +49,28 @@
         <div
           v-if="showMetricToggle"
           class="tabs"
-          role="tablist"
+          role="radiogroup"
+          :aria-labelledby="titleId"
         >
           <button
             type="button"
-            role="tab"
-            :aria-selected="metric === 'tokens'"
+            role="radio"
+            :aria-checked="metric === 'tokens'"
             class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
             :class="metric === 'tokens' && 'tab-active'"
             @click="emit('update:metric', 'tokens')"
+            @keydown="handleRadioGroupKeydown"
           >
             {{ t('admin.dashboard.metricTokens') }}
           </button>
           <button
             type="button"
-            role="tab"
-            :aria-selected="metric === 'actual_cost'"
+            role="radio"
+            :aria-checked="metric === 'actual_cost'"
             class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
             :class="metric === 'actual_cost' && 'tab-active'"
             @click="emit('update:metric', 'actual_cost')"
+            @keydown="handleRadioGroupKeydown"
           >
             {{ t('admin.dashboard.metricActualCost') }}
           </button>
@@ -135,7 +142,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Doughnut } from 'vue-chartjs'
@@ -144,10 +151,14 @@ import UserBreakdownSubTable from './UserBreakdownSubTable.vue'
 import type { EndpointStat, UserBreakdownItem } from '@/types'
 import { getUserBreakdown } from '@/api/admin/dashboard'
 import { chartTooltipStyle, distributionColor, useChartScheme } from './chartPalette'
+import { handleRadioGroupKeydown } from '@/utils/radioGroupKeyboard'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
 const { t } = useI18n()
+
+// 数据源 / 指标分段控件都是「选值」而非切面板，用 radiogroup 语义并从可见标题取无障碍名称。
+const titleId = useId()
 
 type DistributionMetric = 'tokens' | 'actual_cost'
 type EndpointSource = 'inbound' | 'upstream' | 'path'

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Select from '@/components/common/Select.vue'
 import HelpTooltip from '@/components/common/HelpTooltip.vue'
@@ -10,6 +10,7 @@ import { opsAPI, type OpsDashboardOverview, type OpsMetricThresholds, type OpsRe
 import type { OpsRequestDetailsPreset } from './OpsRequestDetailsModal.vue'
 import { useAdminSettingsStore } from '@/stores'
 import { formatNumber } from '@/utils/format'
+import { handleRadioGroupKeydown } from '@/utils/radioGroupKeyboard'
 
 type RealtimeWindow = '1min' | '5min' | '30min' | '1h'
 
@@ -49,6 +50,9 @@ const emit = defineEmits<Emits>()
 
 const { t } = useI18n()
 const adminSettingsStore = useAdminSettingsStore()
+
+// 实时时间窗分段控件的无障碍名称指向可见的「Realtime」标题
+const realtimeTitleId = useId()
 
 const realtimeWindow = ref<RealtimeWindow>('1min')
 
@@ -1117,21 +1121,24 @@ function handleToolbarRefresh() {
                   <span class="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" :style="{ background: 'var(--accent)' }"></span>
                   <span class="relative inline-flex h-3 w-3 rounded-full" :style="{ background: 'var(--accent)' }"></span>
                 </div>
-                <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ t('admin.ops.realtime.title') }}</h3>
+                <h3 :id="realtimeTitleId" class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ t('admin.ops.realtime.title') }}</h3>
                 <HelpTooltip v-if="!props.fullscreen" :content="t('admin.ops.tooltips.qps')" />
               </div>
 
               <!-- Time Window Selector -->
               <!-- Apple 分段控件：时间窗切换 -->
-              <div class="tabs flex-wrap">
+              <!-- 选时间窗是「选值」，不切换面板：radiogroup 语义 + 方向键遍历 -->
+              <div class="tabs flex-wrap" role="radiogroup" :aria-labelledby="realtimeTitleId">
                 <button
                   v-for="window in availableRealtimeWindows"
                   :key="window"
                   type="button"
+                  role="radio"
                   class="tab px-2 py-0.5 text-[9px] sm:text-[10px]"
                   :class="realtimeWindow === window ? 'tab-active' : ''"
-                  :aria-selected="realtimeWindow === window"
+                  :aria-checked="realtimeWindow === window"
                   @click="realtimeWindow = window"
+                  @keydown="handleRadioGroupKeydown"
                 >
                   {{ window }}
                 </button>

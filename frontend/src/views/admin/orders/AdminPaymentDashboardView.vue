@@ -5,15 +5,18 @@
       <div class="flex items-center justify-end">
         <div class="flex items-center gap-2">
           <!-- Apple 分段控件：天数切换 -->
-          <div class="tabs">
+          <!-- 选天数是「选值」，不切换面板：radiogroup 语义 + 方向键遍历 -->
+          <div class="tabs" role="radiogroup" :aria-label="t('dashboard.timeRange')">
             <button
               v-for="d in DAYS_OPTIONS"
               :key="d"
               type="button"
+              role="radio"
               class="tab tabular px-3 py-1.5 text-xs"
               :class="days === d ? 'tab-active' : ''"
-              :aria-selected="days === d"
+              :aria-checked="days === d"
               @click="days = d"
+              @keydown="handleRadioGroupKeydown"
             >
               {{ d }}{{ t('payment.admin.daySuffix') }}
             </button>
@@ -76,6 +79,7 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { adminPaymentAPI } from '@/api/admin/payment'
 import { extractI18nErrorMessage } from '@/utils/apiError'
+import { handleRadioGroupKeydown } from '@/utils/radioGroupKeyboard'
 import type { CurrencyAmounts, DashboardStats, TopUserPaymentStats } from '@/types/payment'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
