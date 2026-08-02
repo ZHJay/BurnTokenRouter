@@ -372,7 +372,7 @@ const empty = computed(() => events.value.length === 0 && !loading.value)
         <Select :model-value="status" :options="statusOptions" class="w-[110px]" @change="status = String($event || '')" />
         <Select :model-value="emailSent" :options="emailSentOptions" class="w-[110px]" @change="emailSent = String($event || '')" />
         <button
-          class="flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-bold text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-dark-700 dark:text-gray-300 dark:hover:bg-dark-600"
+          class="flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-bold text-gray-700 transition-[background-color,color,transform] duration-fast ease-apple-out active:scale-[0.96] disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-dark-700 dark:text-gray-300 dark:hover:bg-dark-600"
           :disabled="loading"
           @click="loadFirstPage"
         >
@@ -441,36 +441,36 @@ const empty = computed(() => events.value.length === 0 && !loading.value)
             <div class="text-[11px] text-gray-400 dark:text-gray-500">{{ formatDimensionsSummary(row) }}</div>
           </div>
         </div>
-        <table v-else class="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
-          <thead class="sticky top-0 z-10 bg-gray-50 dark:bg-dark-900">
+        <table v-else class="table min-w-full">
+          <thead class="sticky top-0 z-10">
             <tr>
-              <th class="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              <th>
                 {{ t('admin.ops.alertEvents.table.time') }}
               </th>
-              <th class="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              <th>
                 {{ t('admin.ops.alertEvents.table.severity') }}
               </th>
-              <th class="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              <th>
                 {{ t('admin.ops.alertEvents.table.platform') }}
               </th>
-              <th class="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              <th>
                 {{ t('admin.ops.alertEvents.table.ruleId') }}
               </th>
-              <th class="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              <th>
                 {{ t('admin.ops.alertEvents.table.title') }}
               </th>
-              <th class="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              <th>
                 {{ t('admin.ops.alertEvents.table.duration') }}
               </th>
-              <th class="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              <th>
                 {{ t('admin.ops.alertEvents.table.dimensions') }}
               </th>
-              <th class="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              <th class="text-right">
                 {{ t('admin.ops.alertEvents.table.email') }}
               </th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-200 bg-white dark:divide-dark-700 dark:bg-dark-800">
+          <tbody>
             <tr
               v-for="row in events"
               :key="row.id"
@@ -478,10 +478,10 @@ const empty = computed(() => events.value.length === 0 && !loading.value)
               @click="openDetail(row)"
               :title="row.title || ''"
             >
-              <td class="whitespace-nowrap px-4 py-3 text-xs text-gray-600 dark:text-gray-300">
+              <td class="tabular whitespace-nowrap text-xs text-gray-600 dark:text-gray-300">
                 {{ formatDateTime(row.fired_at || row.created_at) }}
               </td>
-              <td class="whitespace-nowrap px-4 py-3">
+              <td class="whitespace-nowrap">
                 <div class="flex items-center gap-2">
                   <span class="rounded-full px-2 py-1 text-[10px] font-bold" :class="severityBadgeClass(String(row.severity || ''))">
                     {{ row.severity || '-' }}
@@ -491,25 +491,25 @@ const empty = computed(() => events.value.length === 0 && !loading.value)
                   </span>
                 </div>
               </td>
-              <td class="whitespace-nowrap px-4 py-3 text-xs text-gray-600 dark:text-gray-300">
+              <td class="whitespace-nowrap text-xs text-gray-600 dark:text-gray-300">
                 {{ getDimensionString(row, 'platform') || '-' }}
               </td>
-              <td class="whitespace-nowrap px-4 py-3 text-xs text-gray-600 dark:text-gray-300">
+              <td class="whitespace-nowrap text-xs text-gray-600 dark:text-gray-300">
                 <span class="font-mono">#{{ row.rule_id }}</span>
               </td>
-              <td class="min-w-[260px] px-4 py-3 text-xs text-gray-700 dark:text-gray-200">
+              <td class="min-w-[260px] text-xs text-gray-700 dark:text-gray-200">
                 <div class="font-semibold truncate max-w-[360px]">{{ row.title || '-' }}</div>
                 <div v-if="row.description" class="mt-0.5 line-clamp-2 text-[11px] text-gray-500 dark:text-gray-400">
                   {{ row.description }}
                 </div>
               </td>
-              <td class="whitespace-nowrap px-4 py-3 text-xs text-gray-600 dark:text-gray-300">
+              <td class="tabular whitespace-nowrap text-xs text-gray-600 dark:text-gray-300">
                 {{ formatDurationLabel(row) }}
               </td>
-              <td class="whitespace-nowrap px-4 py-3 text-[11px] text-gray-500 dark:text-gray-400">
+              <td class="whitespace-nowrap text-[11px] text-gray-500 dark:text-gray-400">
                 {{ formatDimensionsSummary(row) }}
               </td>
-              <td class="whitespace-nowrap px-4 py-3 text-right text-xs">
+              <td class="whitespace-nowrap text-right text-xs">
                 <span
                   class="inline-flex items-center justify-end gap-1.5"
                   :title="row.email_sent ? t('admin.ops.alertEvents.table.emailSent') : t('admin.ops.alertEvents.table.emailIgnored')"
@@ -660,24 +660,26 @@ const empty = computed(() => events.value.length === 0 && !loading.value)
           <div v-else-if="history.length === 0" class="py-6 text-center text-xs text-gray-500 dark:text-gray-400">
             {{ t('admin.ops.alertEvents.detail.historyEmpty') }}
           </div>
-          <div v-else class="overflow-hidden rounded-lg border border-gray-100 dark:border-dark-700">
-            <table class="min-w-full divide-y divide-gray-100 dark:divide-dark-700">
-              <thead class="bg-gray-50 dark:bg-dark-900">
+          <div v-else class="table-container overflow-hidden">
+            <!-- 这张表在 BaseDialog（thin 玻璃）内部：.table 的半透明表头会玻璃叠玻璃，
+                 因此按既有约定把 th 钉成不透明。 -->
+            <table class="table min-w-full">
+              <thead class="[&_th]:bg-[var(--surface)] [&_th]:backdrop-blur-none">
                 <tr>
-                  <th class="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.ops.alertEvents.table.time') }}</th>
-                  <th class="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.ops.alertEvents.table.status') }}</th>
-                  <th class="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.ops.alertEvents.table.metric') }}</th>
+                  <th>{{ t('admin.ops.alertEvents.table.time') }}</th>
+                  <th>{{ t('admin.ops.alertEvents.table.status') }}</th>
+                  <th>{{ t('admin.ops.alertEvents.table.metric') }}</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
+              <tbody>
                 <tr v-for="it in history" :key="it.id" class="hover:bg-[var(--surface-hover)]">
-                  <td class="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">{{ formatDateTime(it.fired_at || it.created_at) }}</td>
-                  <td class="px-3 py-2 text-xs">
+                  <td class="tabular text-xs text-gray-600 dark:text-gray-300">{{ formatDateTime(it.fired_at || it.created_at) }}</td>
+                  <td class="text-xs">
                     <span class="inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold ring-1 ring-inset" :class="statusBadgeClass(it.status)">
                       {{ formatStatusLabel(it.status) }}
                     </span>
                   </td>
-                  <td class="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">
+                  <td class="tabular text-xs text-gray-600 dark:text-gray-300">
                     <span v-if="typeof it.metric_value === 'number' && typeof it.threshold_value === 'number'">
                       {{ it.metric_value.toFixed(2) }} / {{ it.threshold_value.toFixed(2) }}
                     </span>
@@ -692,4 +694,3 @@ const empty = computed(() => events.value.length === 0 && !loading.value)
     </BaseDialog>
   </div>
 </template>
-

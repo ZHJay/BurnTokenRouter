@@ -1,10 +1,13 @@
 <template>
-  <div class="mb-4 flex items-center justify-between rounded-xl bg-[var(--accent-tint)] p-3 shadow-[inset_0_0_0_0.5px_var(--hairline)]">
+  <!-- 批量操作条（原型基准）：pill 圆角 + --accent-tint 底 + 强调色计数 + 玻璃动作按钮。
+       计数用 primary-800/300 而非裸 --accent：--accent 在这张 tint 底上只有 3.54:1，
+       过不了 AA；primary-800 亮色 5.11:1、primary-300 暗色 7.25:1，同样读作强调色。 -->
+  <div class="mb-4 flex items-center justify-between rounded-full bg-[var(--accent-tint)] py-2 pl-3.5 pr-2.5 shadow-[inset_0_0_0_0.5px_var(--hairline)]">
     <div class="flex flex-wrap items-center gap-2">
-      <span v-if="selectedIds.length > 0" class="tabular text-sm font-medium text-primary-900 dark:text-primary-100">
+      <span v-if="selectedIds.length > 0" class="tabular text-sm font-semibold text-primary-800 dark:text-primary-300">
         {{ t('admin.accounts.bulkActions.selected', { count: selectedIds.length }) }}
       </span>
-      <span v-else class="text-sm font-medium text-primary-900 dark:text-primary-100">
+      <span v-else class="text-sm font-semibold text-primary-800 dark:text-primary-300">
         {{ t('admin.accounts.bulkEdit.title') }}
       </span>
       <template v-if="selectedIds.length > 0">

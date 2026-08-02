@@ -2,7 +2,7 @@
   <div v-if="entry.status === 'idle'" class="mt-0.5 text-xs">
     <button
       type="button"
-      class="geo-link rounded-md text-primary-600 underline decoration-dashed underline-offset-2 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+      class="geo-link rounded-md text-primary-600 underline decoration-dashed underline-offset-2 hover:text-primary-700 transition-[color,transform] duration-fast ease-apple-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] dark:text-primary-400 dark:hover:text-primary-300"
       @click="handleFetch"
     >
       {{ t('usage.ipGeo.fetch') }}
@@ -27,7 +27,7 @@
   <div v-else-if="entry.status === 'success'" class="mt-0.5 flex items-center gap-1 text-xs">
     <button
       type="button"
-      class="geo-link truncate rounded-md text-gray-500 underline decoration-dotted underline-offset-2 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
+      class="geo-link truncate rounded-md text-gray-500 underline decoration-dotted underline-offset-2 hover:text-primary-600 transition-[color,transform] duration-fast ease-apple-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] dark:text-gray-400 dark:hover:text-primary-400"
       :title="tooltipText"
       @click="handleOpenDetail"
     >
@@ -35,7 +35,7 @@
     </button>
     <button
       type="button"
-      class="geo-link rounded-full text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
+      class="geo-link rounded-full text-gray-400 hover:text-primary-600 transition-[color,transform] duration-fast ease-apple-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] dark:hover:text-primary-400"
       :title="t('usage.ipGeo.refreshTitle')"
       @click="handleRefresh"
     >
@@ -46,7 +46,7 @@
   <div v-else-if="entry.status === 'error'" class="mt-0.5 text-xs">
     <button
       type="button"
-      class="geo-link rounded-md text-red-600 underline decoration-dashed underline-offset-2 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+      class="geo-link rounded-md text-red-600 underline decoration-dashed underline-offset-2 hover:text-red-700 transition-[color,transform] duration-fast ease-apple-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] dark:text-red-400 dark:hover:text-red-300"
       @click="handleFetch"
     >
       {{ t('usage.ipGeo.failed') }}

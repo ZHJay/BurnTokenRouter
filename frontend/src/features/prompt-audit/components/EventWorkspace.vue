@@ -62,41 +62,41 @@
       :style="{ background: 'rgb(255 59 48 / 0.1)', color: 'var(--sys-red)' }"
     >{{ error }}</div>
     <div class="card mt-5 overflow-x-auto">
-      <table class="min-w-[1120px] w-full text-left text-sm">
-        <thead class="text-xs uppercase tracking-wide text-gray-500 dark:text-dark-400" :style="{ background: 'var(--surface-secondary)' }">
+      <table class="table min-w-[1120px]">
+        <thead>
           <tr>
-            <th class="w-10 px-3 py-3"><input type="checkbox" :checked="allSelected" :aria-label="t('admin.promptAudit.events.selectAll')" @change="toggleAll" /></th>
-            <th class="px-3 py-3 font-medium">{{ t('admin.promptAudit.events.time') }}</th>
-            <th class="px-3 py-3 font-medium">{{ t('admin.promptAudit.events.identity') }}</th>
-            <th class="px-3 py-3 font-medium">{{ t('admin.promptAudit.events.group') }}</th>
-            <th class="px-3 py-3 font-medium">{{ t('admin.promptAudit.events.route') }}</th>
-            <th class="px-3 py-3 font-medium">{{ t('admin.promptAudit.events.result') }}</th>
-            <th class="px-3 py-3 font-medium">{{ t('admin.promptAudit.events.preview') }}</th>
-            <th class="px-3 py-3 text-right font-medium">{{ t('admin.promptAudit.common.actions') }}</th>
+            <th class="w-10"><input type="checkbox" :checked="allSelected" :aria-label="t('admin.promptAudit.events.selectAll')" @change="toggleAll" /></th>
+            <th>{{ t('admin.promptAudit.events.time') }}</th>
+            <th>{{ t('admin.promptAudit.events.identity') }}</th>
+            <th>{{ t('admin.promptAudit.events.group') }}</th>
+            <th>{{ t('admin.promptAudit.events.route') }}</th>
+            <th>{{ t('admin.promptAudit.events.result') }}</th>
+            <th>{{ t('admin.promptAudit.events.preview') }}</th>
+            <th class="text-right">{{ t('admin.promptAudit.common.actions') }}</th>
           </tr>
         </thead>
-        <tbody class="divide-y" :style="{ borderColor: 'var(--separator)' }">
+        <tbody>
           <tr v-if="loading"><td colspan="8" class="px-4 py-12 text-center text-gray-500" aria-busy="true">{{ t('common.loading') }}</td></tr>
           <tr v-else-if="events.length === 0"><td colspan="8" class="px-4 py-12 text-center text-gray-500">{{ t('admin.promptAudit.events.empty') }}</td></tr>
           <tr v-for="event in events" v-else :key="event.id" :data-test="`event-${event.id}`" class="align-top transition-colors duration-instant ease-apple-out hover:bg-[var(--surface-hover)]">
-            <td class="px-3 py-3"><input type="checkbox" :checked="selectedIds.includes(event.id)" :aria-label="t('admin.promptAudit.events.selectEvent', { id: event.id })" @change="toggleOne(event.id)" /></td>
-            <td class="tabular whitespace-nowrap px-3 py-3 text-xs text-gray-600 dark:text-dark-300">{{ formatDate(event.created_at) }}</td>
-            <td class="px-3 py-3">
+            <td><input type="checkbox" :checked="selectedIds.includes(event.id)" :aria-label="t('admin.promptAudit.events.selectEvent', { id: event.id })" @change="toggleOne(event.id)" /></td>
+            <td class="tabular whitespace-nowrap text-xs text-gray-600 dark:text-dark-300">{{ formatDate(event.created_at) }}</td>
+            <td>
               <CopyLine :label="t('admin.promptAudit.events.user')" :value="event.snapshot.username" />
               <CopyLine :label="t('admin.promptAudit.events.email')" :value="event.snapshot.user_email" />
               <CopyLine :label="t('admin.promptAudit.events.apiKey')" :value="event.snapshot.api_key_name" />
             </td>
-            <td class="px-3 py-3 text-gray-700 dark:text-dark-200">{{ event.snapshot.group_name || '—' }}</td>
-            <td class="px-3 py-3">
+            <td class="text-gray-700 dark:text-dark-200">{{ event.snapshot.group_name || '—' }}</td>
+            <td>
               <p class="font-medium text-gray-900 dark:text-white">{{ event.snapshot.endpoint }}</p>
               <p class="mt-1 text-xs text-gray-500">{{ event.snapshot.model }} · {{ event.snapshot.protocol }} · {{ event.snapshot.stage || 'http' }}</p>
             </td>
-            <td class="px-3 py-3">
+            <td>
               <span class="badge" :class="decisionClass(event.decision)">{{ formatDecisionRisk(event.decision, event.risk_level) }}</span>
               <p class="mt-2 max-w-48 truncate text-xs text-gray-500" :title="formatCategories(event.categories)">{{ formatCategories(event.categories) }}</p>
             </td>
-            <td class="max-w-xs px-3 py-3"><p class="line-clamp-2 break-words text-gray-600 dark:text-dark-300">{{ event.snapshot.redacted_preview || '—' }}</p></td>
-            <td class="whitespace-nowrap px-3 py-3 text-right">
+            <td class="max-w-xs"><p class="line-clamp-2 break-words text-gray-600 dark:text-dark-300">{{ event.snapshot.redacted_preview || '—' }}</p></td>
+            <td class="whitespace-nowrap text-right">
               <button type="button" class="btn btn-ghost btn-sm" @click="$emit('view', event.id)">{{ t('common.view') }}</button>
               <button type="button" class="btn btn-ghost btn-sm text-red-600" @click="$emit('delete', event.id)">{{ t('common.delete') }}</button>
             </td>

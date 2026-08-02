@@ -260,7 +260,7 @@
             <span
               :class="[
                 'badge',
-                value === 'active' ? 'badge-success' : value === 'expired' ? 'badge-danger' : 'badge-danger'
+                value === 'active' ? 'badge-success' : 'badge-gray'
               ]"
             >
               {{ t('admin.accounts.status.' + value) }}

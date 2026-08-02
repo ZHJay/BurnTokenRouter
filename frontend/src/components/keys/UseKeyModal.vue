@@ -28,21 +28,22 @@
           {{ platformDescription }}
         </p>
 
-        <!-- Client Tabs -->
-        <div v-if="clientTabs.length" class="overflow-x-auto" style="box-shadow: inset 0 -0.5px 0 var(--separator)">
-          <nav class="-mb-px flex min-w-max gap-4 sm:gap-6" aria-label="Client">
+        <!-- Client Tabs：Apple 分段控件。少量对等选项就地换内容面板，
+             因此保留 tablist/tab/aria-selected 语义。 -->
+        <div v-if="clientTabs.length" class="overflow-x-auto">
+          <nav class="tabs flex min-w-max" aria-label="Client" role="tablist">
             <button
               v-for="tab in clientTabs"
               :key="tab.id"
               type="button"
+              role="tab"
+              :aria-selected="activeClientTab === tab.id"
               @click="activeClientTab = tab.id"
               :class="[
-                'whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium',
-                'transition duration-fast ease-apple-out focus-visible:outline-none',
-                'focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]',
-                activeClientTab === tab.id
-                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                'tab whitespace-nowrap transition-transform duration-instant ease-apple-out',
+                'focus-visible:outline-none focus-visible:ring-[3.5px]',
+                'focus-visible:ring-[color:var(--accent-tint-strong)] active:scale-[0.96]',
+                activeClientTab === tab.id && 'tab-active'
               ]"
             >
               <span class="flex items-center gap-2">
@@ -110,21 +111,21 @@
           </div>
         </div>
 
-        <!-- OS/Shell Tabs -->
-        <div v-if="showShellTabs" class="overflow-x-auto" style="box-shadow: inset 0 -0.5px 0 var(--separator)">
-          <nav class="-mb-px flex min-w-max gap-4" aria-label="Tabs">
+        <!-- OS/Shell Tabs：同上，2–3 个对等选项就地换代码面板 -->
+        <div v-if="showShellTabs" class="overflow-x-auto">
+          <nav class="tabs flex min-w-max" aria-label="Tabs" role="tablist">
             <button
               v-for="tab in currentTabs"
               :key="tab.id"
               type="button"
+              role="tab"
+              :aria-selected="activeTab === tab.id"
               @click="activeTab = tab.id"
               :class="[
-                'whitespace-nowrap border-b-2 px-1 py-2.5 text-sm font-medium',
-                'transition duration-fast ease-apple-out focus-visible:outline-none',
-                'focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]',
-                activeTab === tab.id
-                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                'tab whitespace-nowrap transition-transform duration-instant ease-apple-out',
+                'focus-visible:outline-none focus-visible:ring-[3.5px]',
+                'focus-visible:ring-[color:var(--accent-tint-strong)] active:scale-[0.96]',
+                activeTab === tab.id && 'tab-active'
               ]"
             >
               <span class="flex items-center gap-2">

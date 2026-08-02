@@ -66,21 +66,25 @@
       </div>
       <!-- 明细区：tab 栏 + 筛选 + 内容收进同一张卡片，消除割裂感 -->
       <div class="card">
-        <div class="flex flex-wrap items-center border-b border-gray-200 px-2 dark:border-dark-700 sm:px-4">
-          <button
-            v-for="tab in detailTabs"
-            :key="tab.key"
-            type="button"
-            data-testid="usage-detail-tab"
-            class="-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-3 text-sm font-medium transition-colors sm:px-4"
-            :class="activeTab === tab.key
-              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-              : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:border-dark-500 dark:hover:text-gray-200'"
-            @click="switchTab(tab.key)"
-          >
-            <Icon :name="tab.icon" size="sm" />
-            {{ tab.label }}
-          </button>
+        <!-- Apple 分段控件：三个对等选项就地切换下方明细面板。
+             外层 border-b 是卡片内的结构分隔线（tab 栏 / 筛选区），不是 tab 下划线。 -->
+        <div class="flex flex-wrap items-center border-b border-gray-200 px-2 py-2.5 dark:border-dark-700 sm:px-4">
+          <div class="tabs flex-wrap" role="tablist">
+            <button
+              v-for="tab in detailTabs"
+              :key="tab.key"
+              type="button"
+              role="tab"
+              :aria-selected="activeTab === tab.key"
+              data-testid="usage-detail-tab"
+              class="tab inline-flex items-center gap-1.5 transition-transform duration-instant ease-apple-out focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] active:scale-[0.96]"
+              :class="activeTab === tab.key && 'tab-active'"
+              @click="switchTab(tab.key)"
+            >
+              <Icon :name="tab.icon" size="sm" />
+              {{ tab.label }}
+            </button>
+          </div>
         </div>
 
         <UsageFilters v-model="filters" ref="usageFiltersRef" flat :mode="activeTab" class="border-b border-gray-100 dark:border-dark-700/50" :start-date="startDate" :end-date="endDate" :exporting="exporting" :model-options="modelNameOptions" @change="applyFilters" @refresh="refreshData" @reset="resetFilters" @cleanup="openCleanupDialog" @export="exportToExcel">

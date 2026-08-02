@@ -124,7 +124,7 @@
             :disabled="
               isSendingCode || (turnstileEnabled && showResendTurnstile && !resendTurnstileToken)
             "
-            class="rounded-md text-xs font-semibold text-primary-600 transition-colors hover:text-primary-500 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] disabled:cursor-not-allowed disabled:opacity-50 dark:text-primary-400 dark:hover:text-primary-300"
+            class="rounded-md text-xs font-semibold text-primary-600 transition-[background-color,color,transform] duration-fast ease-apple-out active:scale-[0.96] disabled:active:scale-100 hover:text-primary-500 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] disabled:cursor-not-allowed disabled:opacity-50 dark:text-primary-400 dark:hover:text-primary-300"
           >
             <span v-if="isSendingCode">{{ t('auth.sendingCode') }}</span>
             <span v-else-if="turnstileEnabled && !showResendTurnstile">
@@ -140,7 +140,7 @@
     <template #footer>
       <button
         @click="handleBack"
-        class="mx-auto flex items-center gap-2 rounded-md text-xs text-gray-500 transition-colors hover:text-gray-700 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] dark:text-dark-400 dark:hover:text-gray-300"
+        class="mx-auto flex items-center gap-2 rounded-md text-xs text-gray-500 transition-[background-color,color,transform] duration-fast ease-apple-out active:scale-[0.96] hover:text-gray-700 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] dark:text-dark-400 dark:hover:text-gray-300"
       >
         <Icon name="arrowLeft" size="sm" />
         {{ t('auth.backToRegistration') }}

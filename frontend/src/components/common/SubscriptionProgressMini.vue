@@ -167,7 +167,7 @@
           <router-link
             to="/subscriptions"
             @click="closeTooltip"
-            class="block w-full rounded-md py-1 text-center text-xs text-primary-600 transition-colors duration-fast ease-apple-out hover:underline focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] dark:text-primary-400"
+            class="block w-full rounded-md py-1 text-center text-xs text-primary-600 transition-[background-color,color,transform] duration-fast ease-apple-out active:scale-[0.96] hover:underline focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] dark:text-primary-400"
           >
             {{ t('subscriptionProgress.viewAll') }}
           </router-link>

@@ -490,7 +490,8 @@ const columns = computed<Column[]>(() => [
 // Helpers
 const getStatusClass = (status: string, row: PromoCode) => {
   if (row.expires_at && new Date(row.expires_at) < new Date()) {
-    return 'badge-danger'
+    // 已过期:与全站一致的中性终态色(不是错误)
+    return 'badge-gray'
   }
   if (row.max_uses > 0 && row.used_count >= row.max_uses) {
     return 'badge-gray'

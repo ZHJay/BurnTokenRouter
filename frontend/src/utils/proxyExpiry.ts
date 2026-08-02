@@ -8,8 +8,10 @@ export const daysUntil = (iso: string): number =>
   Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000)
 
 // 倒计时徽章的 CSS class(纯函数,无 i18n 依赖)。
+// status=expired 是「已到期」终态,按统一状态配色走中性灰(不是错误);
+// 下面两档 danger/warning 表示的是「即将到期」的紧迫度,与终态不同轴,保持不变。
 export function proxyExpiryBadgeClass(expiresAt: string | null, status?: string): string {
-  if (status === 'expired') return 'badge badge-danger'
+  if (status === 'expired') return 'badge badge-gray'
   const d = expiresAt ? daysUntil(expiresAt) : Infinity
   if (d <= EXPIRY_DANGER_DAYS) return 'badge badge-danger'
   if (d <= EXPIRY_WARN_DAYS) return 'badge badge-warning'

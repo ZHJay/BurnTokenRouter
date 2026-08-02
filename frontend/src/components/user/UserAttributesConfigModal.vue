@@ -70,14 +70,14 @@
           <div class="flex items-center gap-1">
             <button
               @click="openEditModal(attr)"
-              class="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+              class="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-primary-600 transition-[background-color,color,transform] duration-fast ease-apple-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] dark:hover:bg-dark-700 dark:hover:text-primary-400"
               :title="t('common.edit')"
             >
               <Icon name="edit" size="sm" />
             </button>
             <button
               @click="confirmDelete(attr)"
-              class="rounded-lg p-1.5 text-gray-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+              class="rounded-lg p-1.5 text-gray-500 hover:bg-red-50 hover:text-red-600 transition-[background-color,color,transform] duration-fast ease-apple-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] dark:hover:bg-red-900/20 dark:hover:text-red-400"
               :title="t('common.delete')"
             >
               <Icon name="trash" size="sm" />
@@ -161,7 +161,7 @@
           <button
             type="button"
             @click="removeOption(index)"
-            class="rounded-lg p-1.5 text-gray-500 hover:bg-red-50 hover:text-red-600"
+            class="rounded-lg p-1.5 text-gray-500 hover:bg-red-50 hover:text-red-600 transition-[background-color,color,transform] duration-fast ease-apple-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
           >
             <Icon name="x" size="sm" :stroke-width="2" />
           </button>

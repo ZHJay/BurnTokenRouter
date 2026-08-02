@@ -8,7 +8,7 @@
     </span>
     <button
       type="button"
-      class="batch-fetch-btn inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs"
+      class="batch-fetch-btn inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs transition-transform duration-instant ease-apple-out active:scale-[0.96] disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
       :disabled="loading || pendingCount === 0"
       @click="run"
     >

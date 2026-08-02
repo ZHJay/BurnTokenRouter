@@ -145,11 +145,9 @@
             <span
               :class="[
                 'badge',
-                value === 'unused'
+                value === 'unused' || value === 'active'
                   ? 'badge-success'
-                  : value === 'used'
-                    ? 'badge-gray'
-                    : 'badge-danger'
+                  : 'badge-gray'
               ]"
             >
               {{ t('admin.redeem.status.' + value) }}
@@ -168,15 +166,8 @@
             }}</span>
           </template>
 
-          <template #cell-expires_at="{ value, row }">
-            <span
-              :class="[
-                'text-sm',
-                row.status === 'expired'
-                  ? 'text-red-600 dark:text-red-400'
-                  : 'text-gray-500 dark:text-dark-400'
-              ]"
-            >
+          <template #cell-expires_at="{ value }">
+            <span class="text-sm text-gray-500 dark:text-dark-400">
               {{ value ? formatDateTime(value) : t('admin.redeem.neverExpires') }}
             </span>
           </template>

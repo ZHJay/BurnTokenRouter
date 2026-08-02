@@ -9,7 +9,7 @@
         v-for="p in ['all', ...platforms]"
         :key="`platform-${p}`"
         type="button"
-        class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40 disabled:grayscale"
+        class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition active:scale-[0.96] disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] disabled:cursor-not-allowed disabled:opacity-40 disabled:grayscale"
         :class="p === 'all' ? chipClass(platform === 'all') : platform === p ? 'chip-tinted-active' : 'chip-tinted'"
         :style="p === 'all' ? undefined : { '--chip-accent': platformAccentColor(p) }"
         :disabled="p !== 'all' && !platformEnabled(p)"
@@ -27,7 +27,7 @@
       </span>
       <button
         type="button"
-        class="rounded-lg px-3 py-1.5 text-sm font-medium transition"
+        class="rounded-lg px-3 py-1.5 text-sm font-medium transition active:scale-[0.96] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
         :class="chipClass(groupId === 'all')"
         @click="$emit('update:groupId', 'all')"
       >
@@ -37,7 +37,7 @@
         v-for="g in groups"
         :key="`group-${g.id}`"
         type="button"
-        class="rounded-lg px-3 py-1.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40 disabled:grayscale"
+        class="rounded-lg px-3 py-1.5 text-sm font-medium transition active:scale-[0.96] disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] disabled:cursor-not-allowed disabled:opacity-40 disabled:grayscale"
         :class="groupId === g.id ? 'chip-tinted-active' : 'chip-tinted'"
         :style="{ '--chip-accent': platformAccentColor(g.platform) }"
         :disabled="!groupEnabled(g)"
@@ -54,7 +54,7 @@
       </span>
       <button
         type="button"
-        class="rounded-lg px-3 py-1.5 text-sm font-medium transition"
+        class="rounded-lg px-3 py-1.5 text-sm font-medium transition active:scale-[0.96] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
         :class="chipClass(rate === 'all')"
         @click="$emit('update:rate', 'all')"
       >
@@ -64,7 +64,7 @@
         v-for="r in rates"
         :key="`rate-${r}`"
         type="button"
-        class="rounded-lg px-3 py-1.5 font-mono text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40 disabled:grayscale"
+        class="rounded-lg px-3 py-1.5 font-mono text-sm font-medium transition active:scale-[0.96] disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] disabled:cursor-not-allowed disabled:opacity-40 disabled:grayscale"
         :class="chipClass(rate === r)"
         :disabled="!rateEnabled(r)"
         @click="$emit('update:rate', r)"

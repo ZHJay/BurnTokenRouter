@@ -375,7 +375,7 @@
                 value === 'active'
                   ? 'badge-success'
                   : value === 'expired'
-                    ? 'badge-warning'
+                    ? 'badge-gray'
                     : 'badge-danger'
               ]"
             >

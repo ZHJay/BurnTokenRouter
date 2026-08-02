@@ -146,11 +146,19 @@
       @close="closeDialog"
     >
       <div class="channel-dialog-body">
-        <!-- Tab Bar -->
-        <div class="flex items-center border-b border-gray-200 dark:border-dark-700 flex-shrink-0 -mx-4 sm:-mx-6 px-4 sm:px-6 -mt-3 sm:-mt-4">
+        <!-- Tab Bar：页面级 tab 条。项数随启用平台变化（基础设置 + 最多 6 个平台），
+             标签宽度不等，因此保留下划线样式而不收进分段控件。
+             切换的是内容面板，语义用 tablist/tab/aria-selected。 -->
+        <div
+          class="flex items-center border-b border-gray-200 dark:border-dark-700 flex-shrink-0 -mx-4 sm:-mx-6 px-4 sm:px-6 -mt-3 sm:-mt-4"
+          role="tablist"
+          :aria-label="t('admin.channels.form.basicSettings')"
+        >
           <!-- Basic Settings Tab -->
           <button
             type="button"
+            role="tab"
+            :aria-selected="activeTab === 'basic'"
             @click="activeTab = 'basic'"
             class="channel-tab"
             :class="activeTab === 'basic' ? 'channel-tab-active' : 'channel-tab-inactive'"
@@ -162,6 +170,8 @@
             v-for="section in form.platforms.filter(s => s.enabled)"
             :key="section.platform"
             type="button"
+            role="tab"
+            :aria-selected="activeTab === section.platform"
             @click="activeTab = section.platform"
             class="channel-tab group"
             :class="activeTab === section.platform ? 'channel-tab-active' : 'channel-tab-inactive'"
@@ -1632,7 +1642,14 @@ onUnmounted(() => {
 }
 
 .channel-tab {
-  @apply flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap;
+  @apply flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap;
+  @apply outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)];
+  @apply active:scale-[0.96];
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color 240ms var(--ease-out),
+    border-color 240ms var(--ease-out),
+    transform 100ms var(--ease-out);
 }
 
 .channel-tab-active {
@@ -1641,5 +1658,14 @@ onUnmounted(() => {
 
 .channel-tab-inactive {
   @apply border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300;
+}
+
+/* 与 style.css 的减弱动效分支同约定：这里的 active:scale 是裸工具类，
+   不在全局那份选择器清单里，因此本地中和位移、保留颜色反馈。 */
+@media (prefers-reduced-motion: reduce) {
+  .channel-tab {
+    transition-property: color, border-color;
+    transform: none !important;
+  }
 }
 </style>

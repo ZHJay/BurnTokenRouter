@@ -1,29 +1,12 @@
 /**
  * Shared utility functions for payment order display.
  * Used by AdminOrderDetail, AdminOrderTable, AdminRefundDialog, AdminOrdersView, etc.
+ *
+ * Status colours are NOT defined here: every order status renders through
+ * OrderStatusBadge, which is the single source of truth for status -> badge class.
  */
 
-const STATUS_BADGE_MAP: Record<string, string> = {
-  PENDING: 'badge-warning',
-  PAID: 'badge-info',
-  RECHARGING: 'badge-info',
-  COMPLETED: 'badge-success',
-  EXPIRED: 'badge-secondary',
-  CANCELLED: 'badge-secondary',
-  FAILED: 'badge-danger',
-  REFUND_REQUESTED: 'badge-warning',
-  REFUNDING: 'badge-warning',
-  REFUND_PENDING: 'badge-warning',
-  PARTIALLY_REFUNDED: 'badge-warning',
-  REFUNDED: 'badge-info',
-  REFUND_FAILED: 'badge-danger',
-}
-
 const REFUNDABLE_STATUSES = ['COMPLETED', 'PARTIALLY_REFUNDED', 'REFUND_REQUESTED', 'REFUND_FAILED']
-
-export function statusBadgeClass(status: string): string {
-  return STATUS_BADGE_MAP[status] || 'badge-secondary'
-}
 
 export function canRefund(status: string): boolean {
   return REFUNDABLE_STATUSES.includes(status)

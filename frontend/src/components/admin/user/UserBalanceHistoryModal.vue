@@ -30,7 +30,7 @@
           <!-- Current balance: prominent display on the right -->
           <div class="flex-shrink-0 text-right">
             <p class="stat-label">{{ t('admin.users.currentBalance') }}</p>
-            <p class="tabular text-xl font-semibold tracking-[-0.026em] text-gray-900 dark:text-white">
+            <p class="stat-value">
               ${{ user.balance?.toFixed(2) || '0.00' }}
             </p>
           </div>

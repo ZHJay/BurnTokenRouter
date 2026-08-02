@@ -28,7 +28,7 @@
                   {{ user?.role === 'admin' ? t('profile.administrator') : t('profile.user') }}
                 </span>
                 <span
-                  :class="['badge', user?.status === 'active' ? 'badge-success' : 'badge-danger']"
+                  :class="['badge', user?.status === 'active' ? 'badge-success' : 'badge-gray']"
                 >
                   {{
                     user?.status === 'active'

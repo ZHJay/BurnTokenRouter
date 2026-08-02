@@ -27,7 +27,7 @@
             <input v-model="groupSearch" type="search" class="input mt-1.5 w-full" :aria-label="t('admin.promptAudit.policy.searchGroups')" />
           </label>
           <div class="card-inset mt-3 max-h-52 overflow-y-auto p-2">
-            <label v-for="group in filteredGroups" :key="group.id" class="flex cursor-pointer items-center justify-between gap-3 rounded-md px-2 py-2 text-sm transition-colors duration-instant ease-apple-out hover:bg-[var(--surface-hover)]">
+            <label v-for="group in filteredGroups" :key="group.id" class="flex cursor-pointer items-center justify-between gap-3 rounded-md px-2 py-2 text-sm transition-[background-color,color,transform] duration-instant ease-apple-out active:scale-[0.98] hover:bg-[var(--surface-hover)]">
               <span class="flex items-center gap-2 text-gray-800 dark:text-dark-100">
                 <input type="checkbox" :checked="draft.group_ids.includes(group.id)" @change="toggleGroup(group.id)" />
                 {{ group.name }}

@@ -70,9 +70,7 @@
       </template>
 
       <template #cell-status="{ value }">
-        <span :class="['badge', statusBadgeClass(value)]">
-          {{ t('payment.status.' + value.toLowerCase(), value) }}
-        </span>
+        <OrderStatusBadge :status="value" />
       </template>
 
       <template #cell-order_type="{ value }">
@@ -142,7 +140,8 @@ import DataTable from '@/components/common/DataTable.vue'
 import Pagination from '@/components/common/Pagination.vue'
 import Select from '@/components/common/Select.vue'
 import Icon from '@/components/icons/Icon.vue'
-import { statusBadgeClass, canRefund, formatOrderDateTime } from '@/components/payment/orderUtils'
+import OrderStatusBadge from '@/components/payment/OrderStatusBadge.vue'
+import { canRefund, formatOrderDateTime } from '@/components/payment/orderUtils'
 import { currencySymbol } from '@/components/payment/currency'
 
 const { t } = useI18n()

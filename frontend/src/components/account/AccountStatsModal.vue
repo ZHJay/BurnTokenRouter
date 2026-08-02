@@ -47,7 +47,7 @@
           -->
           <div class="card p-4">
             <div class="mb-2 flex items-center justify-between">
-              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{
+              <span class="stat-label">{{
                 t('admin.accounts.stats.totalCost')
               }}</span>
               <div class="rounded-lg bg-emerald-100 p-1.5 dark:bg-emerald-900/30">
@@ -83,7 +83,7 @@
           <!-- 30-Day Total Requests -->
           <div class="card p-4">
             <div class="mb-2 flex items-center justify-between">
-              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{
+              <span class="stat-label">{{
                 t('admin.accounts.stats.totalRequests')
               }}</span>
               <div class="rounded-lg bg-blue-100 p-1.5 dark:bg-blue-900/30">
@@ -101,7 +101,7 @@
           <!-- Daily Average Cost -->
           <div class="card p-4">
             <div class="mb-2 flex items-center justify-between">
-              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{
+              <span class="stat-label">{{
                 t('admin.accounts.stats.avgDailyCost')
               }}</span>
               <div class="rounded-lg bg-amber-100 p-1.5 dark:bg-amber-900/30">
@@ -131,7 +131,7 @@
           <!-- Daily Average Requests -->
           <div class="card p-4">
             <div class="mb-2 flex items-center justify-between">
-              <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{
+              <span class="stat-label">{{
                 t('admin.accounts.stats.avgDailyRequests')
               }}</span>
               <div class="rounded-lg bg-purple-100 p-1.5 dark:bg-purple-900/30">

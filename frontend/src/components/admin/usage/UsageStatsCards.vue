@@ -1,21 +1,20 @@
 <template>
   <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-    <div class="card flex items-center gap-3 p-4">
-      <div class="stat-icon stat-icon-primary shrink-0">
-        <Icon name="document" size="md" />
-      </div>
-      <div>
+    <div class="card card-hover flex items-start justify-between gap-3 p-4">
+      <div class="min-w-0 flex-1 space-y-1">
         <p class="stat-label">{{ t('usage.totalRequests') }}</p>
-        <p class="tabular text-xl font-semibold tracking-[-0.026em]">{{ stats?.total_requests?.toLocaleString() || '0' }}</p>
-        <p class="text-xs tracking-[0.01em] text-gray-400">{{ t('usage.inSelectedRange') }}</p>
+        <p class="stat-value">{{ stats?.total_requests?.toLocaleString() || '0' }}</p>
+        <p class="truncate text-xs text-gray-500 dark:text-gray-400">{{ t('usage.inSelectedRange') }}</p>
+      </div>
+      <div class="stat-icon stat-icon-primary h-8 w-8 shrink-0 text-base">
+        <Icon name="document" size="sm" :stroke-width="2" />
       </div>
     </div>
-    <div class="card flex items-center gap-3 p-4">
-      <div class="stat-icon stat-icon-warning shrink-0"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg></div>
-      <div>
+    <div class="card card-hover flex items-start justify-between gap-3 p-4">
+      <div class="min-w-0 flex-1 space-y-1">
         <p class="stat-label">{{ t('usage.totalTokens') }}</p>
-        <p class="tabular text-xl font-semibold tracking-[-0.026em]">{{ formatTokens(stats?.total_tokens || 0) }}</p>
-        <p class="tabular flex flex-wrap items-center gap-x-1 text-xs tracking-[0.01em] text-gray-500">
+        <p class="stat-value">{{ formatTokens(stats?.total_tokens || 0) }}</p>
+        <p class="tabular flex flex-wrap items-center gap-x-1 text-xs text-gray-500 dark:text-gray-400">
           <span>{{ t('usage.in') }}: {{ formatTokens(stats?.total_input_tokens || 0) }}</span>
           <span>/</span>
           <span>{{ t('usage.out') }}: {{ formatTokens(stats?.total_output_tokens || 0) }}</span>
@@ -57,17 +56,15 @@
           </span>
         </p>
       </div>
+      <div class="stat-icon stat-icon-warning h-8 w-8 shrink-0 text-base"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg></div>
     </div>
-    <div class="card flex items-center gap-3 p-4">
-      <div class="stat-icon stat-icon-success shrink-0">
-        <Icon name="dollar" size="md" />
-      </div>
-      <div class="min-w-0 flex-1">
+    <div class="card card-hover flex items-start justify-between gap-3 p-4">
+      <div class="min-w-0 flex-1 space-y-1">
         <p class="stat-label">{{ t('usage.totalCost') }}</p>
-        <p class="tabular text-xl font-semibold tracking-[-0.026em] text-green-600">
+        <p class="stat-value text-green-600 dark:text-green-400">
           ${{ (stats?.total_actual_cost || 0).toFixed(4) }}
         </p>
-        <p class="tabular text-xs tracking-[0.01em] text-gray-400">
+        <p class="tabular truncate text-xs text-gray-500 dark:text-gray-400">
           <template v-if="showAccountCost && totalAccountCost != null">
             <span class="text-orange-500">{{ t('usage.accountCost') }} ${{ totalAccountCost.toFixed(4) }}</span>
             <span> · </span>
@@ -78,12 +75,18 @@
           </span>
         </p>
       </div>
-    </div>
-    <div class="card flex items-center gap-3 p-4">
-      <div class="stat-icon shrink-0 bg-purple-100 text-purple-600 dark:bg-purple-900/30">
-        <Icon name="clock" size="md" />
+      <div class="stat-icon stat-icon-success h-8 w-8 shrink-0 text-base">
+        <Icon name="dollar" size="sm" :stroke-width="2" />
       </div>
-      <div><p class="stat-label">{{ t('usage.avgDuration') }}</p><p class="tabular text-xl font-semibold tracking-[-0.026em]">{{ formatDuration(stats?.average_duration_ms || 0) }}</p></div>
+    </div>
+    <div class="card card-hover flex items-start justify-between gap-3 p-4">
+      <div class="min-w-0 flex-1 space-y-1">
+        <p class="stat-label">{{ t('usage.avgDuration') }}</p>
+        <p class="stat-value">{{ formatDuration(stats?.average_duration_ms || 0) }}</p>
+      </div>
+      <div class="stat-icon h-8 w-8 shrink-0 bg-purple-100 text-base text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+        <Icon name="clock" size="sm" :stroke-width="2" />
+      </div>
     </div>
   </div>
 </template>

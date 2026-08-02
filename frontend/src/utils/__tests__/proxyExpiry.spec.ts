@@ -21,8 +21,8 @@ describe('daysUntil', () => {
 })
 
 describe('proxyExpiryBadgeClass', () => {
-  it('status=expired → danger', () => {
-    expect(proxyExpiryBadgeClass(isoInDays(30), 'expired')).toBe('badge badge-danger')
+  it('status=expired → gray(已到期为中性终态,非错误)', () => {
+    expect(proxyExpiryBadgeClass(isoInDays(30), 'expired')).toBe('badge badge-gray')
   })
   it('≤3 天 → danger（含边界 3）', () => {
     expect(proxyExpiryBadgeClass(isoInDays(2), 'active')).toBe('badge badge-danger')

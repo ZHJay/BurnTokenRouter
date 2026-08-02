@@ -575,7 +575,7 @@
               <span
                 :class="[
                   'inline-block h-2 w-2 rounded-full',
-                  value === 'active' ? 'bg-green-500' : 'bg-red-500'
+                  value === 'active' ? 'bg-green-500' : 'bg-gray-400'
                 ]"
               ></span>
               <span class="text-sm text-gray-700 dark:text-gray-300">

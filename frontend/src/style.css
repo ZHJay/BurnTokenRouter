@@ -1546,6 +1546,29 @@
 
   /* 降低透明度：材质转不透明并去掉模糊 */
   @media (prefers-reduced-transparency: reduce) {
+    /* 先中和材质变量本身，再覆盖具体表面。
+
+       为什么两层都要：下面的选择器清单是"已知会用玻璃的表面"，任何新写的规则
+       只要引用 var(--mat-thin) 就会重新引入半透明，而清单不会自动跟着长。把
+       --mat-* 直接钉成不透明，可访问性偏好就不再依赖清单的完整性 —— 这是
+       结构性保证，不是靠特异性侥幸取胜。
+
+       !important 是必需的：[data-glass='clear'] (0,1,1) 与
+       .dark[data-glass='frosted'] (0,2,0) 都比 :root (0,1,0) 特异性更高，
+       且同样落在 <html> 上。没有 !important 时审美档位会照常胜出。 */
+    :root,
+    .dark {
+      --mat-thick: var(--surface) !important;
+      --mat-regular: var(--surface) !important;
+      --mat-thin: var(--surface) !important;
+      --mat-blur-thick: 0px !important;
+      --mat-blur-regular: 0px !important;
+      --mat-blur-thin: 0px !important;
+      /* saturate(100%) 是恒等值，且已是本文件既有写法（见 .modal-enter-from
+         .modal-content 的 blur(0px) saturate(100%)）—— 不是新造的值。 */
+      --mat-diffuse: saturate(100%) !important;
+    }
+
     .glass,
     .glass-thick,
     .glass-thin,
@@ -1600,6 +1623,20 @@
       --label-tertiary: rgba(235, 235, 245, 0.75); /* → 8.56:1 */
     }
 
+    /* 与 reduced-transparency 同样的结构性中和：本分支此前只覆盖了表面清单，
+       材质变量自身仍是半透明，任何清单外的 var(--mat-*) 消费者都会在高对比下
+       继续透出背景，削弱刚刚加上的描边。 */
+    :root,
+    .dark {
+      --mat-thick: var(--surface) !important;
+      --mat-regular: var(--surface) !important;
+      --mat-thin: var(--surface) !important;
+      --mat-blur-thick: 0px !important;
+      --mat-blur-regular: 0px !important;
+      --mat-blur-thin: 0px !important;
+      --mat-diffuse: saturate(100%) !important;
+    }
+
     .glass,
     .glass-thick,
     .glass-thin,
@@ -1627,6 +1664,23 @@
 
     .input {
       box-shadow: inset 0 0 0 1px var(--label) !important;
+    }
+
+    /* 两个遮罩此前只在 reduced-transparency 分支里去掉了 blur(2px)。高对比下
+       模糊同样会削弱遮罩后内容的边界清晰度 —— 变暗的 scrim 保留，模糊去掉。 */
+    .modal-overlay,
+    .dialog-overlay {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    /* 装饰性镜面光泽同样只在 reduced-transparency 分支里停用过。它们是叠在表面
+       之上的半透明渐变，会压低刚刚加上的 1px 描边与文字的实际对比度 —— 与本分支
+       "近实色背景 + 明确描边"的目标直接冲突。 */
+    .glass-lens::before,
+    .glass-lens::after,
+    .sidebar::after {
+      display: none;
     }
   }
 }

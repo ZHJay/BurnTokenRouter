@@ -4,7 +4,7 @@
     <div class="relative mb-3">
       <div
         @click="toggleDropdown"
-        class="cursor-pointer rounded-lg bg-[var(--surface-secondary)] px-3 py-2 shadow-[inset_0_0_0_1px_var(--separator)] transition-shadow duration-fast ease-apple-out hover:shadow-[inset_0_0_0_1px_var(--label-quaternary)]"
+        class="cursor-pointer rounded-lg bg-[var(--surface-secondary)] px-3 py-2 shadow-[inset_0_0_0_1px_var(--separator)] transition-[box-shadow,transform] duration-fast ease-apple-out active:scale-[0.96] hover:shadow-[inset_0_0_0_1px_var(--label-quaternary)]"
       >
         <div class="grid grid-cols-2 gap-1.5">
           <span
