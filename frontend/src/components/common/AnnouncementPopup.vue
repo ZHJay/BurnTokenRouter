@@ -164,7 +164,9 @@ onBeforeUnmount(() => {
   -webkit-backdrop-filter: blur(2px);
 }
 
-:global(.dark) .popup-scrim {
+/* Plain `.dark X`, NOT `:global(.dark) X` — the latter compiles to bare `.dark`
+   (Vue drops the combinator and target class), landing the rule on <html>. */
+.dark .popup-scrim {
   background: rgb(0 0 0 / 0.42);
 }
 

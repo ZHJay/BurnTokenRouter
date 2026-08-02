@@ -986,7 +986,13 @@ onUnmounted(() => {
   animation: shimmer-kv 1.8s ease-in-out infinite;
   border-radius: 8px;
 }
-:global(.dark) .skeleton {
+/* Plain `.dark X`, NOT `:global(.dark) X`. Verified against @vue/compiler-sfc:
+   `:global(.dark) .skeleton` compiles to bare `.dark`, dropping the combinator and
+   the target class, so the gradient lands on <html>. `.dark .skeleton` in a scoped
+   block emits `.dark .skeleton[data-v-…]`, which keeps the scope attribute — that
+   matters here because `.skeleton` is also a global semantic class in style.css,
+   and an unscoped rule would override it app-wide. */
+.dark .skeleton {
   background: linear-gradient(
     90deg,
     theme('colors.dark.700') 25%,

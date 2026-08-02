@@ -55,7 +55,13 @@ const statusClass = computed(() => {
   color: #8a6100;
 }
 
-:global(.dark) .badge-pending {
+/* Plain `.dark X`, NOT `:global(.dark) X`. Verified against @vue/compiler-sfc:
+   `:global(.dark) .badge-pending` compiles to bare `.dark`, dropping both the
+   descendant combinator and the target class, so the rule lands on <html> and the
+   badge keeps its light-mode colours. `.dark .badge-pending` in a scoped block
+   correctly emits `.dark .badge-pending[data-v-…]`, which also keeps the scope
+   attribute so it cannot leak onto the global `.badge-*` classes. */
+.dark .badge-pending {
   background: rgb(255 214 10 / 0.2);
   color: #ffd60a;
 }
