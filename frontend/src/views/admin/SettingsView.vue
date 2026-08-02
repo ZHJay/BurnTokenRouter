@@ -12205,9 +12205,23 @@ watch(
 .settings-tabs-shell {
   @apply sticky z-20 -mx-1 rounded-2xl p-1.5;
   top: 4.75rem;
-  background: var(--mat-regular);
-  backdrop-filter: blur(var(--mat-blur-regular)) var(--mat-diffuse);
-  -webkit-backdrop-filter: blur(var(--mat-blur-regular)) var(--mat-diffuse);
+  /* Opaque, not translucent material — deliberate, same reasoning as
+     DataTable's `.sticky-header-cell`.
+
+     A translucent sticky bar only works if what passes beneath it becomes
+     unreadable. Here body PROSE scrolls under the tab strip and stays fully
+     legible: a screenshot review caught "…callback URL suggestions. Leave empty
+     to use current site URL." reading straight across the "Agreement / Feature
+     Switches / Security / Users" labels. Two competing text layers is worse than
+     an opaque bar.
+
+     The prior comment argued this was safe because the section cards below are
+     opaque. That holds for cards, but not for the bar itself — the text passing
+     under it is precisely what the material fails to suppress.
+
+     The iOS 27 edge treatment below is kept, so it still reads as a defined
+     floating layer rather than a flat slab. */
+  background-color: var(--surface);
   border: 0;
   box-shadow:
     0 0 0 0.5px var(--glass-edge-outer),

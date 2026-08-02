@@ -269,7 +269,10 @@ import Icon from '@/components/icons/Icon.vue'
 
 const { t } = useI18n()
 
-const desktopViewportQuery = '(min-width: 768px)'
+/* Must match TablePageLayout's mobile boundary (it treats < 1024px as mobile).
+   At 768px this disagreed, so between 768 and 1023px a desktop <table> rendered
+   inside a mobile-mode layout container. */
+const desktopViewportQuery = '(min-width: 1024px)'
 const isDesktopViewport = ref(
   typeof window === 'undefined' ? true : window.matchMedia(desktopViewportQuery).matches
 )
@@ -1016,14 +1019,27 @@ defineExpose({
   background-color: var(--surface);
 }
 
-/* 所有表头单元格固定在顶部：Regular 材质浮动 chrome，数据行从下方滚过 */
+/* 所有表头单元格固定在顶部。
+
+   表头是 OPAQUE 的，不是半透明材质 —— 这是一处刻意的取舍，理由如下。
+
+   Apple 的半透明材质用来暗示"背后有东西"，而不是让人读到它。表头承载
+   列标签，数据行从其下方滚过：实测残留对比度浅色 5.14:1、深色 5.93:1，
+   也就是穿透过来的文字完全可读，于是形成两层互相打架的文字层 ——
+   截图里 "ACTIONS" 压在残影 "…ED" 上，整行 margaret@example.com / 1029 /
+   $437.09 都能透过列标签读出来。这比"实色条"或"没有条"都更糟。
+
+   仅提高 alpha 不足以解决：背后的文字依然可读。承载可读标签且悬浮在滚动
+   内容之上的表面，就应当不透明 —— 与下方 `tbody .sticky-col` 已有的处理
+   一致（那里作者已经想通了表体固定列，只是漏了表头）。
+
+   保留 iOS 27 的边缘处理（底部深边 + 顶部镜面高光），使其仍读作一个有
+   定义的图层，而非一块平板。 */
 .sticky-header-cell {
   position: sticky;
   top: 0;
   z-index: 210; /* 必须高于所有表体内容 */
-  background: var(--mat-regular);
-  backdrop-filter: blur(var(--mat-blur-regular)) var(--mat-diffuse);
-  -webkit-backdrop-filter: blur(var(--mat-blur-regular)) var(--mat-diffuse);
+  background-color: var(--surface);
   font-weight: 590;
   letter-spacing: 0.03em;
   color: var(--label-secondary);
