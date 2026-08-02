@@ -124,7 +124,7 @@
         <button
           v-if="outputLines.length > 0"
           @click="copyOutput"
-          class="absolute right-2 top-2 rounded-full bg-gray-800/80 p-1.5 text-gray-400 opacity-0 transition-[background-color,color,opacity,transform] duration-fast ease-apple-out hover:bg-gray-700 hover:text-white focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)] active:scale-[0.96] group-hover:opacity-100"
+          class="absolute right-2 top-2 rounded-full bg-gray-800 p-1.5 text-gray-400 opacity-0 transition-[background-color,color,opacity,transform] duration-fast ease-apple-out hover:bg-gray-700 hover:text-white focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)] active:scale-[0.96] group-hover:opacity-100"
           :title="t('admin.accounts.copyOutput')"
         >
           <Icon name="link" size="sm" :stroke-width="2" />
@@ -139,11 +139,11 @@
           <div
             v-for="(image, index) in generatedImages"
             :key="`${image.url}-${index}`"
-            class="card card-hover group/img relative cursor-pointer overflow-hidden"
+            class="img-tile card card-hover group/img relative cursor-pointer overflow-hidden"
             @click="previewImageUrl = image.url"
           >
             <img :src="image.url" :alt="`test-image-${index + 1}`" class="max-h-[360px] w-full object-contain" />
-            <div class="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover/img:bg-black/20">
+            <div class="img-hover-wash absolute inset-0 flex items-center justify-center transition-colors">
               <Icon name="eye" size="lg" class="text-white opacity-0 drop-shadow-lg transition-opacity group-hover/img:opacity-100" :stroke-width="2" />
             </div>
             <div class="px-3 py-1.5 text-xs text-gray-500 shadow-[inset_0_0.5px_0_var(--separator)] dark:text-gray-300">
@@ -158,11 +158,11 @@
         <Transition name="fade">
           <div
             v-if="previewImageUrl"
-            class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4"
+            class="lightbox-scrim fixed inset-0 z-[100] flex items-center justify-center p-4"
             @click.self="previewImageUrl = ''"
           >
             <button
-              class="absolute right-4 top-4 rounded-full bg-black/50 p-2 text-white transition-[background-color,transform] duration-fast ease-apple-out hover:bg-black/70 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-white/40 active:scale-[0.96]"
+              class="absolute right-4 top-4 rounded-full bg-gray-900 p-2 text-white transition-[background-color,transform] duration-fast ease-apple-out hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-white/40 active:scale-[0.96]"
               @click="previewImageUrl = ''"
             >
               <Icon name="x" size="lg" :stroke-width="2" />
@@ -579,5 +579,35 @@ const copyOutput = () => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+</style>
+
+<style scoped>
+/* 图片 hover 变暗层：这是内容之上刻意的一层 wash，不是界面材质。
+   "降低透明度"下不能把它转成实色（会挡住图片本身），改为完全让位，
+   眼睛图标靠自带的 drop-shadow 保持可读。 */
+.img-hover-wash {
+  background-color: rgb(0 0 0 / 0);
+}
+
+.img-tile:hover .img-hover-wash {
+  background-color: rgb(0 0 0 / 0.2);
+}
+
+/* Lightbox 遮罩：变暗就是它的全部作用，这里直接走不透明，
+   图片在纯黑底上的对比度也更好。 */
+.lightbox-scrim {
+  background-color: rgb(0 0 0 / 0.8);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .img-hover-wash,
+  .img-tile:hover .img-hover-wash {
+    background-color: transparent;
+  }
+
+  .lightbox-scrim {
+    background-color: #000;
+  }
 }
 </style>

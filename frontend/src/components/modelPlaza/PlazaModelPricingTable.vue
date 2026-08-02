@@ -60,7 +60,7 @@
         <tr
           v-for="m in sortedModels"
           :key="m.name"
-          class="border-b border-gray-100 transition-colors last:border-b-0 hover:bg-gray-50/70 dark:border-dark-800 dark:hover:bg-dark-800/50"
+          class="border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[var(--surface-hover)] dark:border-dark-800"
         >
           <!-- 模型名 + 非 token 计费模式徽章 -->
           <td class="border-r border-gray-100 py-2.5 pr-4 align-middle dark:border-dark-700/60">
@@ -68,7 +68,7 @@
               <span class="font-medium text-gray-900 dark:text-white">{{ m.name }}</span>
               <span
                 v-if="billingMode(m) !== BILLING_MODE_TOKEN"
-                class="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500 dark:bg-dark-700/70 dark:text-dark-300"
+                class="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500 dark:bg-dark-700 dark:text-dark-300"
               >
                 {{ billingModeLabel(m) }}
               </span>
@@ -131,7 +131,7 @@
                 <span
                   v-for="(iv, idx) in requestIntervals(m)"
                   :key="idx"
-                  class="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800 dark:bg-dark-700/60 dark:text-gray-200"
+                  class="tabular inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800 dark:bg-dark-700 dark:text-gray-200"
                 >
                   <span class="font-sans text-gray-400 dark:text-dark-500">{{ tierLabel(iv) }}</span>
                   {{ paidRequestPrice(iv.per_request_price)

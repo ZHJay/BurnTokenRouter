@@ -209,7 +209,7 @@
   <transition name="fade">
     <div
       v-if="mobileOpen"
-      class="fixed inset-0 z-30 bg-black/50 lg:hidden"
+      class="sidebar-scrim fixed inset-0 z-30 lg:hidden"
       @click="closeMobile"
     ></div>
   </transition>
@@ -1155,5 +1155,21 @@ onBeforeUnmount(() => {
   display: block;
   width: 1.25rem;
   height: 1.25rem;
+}
+
+/* 移动端抽屉遮罩：变暗是它的全部作用，不能转成实色（会盖掉整页内容，
+   用户就看不到抽屉盖住的是什么了）。这里与 style.css 中
+   .modal-overlay / .dialog-overlay 的处理一致：变暗留下，模糊去掉。
+   本元素当前没有 backdrop-filter，声明是防御性的 —— 避免以后有人加回模糊
+   却绕过本偏好。 */
+.sidebar-scrim {
+  background-color: rgb(0 0 0 / 0.5);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .sidebar-scrim {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 </style>

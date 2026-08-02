@@ -131,7 +131,7 @@ const labelClass = computed(() => {
 
   if (!isSubscription.value) {
     // Standard: subtle background (不再为专属倍率使用不同的背景色)
-    return `${base} bg-black/10 dark:bg-white/10`
+    return `${base} bg-[var(--surface-pressed)]`
   }
 
   // 订阅类型：根据剩余天数显示不同颜色

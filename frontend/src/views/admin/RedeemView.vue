@@ -275,7 +275,7 @@
     <!-- Generate Codes Dialog -->
     <Teleport to="body">
       <div v-if="showGenerateDialog" class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="fixed inset-0 bg-black/[0.24] backdrop-blur-xs dark:bg-black/[0.42]" @click="showGenerateDialog = false"></div>
+        <div class="modal-scrim fixed inset-0" @click="showGenerateDialog = false"></div>
         <div
           class="modal-content relative z-10 max-w-md overflow-y-auto p-6"
         >
@@ -415,7 +415,7 @@
         v-if="showBatchUpdateDialog"
         class="fixed inset-0 z-50 flex items-center justify-center p-4"
       >
-        <div class="fixed inset-0 bg-black/[0.24] backdrop-blur-xs dark:bg-black/[0.42]" @click="closeBatchUpdateDialog"></div>
+        <div class="modal-scrim fixed inset-0" @click="closeBatchUpdateDialog"></div>
         <div
           class="modal-content relative z-10 max-w-lg overflow-y-auto p-6"
         >
@@ -523,7 +523,7 @@
     <!-- Generated Codes Result Dialog -->
     <Teleport to="body">
       <div v-if="showResultDialog" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="fixed inset-0 bg-black/[0.24] backdrop-blur-xs dark:bg-black/[0.42]" @click="closeResultDialog"></div>
+        <div class="modal-scrim fixed inset-0" @click="closeResultDialog"></div>
         <div class="modal-content relative z-10 max-w-lg">
           <!-- Header -->
           <div
@@ -1187,3 +1187,24 @@ onUnmounted(() => {
   abortController?.abort()
 })
 </script>
+
+<style scoped>
+/* 手写遮罩：变暗保留，模糊必须能被"降低透明度"偏好关掉。
+   与 style.css 里 .modal-overlay / .dialog-overlay 的处理保持一致。 */
+.modal-scrim {
+  background: rgb(0 0 0 / 0.24);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+:global(.dark) .modal-scrim {
+  background: rgb(0 0 0 / 0.42);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .modal-scrim {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+</style>

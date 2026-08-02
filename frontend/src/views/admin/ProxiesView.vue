@@ -879,7 +879,8 @@
 
         <div class="max-h-80 overflow-auto rounded-xl shadow-[inset_0_0_0_0.5px_var(--hairline)]">
           <table class="table min-w-full">
-            <thead>
+            <!-- 弹窗是 thin 玻璃，.table th 默认 regular 玻璃 —— 表头转不透明，避免玻璃叠玻璃 -->
+            <thead class="sticky top-0 z-[1] [&_th]:bg-[var(--surface)] [&_th]:backdrop-blur-none">
               <tr>
                 <th>{{ t('admin.proxies.qualityTableTarget') }}</th>
                 <th>{{ t('admin.proxies.qualityTableStatus') }}</th>
@@ -932,7 +933,8 @@
       </div>
       <div v-else class="max-h-80 overflow-auto">
         <table class="table min-w-full">
-          <thead>
+          <!-- 同上：弹窗内的表头必须让出玻璃，否则两层材质相叠 -->
+          <thead class="sticky top-0 z-[1] [&_th]:bg-[var(--surface)] [&_th]:backdrop-blur-none">
             <tr>
               <th>{{ t('admin.proxies.accountName') }}</th>
               <th>{{ t('admin.accounts.columns.platformType') }}</th>

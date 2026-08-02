@@ -18,7 +18,9 @@
       <div v-if="loading" class="py-10 text-center text-gray-500">{{ t('common.loading') }}</div>
       <div v-else class="overflow-x-auto">
         <table class="table min-w-full">
-          <thead>
+          <!-- 弹窗本身是 thin 玻璃，.table th 默认又是 regular 玻璃：
+               玻璃叠玻璃，表头文字要同时透过两层材质。表头在此转不透明。 -->
+          <thead class="[&_th]:bg-[var(--surface)] [&_th]:backdrop-blur-none">
             <tr>
               <th>{{ t('admin.users.platformQuota.columns.platform') }}</th>
               <th>{{ t('admin.users.platformQuota.columns.daily') }}</th>

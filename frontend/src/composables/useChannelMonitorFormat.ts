@@ -4,7 +4,7 @@
  * Centralises:
  *  - status / provider label + badge class lookups
  *  - latency / availability / percent number formatting
- *  - dashboard-style helpers (HSL for availability, provider gradient, relative time)
+ *  - dashboard-style helpers (HSL for availability, provider tint, relative time)
  *
  * i18n keys live under `monitorCommon.*` so admin and user views share the
  * same translation source.
@@ -76,7 +76,9 @@ export function useChannelMonitorFormat() {
       case PROVIDER_ANTHROPIC:
         return 'bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300'
       case PROVIDER_GEMINI:
-        return 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300'
+        // sky 不在 tailwind.config.js 的调色板里，会落回 Tailwind 默认色（旧 #0ea5e9）。
+        // 改用已重映射到 Apple 系统蓝的 blue，与 platformColors 里的 Gemini 同色相。
+        return 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300'
       case PROVIDER_GROK:
         return 'bg-zinc-100 text-zinc-700 dark:bg-zinc-500/15 dark:text-zinc-300'
       default:
@@ -86,7 +88,7 @@ export function useChannelMonitorFormat() {
 
   /**
    * Tailwind class for a provider radio-button-style picker (active/inactive state).
-   * Reuses the same emerald/orange/sky palette as providerBadgeClass to keep
+   * Reuses the same emerald/orange/blue palette as providerBadgeClass to keep
    * visual semantics consistent across badges and pickers.
    */
   function providerPickerClass(p: Provider | string, active: boolean): string {
@@ -101,8 +103,8 @@ export function useChannelMonitorFormat() {
           : 'border-gray-200 bg-white text-gray-600 hover:border-orange-300 hover:text-orange-700 dark:border-dark-700 dark:bg-dark-800 dark:text-gray-400 dark:hover:border-orange-500/50'
       case PROVIDER_GEMINI:
         return active
-          ? 'border-sky-500 bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300 dark:border-sky-400'
-          : 'border-gray-200 bg-white text-gray-600 hover:border-sky-300 hover:text-sky-700 dark:border-dark-700 dark:bg-dark-800 dark:text-gray-400 dark:hover:border-sky-500/50'
+          ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-400'
+          : 'border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:text-blue-700 dark:border-dark-700 dark:bg-dark-800 dark:text-gray-400 dark:hover:border-blue-500/50'
       case PROVIDER_GROK:
         return active
           ? 'border-zinc-500 bg-zinc-50 text-zinc-800 dark:bg-zinc-500/15 dark:text-zinc-200 dark:border-zinc-400'
@@ -168,19 +170,24 @@ export function hslForPct(pct: number | null | undefined): string | undefined {
 }
 
 /**
- * Tailwind gradient class for the provider icon tile background.
+ * Tailwind class for the provider icon tile background.
+ *
+ * 原为 `bg-gradient-to-br from-X-50 to-Y-100`。图标底板是卡片上的实体表面，
+ * 按 Apple 规范平涂单色，不做渐变。各家色相保留，只是换成 Apple 系统色家族
+ * （sky 不在调色板内，会落回旧 Tailwind 默认色，故 Gemini 改用 blue）。
+ * 类名字符串自带 bg-*，消费方模板无需改动。
  */
 export function providerGradient(provider: string): string {
   switch (provider) {
     case PROVIDER_OPENAI:
-      return 'bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-500/10 dark:to-emerald-500/20'
+      return 'bg-emerald-100 dark:bg-emerald-500/15'
     case PROVIDER_ANTHROPIC:
-      return 'bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-500/10 dark:to-amber-500/20'
+      return 'bg-orange-100 dark:bg-orange-500/15'
     case PROVIDER_GEMINI:
-      return 'bg-gradient-to-br from-sky-50 to-indigo-100 dark:from-sky-500/10 dark:to-indigo-500/20'
+      return 'bg-blue-100 dark:bg-blue-500/15'
     case PROVIDER_GROK:
-      return 'bg-gradient-to-br from-zinc-50 to-neutral-200 dark:from-zinc-500/10 dark:to-neutral-500/20'
+      return 'bg-zinc-100 dark:bg-zinc-500/15'
     default:
-      return 'bg-gradient-to-br from-gray-100 to-gray-200 dark:from-dark-700 dark:to-dark-600'
+      return 'bg-gray-100 dark:bg-dark-700'
   }
 }

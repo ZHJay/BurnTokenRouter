@@ -129,7 +129,7 @@ onBeforeUnmount(() => {
         <button
           v-if="props.trigger === 'click'"
           type="button"
-          class="absolute right-1.5 top-1.5 rounded-full p-1 text-gray-300 transition-colors duration-fast ease-apple-out hover:bg-white/10 hover:text-white active:scale-[0.96]"
+          class="absolute right-1.5 top-1.5 rounded-full p-1 text-gray-300 transition-colors duration-fast ease-apple-out hover:bg-gray-700 hover:text-white active:scale-[0.96]"
           aria-label="Close"
           @click.stop="closeTooltip"
         >

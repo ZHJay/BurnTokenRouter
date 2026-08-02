@@ -78,7 +78,7 @@
                   :class="item.class"
                 >
                   <p class="text-xs text-gray-500 dark:text-gray-400">{{ item.label }}</p>
-                  <p class="mt-2 truncate text-2xl font-semibold leading-8" :class="item.valueClass">{{ item.value }}</p>
+                  <p class="tabular mt-2 truncate text-2xl font-semibold leading-8 tracking-[-0.026em]" :class="item.valueClass">{{ item.value }}</p>
                   <p v-if="item.meta" class="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">{{ item.meta }}</p>
                 </div>
               </div>
@@ -572,7 +572,7 @@
                           <img :src="image" alt="" class="h-full w-full object-cover" />
                           <button
                             type="button"
-                            class="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                            class="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-gray-900 text-white opacity-0 transition-opacity group-hover:opacity-100"
                             @click="removeModerationTestImage(index)"
                           >
                             <Icon name="x" size="xs" :stroke-width="2" />
@@ -732,7 +732,7 @@
                   :key="group.id"
                   type="button"
                   class="flex min-h-20 items-center justify-between rounded-lg p-4 text-left transition-transform duration-instant ease-apple-out active:scale-[0.98]"
-                  :class="isGroupSelected(group.id) ? 'bg-primary-50 shadow-[inset_0_0_0_1px_var(--accent)] dark:bg-primary-900/20' : 'shadow-[inset_0_0_0_0.5px_var(--hairline)] hover:bg-gray-50 dark:hover:bg-dark-700/60'"
+                  :class="isGroupSelected(group.id) ? 'bg-primary-50 shadow-[inset_0_0_0_1px_var(--accent)] dark:bg-primary-900/20' : 'shadow-[inset_0_0_0_0.5px_var(--hairline)] hover:bg-[var(--surface-hover)]'"
                   @click="toggleGroup(group.id)"
                 >
                   <span class="min-w-0">
@@ -769,7 +769,7 @@
                   class="rounded-lg p-3 text-left transition-transform duration-instant ease-apple-out active:scale-[0.98]"
                   :class="configForm.model_filter_type === option.value
                     ? 'bg-primary-50 text-primary-900 shadow-[inset_0_0_0_1px_var(--accent)] dark:bg-primary-900/20 dark:text-primary-100'
-                    : 'shadow-[inset_0_0_0_0.5px_var(--hairline)] hover:bg-gray-50 dark:hover:bg-dark-700/60'"
+                    : 'shadow-[inset_0_0_0_0.5px_var(--hairline)] hover:bg-[var(--surface-hover)]'"
                   @click="setModelFilterType(option.value)"
                 >
                   <div class="flex items-center justify-between gap-2">
@@ -821,7 +821,7 @@
                 </div>
                 <Toggle v-model="configForm.pre_hash_check_enabled" />
               </div>
-              <div class="rounded-lg bg-gray-50 p-3 dark:bg-dark-900/30">
+              <div class="rounded-lg bg-[var(--surface)] p-3 shadow-[inset_0_0_0_0.5px_var(--hairline)]">
                 <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                   <div>
                     <p class="text-sm font-medium text-gray-900 dark:text-white">
@@ -985,7 +985,7 @@
                   class="rounded-lg p-3 text-left transition-transform duration-instant ease-apple-out active:scale-[0.98]"
                   :class="configForm.keyword_blocking_mode === option.value
                     ? 'bg-primary-50 text-primary-900 shadow-[inset_0_0_0_1px_var(--accent)] dark:bg-primary-900/20 dark:text-primary-100'
-                    : 'shadow-[inset_0_0_0_0.5px_var(--hairline)] hover:bg-gray-50 dark:hover:bg-dark-700/60'"
+                    : 'shadow-[inset_0_0_0_0.5px_var(--hairline)] hover:bg-[var(--surface-hover)]'"
                   @click="configForm.keyword_blocking_mode = option.value"
                 >
                   <div class="flex items-center justify-between gap-2">
@@ -1099,7 +1099,7 @@
                 {{ inputDetailRow.group_name }}
               </span>
             </div>
-            <pre class="mt-4 max-h-[420px] overflow-auto whitespace-pre-wrap break-words rounded-lg bg-gray-950 p-4 text-sm leading-6 text-gray-100 shadow-inner dark:bg-black/50">{{ inputDetailText }}</pre>
+            <pre class="code-block mt-4 max-h-[420px] overflow-auto whitespace-pre-wrap break-words leading-6">{{ inputDetailText }}</pre>
           </div>
         </div>
 
@@ -1607,7 +1607,7 @@ const preBlockMetricItems = computed(() => [
     label: t('admin.riskControl.preBlockChecked'),
     value: formatNumber(status.value?.pre_block_checked ?? 0),
     meta: t('admin.riskControl.preBlockCheckedHint'),
-    class: 'bg-gray-50 dark:bg-dark-700/50',
+    class: 'bg-gray-50 dark:bg-dark-800',
     valueClass: 'text-gray-900 dark:text-white',
   },
   {

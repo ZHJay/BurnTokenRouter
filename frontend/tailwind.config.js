@@ -46,6 +46,62 @@ const neutralRamp = {
   950: 'rgb(var(--c-gray-950) / <alpha-value>)'
 }
 
+/*
+ * Chromatic ramps that are aliased by more than one Tailwind family name.
+ *
+ * `sky`, `lime` and `fuchsia` were missing from the original remap, so 119
+ * usages silently kept Tailwind's stock values (sky #0ea5e9, lime #84cc16,
+ * fuchsia #d946ef) and rendered in the OLD palette. A hex grep cannot find
+ * that class of miss, because the stale color never appears in the source —
+ * only the family name does.
+ *
+ * Mapped to their nearest Apple system hue:
+ *   sky     -> systemCyan   (101 usages)
+ *   lime    -> systemGreen  (8 usages; Apple has no yellow-green)
+ *   fuchsia -> systemPink   (10 usages)
+ */
+const appleGreen = {
+  50: '#eefdf2',
+  100: '#d6f8e0',
+  200: '#a7efbf',
+  300: '#6ae07f',
+  400: '#30d158',
+  500: '#34c759',
+  600: '#248a3d',
+  700: '#1c6e30',
+  800: '#175827',
+  900: '#124520',
+  950: '#062810'
+}
+
+const appleCyan = {
+  50: '#ecfbff',
+  100: '#d3f4ff',
+  200: '#a9e9ff',
+  300: '#64d2ff',
+  400: '#32ade6',
+  500: '#1f9dd4',
+  600: '#127ead',
+  700: '#12658b',
+  800: '#145372',
+  900: '#134560',
+  950: '#062a3d'
+}
+
+const applePink = {
+  50: '#fff1f4',
+  100: '#ffe0e7',
+  200: '#ffc6d3',
+  300: '#ff9db4',
+  400: '#ff375f',
+  500: '#ff2d55',
+  600: '#d81b41',
+  700: '#b31536',
+  800: '#951531',
+  900: '#7d152e',
+  950: '#450816'
+}
+
 export default {
   content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
   darkMode: 'class',
@@ -99,19 +155,7 @@ export default {
         gray: neutralRamp,
         // ---- Apple 系统语义色 ----
         // 保留色相家族，换成 Apple 对应系统色；语义不变。
-        green: {
-          50: '#eefdf2',
-          100: '#d6f8e0',
-          200: '#a7efbf',
-          300: '#6ae07f',
-          400: '#30d158',
-          500: '#34c759',
-          600: '#248a3d',
-          700: '#1c6e30',
-          800: '#175827',
-          900: '#124520',
-          950: '#062810'
-        },
+        green: appleGreen,
         emerald: {
           50: '#effdf8',
           100: '#d7f9ee',
@@ -190,19 +234,7 @@ export default {
           900: '#0a4da8',
           950: '#062f66'
         },
-        cyan: {
-          50: '#ecfbff',
-          100: '#d3f4ff',
-          200: '#a9e9ff',
-          300: '#64d2ff',
-          400: '#32ade6',
-          500: '#1f9dd4',
-          600: '#127ead',
-          700: '#12658b',
-          800: '#145372',
-          900: '#134560',
-          950: '#062a3d'
-        },
+        cyan: appleCyan,
         teal: {
           50: '#effcfd',
           100: '#d3f6f9',
@@ -255,19 +287,7 @@ export default {
           900: '#4d285f',
           950: '#2e1339'
         },
-        pink: {
-          50: '#fff1f4',
-          100: '#ffe0e7',
-          200: '#ffc6d3',
-          300: '#ff9db4',
-          400: '#ff375f',
-          500: '#ff2d55',
-          600: '#d81b41',
-          700: '#b31536',
-          800: '#951531',
-          900: '#7d152e',
-          950: '#450816'
-        },
+        pink: applePink,
         rose: {
           50: '#fff1f4',
           100: '#ffe0e7',
@@ -287,7 +307,11 @@ export default {
         slate: neutralRamp,
         zinc: neutralRamp,
         neutral: neutralRamp,
-        stone: neutralRamp
+        stone: neutralRamp,
+        // Families missing from the original remap — see the ramp comments above.
+        sky: appleCyan,
+        lime: appleGreen,
+        fuchsia: applePink
       },
       fontFamily: {
         sans: [

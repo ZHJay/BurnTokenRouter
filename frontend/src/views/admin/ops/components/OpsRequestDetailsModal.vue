@@ -222,7 +222,12 @@ const kindBadgeClass = (kind: string) => {
                 </div>
               </div>
               <table v-else class="table min-w-full">
-                <thead class="sticky top-0 z-10" :style="{ background: 'var(--surface-secondary)' }">
+                <!-- 弹窗是 thin 玻璃：.table th 自带 regular 玻璃，必须显式让位。
+                     此前只给 thead 铺了不透明底色，th 本身仍在跑 backdrop-filter。 -->
+                <thead
+                  class="sticky top-0 z-10 [&_th]:bg-[var(--surface-secondary)] [&_th]:backdrop-blur-none"
+                  :style="{ background: 'var(--surface-secondary)' }"
+                >
                 <tr>
                   <th class="px-4 py-3 text-[11px]">
                     {{ t('admin.ops.requestDetails.table.time') }}

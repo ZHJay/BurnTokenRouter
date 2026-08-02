@@ -527,7 +527,7 @@
                                 class="hairline-bottom flex items-center justify-between bg-gray-100 px-2 py-1.5 dark:bg-dark-700"
                               >
                                 <div
-                                  class="flex items-center gap-0.5 rounded-full bg-gray-200/70 p-0.5 dark:bg-dark-600/70"
+                                  class="flex items-center gap-0.5 rounded-full bg-gray-200 p-0.5 dark:bg-dark-600"
                                 >
                                   <button
                                     v-for="tab in manualTabs"

@@ -906,7 +906,7 @@
               'rounded-lg border-2 border-dashed px-4 py-5 transition-colors',
               vertexServiceAccountDragActive
                 ? 'border-sky-500 bg-sky-50 dark:border-sky-500 dark:bg-sky-900/20'
-                : 'border-gray-300 bg-gray-50 hover:border-sky-400 hover:bg-sky-50/60 dark:border-dark-500 dark:bg-dark-700/40 dark:hover:border-sky-600 dark:hover:bg-sky-900/10'
+                : 'border-gray-300 bg-gray-50 hover:border-sky-400 hover:bg-sky-50 dark:border-dark-500 dark:bg-dark-800 dark:hover:border-sky-600'
             ]"
             @dragenter.prevent="vertexServiceAccountDragActive = true"
             @dragover.prevent="vertexServiceAccountDragActive = true"

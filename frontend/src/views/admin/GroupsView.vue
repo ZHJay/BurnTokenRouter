@@ -770,7 +770,7 @@
           </div>
           <div
             v-if="createModelsListState.enabled"
-            class="overflow-hidden rounded-lg border border-gray-200 bg-gray-50/50 dark:border-dark-600 dark:bg-dark-800/40"
+            class="overflow-hidden rounded-lg border border-gray-200 bg-[var(--surface-secondary)] dark:border-dark-600"
           >
             <div
               v-if="!createModelsListLoading && createModelsListState.items.length > 0"
@@ -816,7 +816,7 @@
               <div
                 v-for="(item, index) in createModelsListState.items"
                 :key="item.id"
-                class="flex items-center gap-2 rounded border border-gray-200 bg-white px-3 py-2 dark:border-dark-600 dark:bg-dark-800"
+                class="flex items-center gap-2 rounded-md bg-[var(--surface)] px-3 py-2 shadow-[inset_0_0_0_0.5px_var(--hairline)]"
               >
                 <input
                   v-model="item.selected"
@@ -1429,7 +1429,7 @@
               class="card relative overflow-hidden"
             >
               <div
-                class="bg-gray-50/80 px-4 py-3 shadow-[inset_0_-0.5px_0_var(--separator)] dark:bg-dark-700/50"
+                class="bg-[var(--surface-secondary)] px-4 py-3 shadow-[inset_0_-0.5px_0_var(--separator)]"
               >
                 <div class="flex items-center gap-2">
                   <div class="h-2 w-2 rounded-full bg-blue-500"></div>
@@ -1515,7 +1515,7 @@
                 </div>
               </div>
 
-              <div class="p-4 bg-gray-50/30 dark:bg-dark-800/30">
+              <div class="p-4">
                 <div
                   v-if="createForm.exact_model_mappings.length === 0"
                   class="flex items-center justify-between gap-3 rounded-xl border-2 border-dashed border-primary-200 px-5 py-4 text-sm text-primary-700 transition-colors hover:border-primary-300 hover:bg-[color:var(--accent-tint)] dark:border-primary-900/40 dark:text-primary-300 dark:hover:border-primary-800"
@@ -1832,7 +1832,7 @@
                           accountSearchResults[getCreateRuleSearchKey(rule)]
                             ?.length > 0
                         "
-                        class="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-lg border bg-white shadow-lg dark:border-dark-600 dark:bg-dark-800"
+                        class="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-lg border bg-white shadow-elev-3 dark:border-dark-600 dark:bg-dark-800"
                       >
                         <button
                           v-for="account in accountSearchResults[
@@ -2254,7 +2254,7 @@
           </div>
           <div
             v-if="editModelsListState.enabled"
-            class="overflow-hidden rounded-lg border border-gray-200 bg-gray-50/50 dark:border-dark-600 dark:bg-dark-800/40"
+            class="overflow-hidden rounded-lg border border-gray-200 bg-[var(--surface-secondary)] dark:border-dark-600"
           >
             <div
               v-if="!editModelsListLoading && editModelsListState.items.length > 0"
@@ -2300,7 +2300,7 @@
               <div
                 v-for="(item, index) in editModelsListState.items"
                 :key="item.id"
-                class="flex items-center gap-2 rounded border border-gray-200 bg-white px-3 py-2 dark:border-dark-600 dark:bg-dark-800"
+                class="flex items-center gap-2 rounded-md bg-[var(--surface)] px-3 py-2 shadow-[inset_0_0_0_0.5px_var(--hairline)]"
               >
                 <input
                   v-model="item.selected"
@@ -2911,7 +2911,7 @@
               class="card relative overflow-hidden"
             >
               <div
-                class="bg-gray-50/80 px-4 py-3 shadow-[inset_0_-0.5px_0_var(--separator)] dark:bg-dark-700/50"
+                class="bg-[var(--surface-secondary)] px-4 py-3 shadow-[inset_0_-0.5px_0_var(--separator)]"
               >
                 <div class="flex items-center gap-2">
                   <div class="h-2 w-2 rounded-full bg-blue-500"></div>
@@ -2997,7 +2997,7 @@
                 </div>
               </div>
 
-              <div class="p-4 bg-gray-50/30 dark:bg-dark-800/30">
+              <div class="p-4">
                 <div
                   v-if="editForm.exact_model_mappings.length === 0"
                   class="flex items-center justify-between gap-3 rounded-xl border-2 border-dashed border-primary-200 px-5 py-4 text-sm text-primary-700 transition-colors hover:border-primary-300 hover:bg-[color:var(--accent-tint)] dark:border-primary-900/40 dark:text-primary-300 dark:hover:border-primary-800"
@@ -3313,7 +3313,7 @@
                           accountSearchResults[getEditRuleSearchKey(rule)]
                             ?.length > 0
                         "
-                        class="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-lg border bg-white shadow-lg dark:border-dark-600 dark:bg-dark-800"
+                        class="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-lg border bg-white shadow-elev-3 dark:border-dark-600 dark:bg-dark-800"
                       >
                         <button
                           v-for="account in accountSearchResults[

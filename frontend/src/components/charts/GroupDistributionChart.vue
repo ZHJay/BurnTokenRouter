@@ -6,24 +6,25 @@
       </h3>
       <div
         v-if="showMetricToggle"
-        class="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-0.5 dark:border-dark-700 dark:bg-dark-800"
+        class="tabs"
+        role="tablist"
       >
         <button
           type="button"
-          class="rounded-md px-2.5 py-1 text-xs font-medium transition-colors"
-          :class="metric === 'tokens'
-            ? 'bg-white text-gray-900 shadow-sm dark:bg-dark-700 dark:text-white'
-            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
+          role="tab"
+          :aria-selected="metric === 'tokens'"
+          class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
+          :class="metric === 'tokens' && 'tab-active'"
           @click="emit('update:metric', 'tokens')"
         >
           {{ t('admin.dashboard.metricTokens') }}
         </button>
         <button
           type="button"
-          class="rounded-md px-2.5 py-1 text-xs font-medium transition-colors"
-          :class="metric === 'actual_cost'
-            ? 'bg-white text-gray-900 shadow-sm dark:bg-dark-700 dark:text-white'
-            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
+          role="tab"
+          :aria-selected="metric === 'actual_cost'"
+          class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
+          :class="metric === 'actual_cost' && 'tab-active'"
           @click="emit('update:metric', 'actual_cost')"
         >
           {{ t('admin.dashboard.metricActualCost') }}
@@ -52,8 +53,8 @@
           <tbody>
             <template v-for="group in displayGroupStats" :key="group.group_id">
               <tr
-                class="border-t border-gray-100 transition-colors dark:border-dark-700"
-                :class="enableBreakdown && group.group_id > 0 ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-700/40' : ''"
+                class="chart-row"
+                :class="enableBreakdown && group.group_id > 0 ? 'chart-row-clickable' : ''"
                 @click="enableBreakdown && group.group_id > 0 && toggleBreakdown('group', group.group_id)"
               >
                 <td
@@ -67,19 +68,19 @@
                     {{ group.group_name || t('admin.dashboard.noGroup') }}
                   </span>
                 </td>
-                <td class="py-1.5 text-right text-gray-600 dark:text-gray-400">
+                <td class="py-1.5 text-right tabular text-gray-600 dark:text-gray-400">
                   {{ formatNumber(group.requests) }}
                 </td>
-                <td class="py-1.5 text-right text-gray-600 dark:text-gray-400">
+                <td class="py-1.5 text-right tabular text-gray-600 dark:text-gray-400">
                   {{ formatTokens(group.total_tokens) }}
                 </td>
-                <td class="py-1.5 text-right text-green-600 dark:text-green-400">
+                <td class="py-1.5 text-right tabular text-green-600 dark:text-green-400">
                   ${{ formatCost(group.actual_cost) }}
                 </td>
-                <td v-if="showAccountCost" class="py-1.5 text-right text-orange-500 dark:text-orange-400">
+                <td v-if="showAccountCost" class="py-1.5 text-right tabular text-orange-500 dark:text-orange-400">
                   ${{ formatCost(group.account_cost) }}
                 </td>
-                <td class="py-1.5 text-right text-gray-400 dark:text-gray-500">
+                <td class="py-1.5 text-right tabular text-gray-400 dark:text-gray-500">
                   ${{ formatCost(group.cost) }}
                 </td>
               </tr>
@@ -116,6 +117,7 @@ import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import UserBreakdownSubTable from './UserBreakdownSubTable.vue'
 import type { GroupStat, UserBreakdownItem } from '@/types'
 import { getUserBreakdown } from '@/api/admin/dashboard'
+import { chartTooltipStyle, distributionColor, useChartScheme } from './chartPalette'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
@@ -175,18 +177,15 @@ const toggleBreakdown = async (type: string, id: number | string) => {
   }
 }
 
-const chartColors = [
-  '#3b82f6',
-  '#10b981',
-  '#f59e0b',
-  '#ef4444',
-  '#8b5cf6',
-  '#ec4899',
-  '#14b8a6',
-  '#f97316',
-  '#6366f1',
-  '#84cc16'
-]
+/**
+ * canvas 读不到 CSS 变量，配色只能由 JS 侧驱动 —— `useChartScheme()` 用
+ * MutationObserver 盯 `<html class="dark">`，主题切换时让下面的 computed 重新求值。
+ */
+const scheme = useChartScheme()
+
+/** 扇区色板：Apple 系统色，按类目序号取色，light / dark 各一档。 */
+const sliceColors = (count: number) =>
+  Array.from({ length: count }, (_, i) => distributionColor(i, scheme.value))
 
 const displayGroupStats = computed(() => {
   if (!props.groupStats?.length) return []
@@ -203,8 +202,11 @@ const chartData = computed(() => {
     datasets: [
       {
         data: displayGroupStats.value.map((g) => toFiniteNumber(props.metric === 'actual_cost' ? g.actual_cost : g.total_tokens)),
-        backgroundColor: chartColors.slice(0, displayGroupStats.value.length),
-        borderWidth: 0
+        backgroundColor: sliceColors(displayGroupStats.value.length),
+        // 扇区之间留白代替描边：不透明卡片上描边会显脏
+        borderWidth: 0,
+        spacing: 2,
+        hoverOffset: 4
       }
     ]
   }
@@ -218,6 +220,7 @@ const doughnutOptions = computed(() => ({
       display: false
     },
     tooltip: {
+      ...chartTooltipStyle(scheme.value),
       callbacks: {
         label: (context: any) => {
           const value = context.raw as number
@@ -265,3 +268,36 @@ const formatCost = (value: number | null | undefined): string => {
   return safeValue.toFixed(4)
 }
 </script>
+
+<style scoped>
+/* 行间用发丝线分隔，而不是 1px 实线框 */
+.chart-row {
+  box-shadow: inset 0 0.5px 0 var(--separator);
+  transition:
+    background-color 240ms var(--ease-out),
+    transform 100ms var(--ease-out);
+}
+
+/* hover / active 用设计令牌，不用手搓的半透明工具类 —— 与 .table tbody tr 同一套值 */
+.chart-row-clickable {
+  cursor: pointer;
+}
+
+.chart-row-clickable:hover {
+  background-color: var(--surface-hover);
+}
+
+.chart-row-clickable:active {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chart-row {
+    transition: none;
+  }
+
+  .chart-row-clickable:active {
+    transform: none;
+  }
+}
+</style>

@@ -52,26 +52,33 @@ const BORDER_STRONG_DEFAULT = 'border-gray-300 dark:border-dark-600'
 
 // ── Accent (single raw color per platform; consumers derive washes/tints
 //    from it via CSS color-mix, e.g. plaza paid-price zone) ──
+//
+// Apple 系统色的字面值（style.css 的 `--sys-*` 镜像）。这里必须是裸色值而不是
+// var(--sys-*)：消费方把它塞进 color-mix() 派生浅淡背景，而 color-mix 需要能解析的颜色。
+// 各家品牌色相刻意保留 —— 认得出 Claude 是橙、Gemini 是蓝，只是换成 Apple 的同色相。
 const ACCENT: Record<Platform, string> = {
-  anthropic: '#f97316', // orange-500
-  openai: '#22c55e', // green-500
-  antigravity: '#a855f7', // purple-500
-  gemini: '#3b82f6', // blue-500
-  grok: '#71717a', // zinc-500
-  composite: '#06b6d4', // cyan-500
+  anthropic: '#ff9500', // --sys-orange
+  openai: '#34c759', // --sys-green
+  antigravity: '#af52de', // --sys-purple
+  gemini: '#007aff', // --sys-blue
+  grok: '#8e8e93', // 中性灰：Grok 的品牌就是近黑/无色相
+  composite: '#32ade6', // --sys-cyan
 }
-const ACCENT_DEFAULT = '#14b8a6' // primary-500 (teal)
+const ACCENT_DEFAULT = '#30b0c7' // --sys-teal
 
-// ── Accent bar (gradient) ───────────────────────────────────────────
+// ── Accent bar (flat platform color) ───────────────────────────────
+// 原为 `bg-gradient-to-r from-X-400 to-X-500`。消费方只有 h-1.5 / w-1 的窄条，
+// 4px 内的渐变本就看不出来，按 Apple 规范平涂即可。类名字符串自带 bg-*，
+// 消费方模板无需改动。
 const ACCENT_BAR: Record<Platform, string> = {
-  anthropic: 'bg-gradient-to-r from-orange-400 to-orange-500',
-  openai: 'bg-gradient-to-r from-emerald-400 to-emerald-500',
-  antigravity: 'bg-gradient-to-r from-purple-400 to-purple-500',
-  gemini: 'bg-gradient-to-r from-blue-400 to-blue-500',
-  grok: 'bg-gradient-to-r from-zinc-700 to-zinc-900',
-  composite: 'bg-gradient-to-r from-slate-500 to-cyan-500',
+  anthropic: 'bg-orange-500',
+  openai: 'bg-emerald-500',
+  antigravity: 'bg-purple-500',
+  gemini: 'bg-blue-500',
+  grok: 'bg-zinc-700',
+  composite: 'bg-cyan-500',
 }
-const ACCENT_BAR_DEFAULT = 'bg-gradient-to-r from-primary-400 to-primary-500'
+const ACCENT_BAR_DEFAULT = 'bg-primary-500'
 
 // ── Text (price, icon) ─────────────────────────────────────────────
 const TEXT: Record<Platform, string> = {

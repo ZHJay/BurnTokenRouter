@@ -36,7 +36,7 @@
 
   <button
     type="button"
-    class="btn w-full border border-dashed border-gray-300 text-gray-600 hover:border-gray-400 hover:bg-gray-50 hover:text-gray-700 dark:border-dark-500 dark:text-gray-400 dark:hover:border-dark-400 dark:hover:bg-dark-700/50 dark:hover:text-gray-300"
+    class="btn w-full border border-dashed border-gray-300 text-gray-600 hover:border-gray-400 hover:bg-[var(--surface-hover)] hover:text-gray-700 dark:border-dark-500 dark:text-gray-400 dark:hover:border-dark-400 dark:hover:text-gray-300"
     @click="addRow"
   >
     <svg class="mr-1 inline h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

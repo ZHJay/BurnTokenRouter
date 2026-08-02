@@ -1,5 +1,7 @@
 <template>
-  <div class="bg-gray-50/50 dark:bg-dark-700/30">
+  <!-- 展开区是内容承载层，走不透明的二级表面（.card-inset）：
+       半透明叠在卡片上会让密集数字发糊，且 prefers-reduced-transparency 覆盖不到手搓工具类 -->
+  <div class="card-inset rounded-none">
     <div v-if="loading" class="flex items-center justify-center py-3">
       <LoadingSpinner />
     </div>
@@ -11,24 +13,24 @@
         <tr
           v-for="user in items"
           :key="user.user_id"
-          class="border-t border-gray-100/50 dark:border-dark-700/50"
+          class="breakdown-row"
         >
           <td class="max-w-[120px] truncate py-1 pl-6 text-gray-600 dark:text-gray-300" :title="user.email">
             {{ user.email || `User #${user.user_id}` }}
           </td>
-          <td class="py-1 text-right text-gray-500 dark:text-gray-400">
+          <td class="py-1 text-right tabular text-gray-500 dark:text-gray-400">
             {{ user.requests.toLocaleString() }}
           </td>
-          <td class="py-1 text-right text-gray-500 dark:text-gray-400">
+          <td class="py-1 text-right tabular text-gray-500 dark:text-gray-400">
             {{ formatTokens(user.total_tokens) }}
           </td>
-          <td class="py-1 text-right text-green-600 dark:text-green-400">
+          <td class="py-1 text-right tabular text-green-600 dark:text-green-400">
             ${{ formatCost(user.actual_cost) }}
           </td>
-          <td v-if="showAccountCost" class="py-1 text-right text-orange-500 dark:text-orange-400">
+          <td v-if="showAccountCost" class="py-1 text-right tabular text-orange-500 dark:text-orange-400">
             ${{ formatCost(user.account_cost) }}
           </td>
-          <td class="py-1 pr-1 text-right text-gray-400 dark:text-gray-500">
+          <td class="py-1 pr-1 text-right tabular text-gray-400 dark:text-gray-500">
             ${{ formatCost(user.cost) }}
           </td>
         </tr>
@@ -71,3 +73,10 @@ const formatCost = (value: number | undefined | null): string => {
   return value.toFixed(4)
 }
 </script>
+
+<style scoped>
+/* 行间用发丝线分隔，而不是 1px 实线框 */
+.breakdown-row {
+  box-shadow: inset 0 0.5px 0 var(--hairline);
+}
+</style>

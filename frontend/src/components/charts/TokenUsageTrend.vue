@@ -35,6 +35,16 @@ import {
 import { Line } from 'vue-chartjs'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import type { TrendDataPoint } from '@/types'
+import {
+  chartAreaFill,
+  chartAxisFont,
+  chartChrome,
+  chartHue,
+  chartLegendStyle,
+  chartTooltipStyle,
+  useChartScheme,
+  withAlpha
+} from './chartPalette'
 
 ChartJS.register(
   CategoryScale,
@@ -54,19 +64,32 @@ const props = defineProps<{
   loading?: boolean
 }>()
 
-const isDarkMode = computed(() => {
-  return document.documentElement.classList.contains('dark')
-})
+/**
+ * canvas 读不到 CSS 变量，配色只能由 JS 侧驱动 —— `useChartScheme()` 用
+ * MutationObserver 盯 `<html class="dark">`，主题切换时让下面的 computed 重新求值。
+ * （此前 `isDarkMode` 直接在 computed 里读 DOM，不会建立依赖，切主题后图表停在旧配色。）
+ */
+const scheme = useChartScheme()
 
-const chartColors = computed(() => ({
-  text: isDarkMode.value ? '#e5e7eb' : '#374151',
-  grid: isDarkMode.value ? '#374151' : '#e5e7eb',
-  input: '#3b82f6',
-  output: '#10b981',
-  cacheCreation: '#f59e0b',
-  cacheRead: '#06b6d4',
-  cacheHitRate: '#8b5cf6'
-}))
+/**
+ * 序列色 —— Apple 系统色，light / dark 各一档。
+ *
+ * 一序列一色相：五条线必须相互区分，可读性优先于色彩克制。
+ * 色相角色沿用 chartPalette 的约定：主序列蓝、输出绿、缓存创建橙、缓存读取青、
+ * 比率紫（与右轴同色，读者才知道这条轴属于哪条线）。
+ */
+const chartColors = computed(() => {
+  const chrome = chartChrome(scheme.value)
+  return {
+    grid: chrome.grid,
+    axis: chrome.axis,
+    input: chartHue('blue', scheme.value),
+    output: chartHue('green', scheme.value),
+    cacheCreation: chartHue('orange', scheme.value),
+    cacheRead: chartHue('teal', scheme.value),
+    cacheHitRate: chartHue('purple', scheme.value)
+  }
+})
 
 const chartData = computed(() => {
   if (!props.trendData?.length) return null
@@ -78,33 +101,45 @@ const chartData = computed(() => {
         label: 'Input',
         data: props.trendData.map((d) => d.input_tokens),
         borderColor: chartColors.value.input,
-        backgroundColor: `${chartColors.value.input}20`,
+        backgroundColor: chartAreaFill(chartColors.value.input),
         fill: true,
-        tension: 0.3
+        tension: 0.3,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHitRadius: 10
       },
       {
         label: 'Output',
         data: props.trendData.map((d) => d.output_tokens),
         borderColor: chartColors.value.output,
-        backgroundColor: `${chartColors.value.output}20`,
+        backgroundColor: chartAreaFill(chartColors.value.output),
         fill: true,
-        tension: 0.3
+        tension: 0.3,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHitRadius: 10
       },
       {
         label: 'Cache Creation',
         data: props.trendData.map((d) => d.cache_creation_tokens),
         borderColor: chartColors.value.cacheCreation,
-        backgroundColor: `${chartColors.value.cacheCreation}20`,
+        backgroundColor: chartAreaFill(chartColors.value.cacheCreation),
         fill: true,
-        tension: 0.3
+        tension: 0.3,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHitRadius: 10
       },
       {
         label: 'Cache Read',
         data: props.trendData.map((d) => d.cache_read_tokens),
         borderColor: chartColors.value.cacheRead,
-        backgroundColor: `${chartColors.value.cacheRead}20`,
+        backgroundColor: chartAreaFill(chartColors.value.cacheRead),
         fill: true,
-        tension: 0.3
+        tension: 0.3,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHitRadius: 10
       },
       {
         label: 'Cache Hit Rate',
@@ -113,10 +148,14 @@ const chartData = computed(() => {
           return totalPromptTokens > 0 ? (d.cache_read_tokens / totalPromptTokens) * 100 : 0
         }),
         borderColor: chartColors.value.cacheHitRate,
-        backgroundColor: `${chartColors.value.cacheHitRate}20`,
+        // 虚线不填充，backgroundColor 只用于图例圆点
+        backgroundColor: withAlpha(chartColors.value.cacheHitRate, 0.2),
         borderDash: [5, 5],
         fill: false,
         tension: 0.3,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHitRadius: 10,
         yAxisID: 'yPercent'
       }
     ]
@@ -133,17 +172,10 @@ const lineOptions = computed(() => ({
   plugins: {
     legend: {
       position: 'top' as const,
-      labels: {
-        color: chartColors.value.text,
-        usePointStyle: true,
-        pointStyle: 'circle',
-        padding: 15,
-        font: {
-          size: 11
-        }
-      }
+      labels: chartLegendStyle(scheme.value)
     },
     tooltip: {
+      ...chartTooltipStyle(scheme.value),
       callbacks: {
         label: (context: any) => {
           if (context.dataset.yAxisID === 'yPercent') {
@@ -168,10 +200,8 @@ const lineOptions = computed(() => ({
         color: chartColors.value.grid
       },
       ticks: {
-        color: chartColors.value.text,
-        font: {
-          size: 10
-        }
+        color: chartColors.value.axis,
+        font: chartAxisFont()
       }
     },
     y: {
@@ -179,10 +209,8 @@ const lineOptions = computed(() => ({
         color: chartColors.value.grid
       },
       ticks: {
-        color: chartColors.value.text,
-        font: {
-          size: 10
-        },
+        color: chartColors.value.axis,
+        font: chartAxisFont(),
         callback: (value: string | number) => formatTokens(Number(value))
       }
     },
@@ -194,10 +222,9 @@ const lineOptions = computed(() => ({
         drawOnChartArea: false
       },
       ticks: {
+        // 右轴刻度沿用该序列色，读者才知道这条轴属于哪条线
         color: chartColors.value.cacheHitRate,
-        font: {
-          size: 10
-        },
+        font: chartAxisFont(),
         callback: (value: string | number) => `${value}%`
       }
     }

@@ -272,7 +272,7 @@
     <teleport to="body">
       <transition name="modal">
         <div v-if="showR2Guide" class="fixed inset-0 z-50 flex items-center justify-center p-4" @mousedown.self="showR2Guide = false">
-          <div class="fixed inset-0 bg-black/[0.24] backdrop-blur-xs dark:bg-black/[0.42]" @click="showR2Guide = false"></div>
+          <div class="modal-scrim fixed inset-0" @click="showR2Guide = false"></div>
           <div class="modal-content relative max-w-2xl overflow-y-auto p-6">
             <button type="button" class="absolute right-4 top-4 rounded-full p-1 text-gray-400 transition-transform duration-instant ease-apple-out hover:bg-gray-100 hover:text-gray-600 active:scale-[0.96] dark:hover:bg-dark-700 dark:hover:text-gray-200" @click="showR2Guide = false">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -820,5 +820,24 @@ onBeforeUnmount(() => {
 .modal-enter-from,
 .modal-leave-to {
   opacity: 0;
+}
+
+/* 手写遮罩：变暗保留，模糊须随"降低透明度"偏好关掉，
+   与 style.css 中 .modal-overlay / .dialog-overlay 同步。 */
+.modal-scrim {
+  background: rgb(0 0 0 / 0.24);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+:global(.dark) .modal-scrim {
+  background: rgb(0 0 0 / 0.42);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .modal-scrim {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 </style>

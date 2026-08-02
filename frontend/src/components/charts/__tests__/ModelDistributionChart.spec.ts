@@ -176,8 +176,10 @@ describe('ModelDistributionChart', () => {
       'Others',
     ])
     expect(chartData.datasets[0].data).toEqual([12, 8, 10])
-    expect(chartData.datasets[0].backgroundColor[0]).toBe('#3b82f6')
-    expect(chartData.datasets[0].backgroundColor[2]).toBe('#94a3b8')
+    // Apple 系统色，浅色档（jsdom 下 <html> 无 .dark）：首个类目取 --sys-blue，
+    // 「其他」取中性灰，与真实类目区分。
+    expect(chartData.datasets[0].backgroundColor[0]).toBe('#007aff')
+    expect(chartData.datasets[0].backgroundColor[2]).toBe('#8e8e93')
     expect(chartData.datasets[0].backgroundColor[2]).not.toBe(chartData.datasets[0].backgroundColor[0])
 
     const rows = wrapper.findAll('tbody tr')

@@ -386,7 +386,9 @@
               <col class="w-[10%]" />
               <col class="w-[26%]" />
             </colgroup>
-            <thead class="bg-gray-50 dark:bg-dark-800/80">
+            <!-- 这张表在 BaseDialog（thin 玻璃）内部：表头深色态原为 dark-800/80，
+                 半透明叠半透明。改走不透明的 --surface-secondary，两个主题各自取值。 -->
+            <thead class="bg-[var(--surface-secondary)]">
               <tr>
                 <th class="px-3 py-3 text-center text-sm font-medium text-gray-500 dark:text-gray-400">Custom ID</th>
                 <th class="px-3 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">Prompt</th>
@@ -1990,9 +1992,11 @@ function isRecoveredOriginalFailure(item: BatchImageDetailItem) {
 
 function detailItemRowClass(item: BatchImageDetailItem) {
   if (isRecoveredOriginalFailure(item)) {
-    return 'bg-gray-50/80 text-gray-400 hover:bg-gray-100/80 dark:bg-dark-900/60 dark:text-gray-500 dark:hover:bg-dark-800/70'
+    // 本表位于 BaseDialog（thin 玻璃）内，行底色原为半透明，与弹窗材质相叠。
+    // 常驻的"已恢复失败项"底色改为不透明 token，hover 仍走系统的水洗层。
+    return 'bg-[var(--surface-secondary)] text-gray-400 hover:bg-[var(--surface-pressed)] dark:text-gray-500'
   }
-  return 'hover:bg-gray-50/70 dark:hover:bg-dark-800/60'
+  return 'hover:bg-[var(--surface-hover)]'
 }
 
 function previewCacheSupported() {

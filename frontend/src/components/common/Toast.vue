@@ -64,7 +64,7 @@
           </div>
 
           <!-- Progress bar -->
-          <div v-if="toast.duration" class="h-1 bg-gray-200/60 dark:bg-dark-700/60">
+          <div v-if="toast.duration" class="h-1 bg-gray-200 dark:bg-dark-700">
             <div
               :class="['h-full toast-progress', getProgressBarColor(toast.type)]"
               :style="{ animationDuration: `${toast.duration}ms` }"

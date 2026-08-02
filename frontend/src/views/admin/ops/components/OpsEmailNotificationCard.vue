@@ -208,7 +208,7 @@ onMounted(() => {
     </div>
 
     <div v-else class="space-y-6">
-      <div class="rounded-2xl bg-gray-50 p-4 dark:bg-dark-700/50">
+      <div class="card-inset p-4">
         <h4 class="mb-2 text-sm font-semibold text-gray-900 dark:text-white">{{ t('admin.ops.email.alertTitle') }}</h4>
         <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
           <div class="text-xs text-gray-600 dark:text-gray-300">
@@ -219,7 +219,7 @@ onMounted(() => {
           </div>
           <div class="text-xs text-gray-600 dark:text-gray-300">
             {{ t('admin.ops.email.recipients') }}:
-            <span class="ml-1 font-medium text-gray-900 dark:text-white">{{ config.alert.recipients.length }}</span>
+            <span class="tabular ml-1 font-medium text-gray-900 dark:text-white">{{ config.alert.recipients.length }}</span>
           </div>
           <div class="text-xs text-gray-600 dark:text-gray-300">
             {{ t('admin.ops.email.minSeverity') }}:
@@ -229,12 +229,12 @@ onMounted(() => {
           </div>
           <div class="text-xs text-gray-600 dark:text-gray-300">
             {{ t('admin.ops.email.rateLimitPerHour') }}:
-            <span class="ml-1 font-medium text-gray-900 dark:text-white">{{ config.alert.rate_limit_per_hour }}</span>
+            <span class="tabular ml-1 font-medium text-gray-900 dark:text-white">{{ config.alert.rate_limit_per_hour }}</span>
           </div>
         </div>
       </div>
 
-      <div class="rounded-2xl bg-gray-50 p-4 dark:bg-dark-700/50">
+      <div class="card-inset p-4">
         <h4 class="mb-2 text-sm font-semibold text-gray-900 dark:text-white">{{ t('admin.ops.email.reportTitle') }}</h4>
         <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
           <div class="text-xs text-gray-600 dark:text-gray-300">
@@ -245,7 +245,7 @@ onMounted(() => {
           </div>
           <div class="text-xs text-gray-600 dark:text-gray-300">
             {{ t('admin.ops.email.recipients') }}:
-            <span class="ml-1 font-medium text-gray-900 dark:text-white">{{ config.report.recipients.length }}</span>
+            <span class="tabular ml-1 font-medium text-gray-900 dark:text-white">{{ config.report.recipients.length }}</span>
           </div>
         </div>
       </div>
@@ -263,7 +263,7 @@ onMounted(() => {
           <li v-for="msg in editorValidation.errors" :key="msg">{{ msg }}</li>
         </ul>
       </div>
-      <div class="rounded-2xl bg-gray-50 p-4 dark:bg-dark-700/50">
+      <div class="card-inset p-4">
         <h4 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">{{ t('admin.ops.email.alertTitle') }}</h4>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
@@ -333,7 +333,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <div class="rounded-2xl bg-gray-50 p-4 dark:bg-dark-700/50">
+      <div class="card-inset p-4">
         <h4 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">{{ t('admin.ops.email.reportTitle') }}</h4>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>

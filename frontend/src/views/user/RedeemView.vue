@@ -6,7 +6,7 @@
         <!-- Apple 控件是实色：hero 用单一系统蓝，不用渐变 -->
         <div class="bg-primary-600 px-6 py-8 text-center dark:bg-primary-500">
           <div
-            class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20"
+            class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-400"
           >
             <Icon name="creditCard" size="xl" class="text-white" />
           </div>
