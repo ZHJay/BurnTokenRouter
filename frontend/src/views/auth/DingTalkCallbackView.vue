@@ -2,10 +2,12 @@
   <AuthLayout>
     <div class="space-y-6">
       <div class="text-center">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+        <h2
+          class="on-glass text-[22px] font-bold leading-[1.18] tracking-[-0.022em] text-gray-900 dark:text-white"
+        >
           {{ t('auth.dingtalk.callbackTitle') }}
         </h2>
-        <p class="mt-2 text-sm text-gray-500 dark:text-dark-400">
+        <p class="mt-1.5 text-[13px] leading-[1.45] text-gray-500 dark:text-dark-400">
           {{ isProcessing ? t('auth.dingtalk.callbackProcessing') : t('auth.dingtalk.callbackHint') }}
         </p>
       </div>
@@ -24,7 +26,7 @@
         >
           <div
             v-if="adoptionRequired && (suggestedDisplayName || suggestedAvatarUrl)"
-            class="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-dark-600 dark:bg-dark-800/60"
+            class="card-inset !rounded-xl p-4"
           >
             <div class="space-y-3">
               <div class="space-y-1">
@@ -38,9 +40,10 @@
 
               <label
                 v-if="suggestedDisplayName"
-                class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 text-sm dark:border-dark-600 dark:bg-dark-900/50"
+                class="flex cursor-pointer items-start gap-3 rounded-lg p-3 text-[13px] transition duration-fast ease-apple-out active:scale-[0.98]"
+                style="background: var(--surface); box-shadow: inset 0 0 0 0.5px var(--hairline)"
               >
-                <input v-model="adoptDisplayName" type="checkbox" class="mt-1 h-4 w-4" />
+                <input v-model="adoptDisplayName" type="checkbox" class="mt-1 h-4 w-4 cursor-pointer" style="accent-color: var(--accent)" />
                 <span class="space-y-1">
                   <span class="block font-medium text-gray-900 dark:text-white">
                     {{ t('auth.oauthFlow.useDisplayName') }}
@@ -53,13 +56,15 @@
 
               <label
                 v-if="suggestedAvatarUrl"
-                class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 text-sm dark:border-dark-600 dark:bg-dark-900/50"
+                class="flex cursor-pointer items-start gap-3 rounded-lg p-3 text-[13px] transition duration-fast ease-apple-out active:scale-[0.98]"
+                style="background: var(--surface); box-shadow: inset 0 0 0 0.5px var(--hairline)"
               >
-                <input v-model="adoptAvatar" type="checkbox" class="mt-1 h-4 w-4" />
+                <input v-model="adoptAvatar" type="checkbox" class="mt-1 h-4 w-4 cursor-pointer" style="accent-color: var(--accent)" />
                 <img
                   :src="suggestedAvatarUrl"
                   :alt="t('auth.oauthFlow.avatarAlt', { providerName })"
-                  class="h-10 w-10 rounded-full border border-gray-200 object-cover dark:border-dark-600"
+                  class="h-10 w-10 rounded-full object-cover"
+                  style="box-shadow: inset 0 0 0 0.5px var(--hairline)"
                 />
                 <span class="space-y-1">
                   <span class="block font-medium text-gray-900 dark:text-white">
@@ -81,14 +86,14 @@
               <input
                 v-model="invitationCode"
                 type="text"
-                class="input w-full"
+                class="input h-11 w-full"
                 :placeholder="t('auth.invitationCodePlaceholder')"
                 :disabled="isSubmitting"
                 @keyup.enter="handleSubmitInvitation"
               />
             </div>
             <button
-              class="btn btn-primary w-full"
+              class="btn btn-primary btn-lg w-full"
               :disabled="isSubmitting || !invitationCode.trim()"
               @click="handleSubmitInvitation"
             >
@@ -100,13 +105,13 @@
             <p class="text-sm text-gray-700 dark:text-gray-300">
               {{ t('auth.oauthFlow.reviewProfileBeforeContinue', { providerName }) }}
             </p>
-            <button class="btn btn-primary w-full" :disabled="isSubmitting" @click="handleContinueLogin">
+            <button class="btn btn-primary btn-lg w-full" :disabled="isSubmitting" @click="handleContinueLogin">
               {{ isSubmitting ? t('common.processing') : t('auth.continue') }}
             </button>
           </template>
 
           <template v-else-if="needsChooser">
-            <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-dark-600 dark:bg-dark-800/60">
+            <div class="card-inset !rounded-xl p-4">
               <div class="space-y-4">
                 <div class="space-y-1">
                   <p class="text-sm font-medium text-gray-900 dark:text-white">
@@ -130,7 +135,7 @@
                     {{ t('auth.oauthFlow.bindExistingAccount') }}
                   </button>
                   <button
-                    class="btn btn-primary w-full"
+                    class="btn btn-primary btn-lg w-full"
                     :disabled="isSubmitting"
                     @click="switchToCreateAccountMode"
                   >
@@ -164,7 +169,7 @@
                 v-model="bindLoginEmail"
                 data-testid="dingtalk-bind-login-email"
                 type="email"
-                class="input w-full"
+                class="input h-11 w-full"
                 :placeholder="t('auth.emailPlaceholder')"
                 :disabled="isSubmitting"
                 @keyup.enter="handleBindLogin"
@@ -173,14 +178,14 @@
                 v-model="bindLoginPassword"
                 data-testid="dingtalk-bind-login-password"
                 type="password"
-                class="input w-full"
+                class="input h-11 w-full"
                 :placeholder="t('auth.passwordPlaceholder')"
                 :disabled="isSubmitting"
                 @keyup.enter="handleBindLogin"
               />
               <button
                 data-testid="dingtalk-bind-login-submit"
-                class="btn btn-primary w-full"
+                class="btn btn-primary btn-lg w-full"
                 :disabled="isSubmitting || !bindLoginEmail.trim() || !bindLoginPassword"
                 @click="handleBindLogin"
               >
@@ -213,14 +218,14 @@
                 type="text"
                 inputmode="numeric"
                 maxlength="6"
-                class="input w-full"
+                class="input h-11 w-full"
                 placeholder="123456"
                 :disabled="isSubmitting"
                 @keyup.enter="handleSubmitTotpChallenge"
               />
               <button
                 data-testid="dingtalk-bind-login-totp-submit"
-                class="btn btn-primary w-full"
+                class="btn btn-primary btn-lg w-full"
                 :disabled="isSubmitting || totpCode.trim().length !== 6"
                 @click="handleSubmitTotpChallenge"
               >

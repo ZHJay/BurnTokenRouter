@@ -3,7 +3,7 @@
     <button
       @click="toggleDropdown"
       :disabled="switching"
-      class="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-700"
+      class="btn btn-ghost btn-sm gap-1.5"
       :title="currentLocale?.name"
     >
       <span class="text-base">{{ currentLocale?.flag }}</span>
@@ -11,7 +11,7 @@
       <Icon
         name="chevronDown"
         size="xs"
-        class="text-gray-400 transition-transform duration-200"
+        class="text-gray-400 transition-transform duration-fast ease-apple-out"
         :class="{ 'rotate-180': isOpen }"
       />
     </button>
@@ -19,22 +19,24 @@
     <transition name="dropdown">
       <div
         v-if="isOpen"
-        class="absolute right-0 z-50 mt-1 w-32 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-dark-700 dark:bg-dark-800"
+        class="glass-thin glass-edge absolute right-0 z-50 mt-1.5 w-36 rounded-xl p-1.5"
       >
         <button
           v-for="locale in availableLocales"
           :key="locale.code"
           :disabled="switching"
           @click="selectLocale(locale.code)"
-          class="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-dark-700"
-          :class="{
-            'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400':
-              locale.code === currentLocaleCode
-          }"
+          class="dropdown-item w-full active:scale-[0.98]"
+          :class="{ 'is-selected': locale.code === currentLocaleCode }"
         >
           <span class="text-base">{{ locale.flag }}</span>
           <span>{{ locale.name }}</span>
-          <Icon v-if="locale.code === currentLocaleCode" name="check" size="sm" class="ml-auto text-primary-500" />
+          <Icon
+            v-if="locale.code === currentLocaleCode"
+            name="check"
+            size="sm"
+            class="ml-auto"
+          />
         </button>
       </div>
     </transition>
@@ -90,14 +92,28 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* 选中项：accent 微染底，hover 时交回 .dropdown-item 的满色高亮 */
+.dropdown-item.is-selected {
+  background-color: var(--surface-selected);
+  color: var(--accent);
+}
+
+.dropdown-item.is-selected:hover {
+  background-color: var(--accent);
+  color: #fff;
+}
+
 .dropdown-enter-active,
 .dropdown-leave-active {
-  transition: all 0.15s ease;
+  transition:
+    opacity 240ms var(--ease-out),
+    transform 240ms var(--spring);
+  transform-origin: top right;
 }
 
 .dropdown-enter-from,
 .dropdown-leave-to {
   opacity: 0;
-  transform: scale(0.95) translateY(-4px);
+  transform: scale(0.94) translateY(-4px);
 }
 </style>

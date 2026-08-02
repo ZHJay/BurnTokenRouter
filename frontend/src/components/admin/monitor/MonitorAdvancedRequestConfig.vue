@@ -27,7 +27,7 @@
           />
           <button
             type="button"
-            class="flex-none rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+            class="flex-none rounded-full p-1 text-gray-400 transition-[background-color,color,transform] duration-fast ease-apple-out hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[rgb(255_59_48_/_0.24)] active:scale-[0.96] dark:hover:bg-red-500/10 dark:hover:text-red-400"
             :title="t('common.delete')"
             @click="removeRow(i)"
           >
@@ -38,7 +38,7 @@
         </div>
         <button
           type="button"
-          class="inline-flex items-center gap-1 rounded border border-dashed border-gray-300 px-2 py-1 text-xs text-gray-500 hover:border-primary-400 hover:text-primary-600 dark:border-dark-600 dark:text-gray-400 dark:hover:border-primary-500 dark:hover:text-primary-400"
+          class="inline-flex items-center gap-1 rounded-full border border-dashed border-gray-300 px-2.5 py-1 text-xs text-gray-500 transition-[border-color,color,transform] duration-fast ease-apple-out hover:border-primary-400 hover:text-primary-600 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)] active:scale-[0.96] dark:border-dark-600 dark:text-gray-400 dark:hover:border-primary-500 dark:hover:text-primary-400"
           @click="addRow"
         >
           <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,7 +61,7 @@
           v-for="opt in bodyModeOptions"
           :key="opt.value"
           type="button"
-          class="rounded-lg border-2 px-3 py-2 text-sm font-medium transition-colors"
+          class="rounded-lg px-3 py-2 text-sm font-medium transition-[background-color,box-shadow,color,transform] duration-fast ease-apple-out focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)] active:scale-[0.96]"
           :class="bodyModeButtonClass(opt.value)"
           @click="updateBodyMode(opt.value)"
         >
@@ -79,7 +79,7 @@
         <label class="input-label !mb-0">{{ t('admin.channelMonitor.advanced.bodyJson') }}</label>
         <button
           type="button"
-          class="text-xs text-primary-600 hover:underline disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline dark:text-primary-400"
+          class="text-xs text-primary-600 transition-transform duration-instant ease-apple-out hover:underline active:scale-[0.96] disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline disabled:active:scale-100 dark:text-primary-400"
           :disabled="!bodyText.trim()"
           @click="formatBody"
         >
@@ -284,9 +284,9 @@ const bodyModeOptions = computed<{ value: BodyOverrideMode; label: string }[]>((
 function bodyModeButtonClass(mode: BodyOverrideMode): string {
   const active = props.bodyOverrideMode === mode
   if (active) {
-    return 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-500/15 dark:text-primary-300 dark:border-primary-400'
+    return 'bg-[var(--accent-tint)] text-primary-700 shadow-[inset_0_0_0_1.5px_var(--accent)] dark:text-primary-300'
   }
-  return 'border-gray-200 bg-white text-gray-600 hover:border-primary-300 dark:border-dark-700 dark:bg-dark-800 dark:text-gray-400'
+  return 'bg-[var(--surface-secondary)] text-gray-600 shadow-[inset_0_0_0_0.5px_var(--hairline)] hover:bg-[var(--surface-hover)] dark:text-gray-400'
 }
 
 const bodyModeHint = computed(() => {

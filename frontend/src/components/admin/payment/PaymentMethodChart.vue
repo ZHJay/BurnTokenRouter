@@ -19,19 +19,19 @@
             </span>
           </div>
           <div class="space-y-1 text-right">
-            <span v-for="[currency, amount] in sortedAmounts(method.amount)" :key="currency" class="block text-sm font-medium text-gray-900 dark:text-white">
+            <span v-for="[currency, amount] in sortedAmounts(method.amount)" :key="currency" class="tabular block text-sm font-semibold text-gray-900 dark:text-white">
               {{ formatMoney(currency, amount) }}
             </span>
-            <span class="ml-2 text-xs text-gray-500 dark:text-gray-400">
+            <span class="tabular ml-2 text-xs text-gray-500 dark:text-gray-400">
               ({{ method.count }})
             </span>
           </div>
         </div>
         <div v-for="[currency, amount] in sortedAmounts(method.amount)" :key="currency" class="flex items-center gap-2">
           <span class="w-10 text-xs text-gray-500 dark:text-gray-400">{{ currency }}</span>
-          <div class="h-2 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-dark-700">
+          <div class="progress h-2 flex-1">
             <div
-              :class="['h-full rounded-full transition-all', barColorMap[method.type] || 'bg-gray-400']"
+              :class="['h-full rounded-full transition-[width] duration-base ease-spring', barColorMap[method.type] || 'bg-gray-400']"
               :style="{ width: barWidth(currency, amount) + '%' }"
             ></div>
           </div>

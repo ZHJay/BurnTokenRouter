@@ -10,11 +10,11 @@
         @change="noop"
       />
 
-      <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+      <div class="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700 ring-1 ring-inset ring-amber-200 dark:bg-amber-500/10 dark:text-amber-200 dark:ring-amber-500/30">
         {{ t('admin.usage.cleanup.warning') }}
       </div>
 
-      <div class="rounded-xl border border-gray-200 p-4 dark:border-dark-700">
+      <div class="card-inset rounded-xl p-4">
         <div class="flex items-center justify-between">
           <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-200">
             {{ t('admin.usage.cleanup.recentTasks') }}
@@ -35,30 +35,30 @@
             <div
               v-for="task in tasks"
               :key="task.id"
-              class="flex flex-col gap-2 rounded-lg border border-gray-100 px-3 py-2 text-sm text-gray-600 dark:border-dark-700 dark:text-gray-300"
+              class="flex flex-col gap-2 rounded-lg px-3 py-2 text-sm text-gray-600 shadow-[inset_0_0_0_0.5px_var(--hairline)] dark:text-gray-300"
             >
               <div class="flex flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-2">
-                  <span :class="statusClass(task.status)" class="rounded-full px-2 py-0.5 text-xs font-semibold">
+                  <span :class="statusClass(task.status)" class="badge">
                     {{ statusLabel(task.status) }}
                   </span>
-                  <span class="text-xs text-gray-400">#{{ task.id }}</span>
+                  <span class="tabular text-xs text-gray-400">#{{ task.id }}</span>
                   <button
                     v-if="canCancel(task)"
                     type="button"
-                    class="btn btn-ghost btn-xs text-rose-600 hover:text-rose-700 dark:text-rose-300"
+                    class="btn btn-ghost btn-sm text-rose-600 hover:text-rose-700 dark:text-rose-300"
                     @click="openCancelConfirm(task)"
                   >
                     {{ t('admin.usage.cleanup.cancel') }}
                   </button>
                 </div>
-                <div class="text-xs text-gray-400">
+                <div class="tabular text-xs text-gray-400">
                   {{ formatDateTime(task.created_at) }}
                 </div>
               </div>
               <div class="flex flex-wrap items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                <span>{{ t('admin.usage.cleanup.range') }}: {{ formatRange(task) }}</span>
-                <span>{{ t('admin.usage.cleanup.deletedRows') }}: {{ task.deleted_rows.toLocaleString() }}</span>
+                <span class="tabular">{{ t('admin.usage.cleanup.range') }}: {{ formatRange(task) }}</span>
+                <span class="tabular">{{ t('admin.usage.cleanup.deletedRows') }}: {{ task.deleted_rows.toLocaleString() }}</span>
               </div>
               <div v-if="task.error_message" class="text-xs text-rose-500">
                 {{ task.error_message }}

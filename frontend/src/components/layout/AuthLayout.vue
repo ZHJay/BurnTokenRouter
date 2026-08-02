@@ -17,7 +17,7 @@
         style="background: radial-gradient(circle, rgb(88 86 214 / 0.24), transparent 68%)"
       ></div>
       <div
-        class="absolute left-2/5 top-1/3 h-96 w-96 rounded-full blur-3xl"
+        class="absolute left-[40%] top-1/3 h-96 w-96 rounded-full blur-3xl"
         style="background: radial-gradient(circle, rgb(48 176 199 / 0.18), transparent 70%)"
       ></div>
     </div>

@@ -35,11 +35,11 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label class="input-label">{{ t('admin.users.columns.balance') }}</label>
-          <input v-model="form.balance" type="number" step="any" class="input" />
+          <input v-model="form.balance" type="number" step="any" class="input tabular" />
         </div>
         <div>
           <label class="input-label">{{ t('admin.users.columns.concurrency') }}</label>
-          <input v-model.number="form.concurrency" type="number" class="input" />
+          <input v-model.number="form.concurrency" type="number" class="input tabular" />
         </div>
       </div>
       <div>
@@ -49,7 +49,7 @@
           type="number"
           min="0"
           step="1"
-          class="input"
+          class="input tabular"
           :placeholder="t('admin.users.form.rpmLimitPlaceholder')"
         />
         <p class="input-hint">{{ t('admin.users.form.rpmLimitHint') }}</p>

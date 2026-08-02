@@ -131,7 +131,7 @@ const dailyFixedHint = computed(() =>
 </script>
 
 <template>
-  <div class="rounded-lg border border-gray-200 dark:border-dark-600">
+  <div class="card-inset">
       <!-- Header: toggle + collapse -->
       <div class="flex items-center justify-between p-4" :class="{ 'pb-0': localEnabled && !collapsed }">
         <div class="flex items-center gap-2 flex-1 cursor-pointer" @click="localEnabled && (collapsed = !collapsed)">
@@ -149,16 +149,11 @@ const dailyFixedHint = computed(() =>
           type="button"
           @click="localEnabled = !localEnabled"
           :class="[
-            'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-            localEnabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600'
+            'switch flex-shrink-0 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]',
+            localEnabled && 'switch-active'
           ]"
         >
-          <span
-            :class="[
-              'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-              localEnabled ? 'translate-x-5' : 'translate-x-0'
-            ]"
-          />
+          <span class="switch-thumb pointer-events-none" />
         </button>
       </div>
 

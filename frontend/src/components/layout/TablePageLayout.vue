@@ -47,8 +47,10 @@ onUnmounted(() => {
 /* 桌面端：Flexbox 布局 */
 .table-page-layout {
   @apply flex flex-col gap-6;
-  /* Header is fixed now, so AppLayout reserves it with pt-[5rem]; subtract that
-     plus the bottom padding rather than the old header + symmetric padding. */
+  /* Matches what AppLayout reserves at the lg breakpoint: pt-[5rem] + pb-8.
+     Below lg the .mobile-mode branch releases the fixed height entirely, since
+     AppLayout's padding differs there (88px base / 104px at md) and a fixed
+     height with no overflow rule would clip long tables. */
   height: calc(100vh - 5rem - 2rem);
 }
 
@@ -62,7 +64,15 @@ onUnmounted(() => {
 
 /* 表格滚动容器 - 增强版表体滚动方案 */
 .table-scroll-container {
-  @apply card flex h-full flex-col overflow-hidden;
+  /* Cannot `@apply card` here: Vite hands each SFC <style> block to PostCSS as
+     its own entry, so Tailwind never sees style.css's @layer components and the
+     build fails. Inline the .card properties instead. */
+  @apply flex h-full flex-col overflow-hidden;
+  background-color: var(--surface);
+  border-radius: 12px;
+  box-shadow:
+    inset 0 0 0 0.5px var(--hairline),
+    var(--shadow-2);
 }
 
 .table-scroll-container :deep(.table-wrapper) {
@@ -113,6 +123,12 @@ onUnmounted(() => {
 
 .table-page-layout.mobile-mode .layout-section-scrollable {
   @apply flex-none min-h-fit;
+}
+
+/* Below lg the children go flex-none, so a fixed parent height with no overflow
+   rule would clip long tables. Release it and let the page scroll. */
+.table-page-layout.mobile-mode {
+  height: auto;
 }
 
 .table-page-layout.mobile-mode .table-scroll-container :deep(table) {

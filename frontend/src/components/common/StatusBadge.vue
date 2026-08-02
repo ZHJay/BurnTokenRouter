@@ -2,7 +2,7 @@
   <div class="flex items-center gap-1.5">
     <span
       :class="[
-        'inline-block h-2 w-2 rounded-full',
+        'inline-block h-2 w-2 flex-none rounded-full',
         variantClass
       ]"
     ></span>
@@ -28,7 +28,7 @@ const variantClass = computed(() => {
     case 'disabled':
     case 'inactive':
     case 'warning':
-      return 'bg-yellow-500'
+      return 'bg-orange-500'
     case 'error':
     case 'danger':
       return 'bg-red-500'

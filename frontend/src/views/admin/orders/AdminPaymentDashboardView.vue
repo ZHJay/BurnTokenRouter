@@ -4,15 +4,15 @@
       <!-- Header with Day Switcher -->
       <div class="flex items-center justify-end">
         <div class="flex items-center gap-2">
-          <div class="flex rounded-lg border border-gray-200 dark:border-dark-600">
+          <!-- Apple 分段控件：天数切换 -->
+          <div class="tabs">
             <button
               v-for="d in DAYS_OPTIONS"
               :key="d"
               type="button"
-              class="px-3 py-1.5 text-xs font-medium transition-colors first:rounded-l-lg last:rounded-r-lg"
-              :class="days === d
-                ? 'bg-primary-600 text-white'
-                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-700'"
+              class="tab tabular px-3 py-1.5 text-xs"
+              :class="days === d ? 'tab-active' : ''"
+              :aria-selected="days === d"
               @click="days = d"
             >
               {{ d }}{{ t('payment.admin.daySuffix') }}
@@ -42,8 +42,8 @@
                   <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('payment.methods.' + method.type, method.type) }}</span>
                 </div>
                 <div class="space-y-1 text-right">
-                  <span v-for="[currency, amount] in sortedAmounts(method.amount)" :key="currency" class="block text-sm font-medium text-gray-900 dark:text-white">{{ formatMoney(currency, amount) }}</span>
-                  <span class="ml-2 text-xs text-gray-500 dark:text-gray-400">({{ method.count }})</span>
+                  <span v-for="[currency, amount] in sortedAmounts(method.amount)" :key="currency" class="tabular block text-sm font-medium text-gray-900 dark:text-white">{{ formatMoney(currency, amount) }}</span>
+                  <span class="tabular ml-2 text-xs text-gray-500 dark:text-gray-400">({{ method.count }})</span>
                 </div>
               </div>
             </div>
@@ -54,12 +54,12 @@
             <div v-else class="space-y-2">
               <div v-for="[currency, users] in sortedTopUsers(stats.top_users)" :key="currency" class="space-y-2">
                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">{{ currency }}</p>
-                <div v-for="(user, idx) in users" :key="user.user_id" class="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-gray-50 dark:hover:bg-dark-700">
+                <div v-for="(user, idx) in users" :key="user.user_id" class="flex items-center justify-between rounded-lg px-3 py-2 transition-transform duration-instant ease-apple-out hover:bg-gray-50 active:scale-[0.98] dark:hover:bg-dark-700">
                   <div class="flex items-center gap-3">
-                    <span :class="['flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold', rankClass(idx)]">{{ idx + 1 }}</span>
+                    <span :class="['tabular flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold', rankClass(idx)]">{{ idx + 1 }}</span>
                     <span class="text-sm text-gray-700 dark:text-gray-300">{{ user.email }}</span>
                   </div>
-                  <span class="text-sm font-medium text-gray-900 dark:text-white">{{ formatMoney(currency, user.amount) }}</span>
+                  <span class="tabular text-sm font-medium text-gray-900 dark:text-white">{{ formatMoney(currency, user.amount) }}</span>
                 </div>
               </div>
             </div>

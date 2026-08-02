@@ -12,7 +12,8 @@
             class="cursor-pointer"
           >
             <input v-model="preset" type="radio" name="prompt-delete-range" :value="option.id" class="peer sr-only" :data-test="`range-preset-${option.id}`" @change="criteriaChanged" />
-            <span class="inline-flex items-center rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors peer-checked:border-red-500 peer-checked:bg-red-50 peer-checked:text-red-700 peer-focus-visible:ring-2 peer-focus-visible:ring-red-500/30 dark:border-dark-600 dark:text-dark-300 dark:peer-checked:border-red-500 dark:peer-checked:bg-red-950/40 dark:peer-checked:text-red-300">
+            <!-- 危险区选中态保持红色语义：这是删除范围，不是普通筛选 -->
+            <span class="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium text-gray-600 shadow-[inset_0_0_0_0.5px_var(--hairline)] transition-colors duration-fast ease-apple-out peer-checked:bg-red-50 peer-checked:text-red-700 peer-checked:shadow-[inset_0_0_0_1px_theme(colors.red.500)] peer-focus-visible:ring-2 peer-focus-visible:ring-red-500/30 dark:text-dark-300 dark:peer-checked:bg-red-950/40 dark:peer-checked:text-red-300">
               {{ t(`admin.promptAudit.events.timePresets.${option.id}`) }}
             </span>
           </label>
@@ -27,7 +28,7 @@
             <span>{{ t('admin.promptAudit.events.endAt') }}</span>
             <input v-model="local.end_at" type="datetime-local" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.endAt')" @change="criteriaChanged" />
           </label>
-          <p v-if="!canPreview" class="text-xs text-red-600 dark:text-red-400 sm:col-span-2">{{ t('admin.promptAudit.events.customRangeInvalid') }}</p>
+          <p v-if="!canPreview" class="text-xs sm:col-span-2" :style="{ color: 'var(--sys-red)' }">{{ t('admin.promptAudit.events.customRangeInvalid') }}</p>
         </div>
       </fieldset>
 
@@ -53,7 +54,7 @@
         </label>
       </div>
 
-      <details class="rounded-xl border border-gray-200 px-4 py-3 dark:border-dark-700/60" data-test="more-conditions">
+      <details class="card-inset rounded-xl px-4 py-3" data-test="more-conditions">
         <summary class="cursor-pointer select-none text-xs font-medium text-gray-600 dark:text-dark-200">{{ t('admin.promptAudit.events.moreConditions') }}</summary>
         <div class="mt-3 grid gap-3 sm:grid-cols-2">
           <label class="text-xs text-gray-600 dark:text-dark-200">
@@ -75,17 +76,25 @@
         </div>
       </details>
 
-      <div v-if="preview" class="rounded-xl border border-red-200 bg-red-50/60 px-4 py-3 dark:border-red-900/60 dark:bg-red-950/20" data-test="delete-preview-result">
-        <p class="text-sm font-semibold text-red-700 dark:text-red-300">{{ t('admin.promptAudit.events.filterDeleteCount', { count: preview.matched_count }) }}</p>
+      <div
+        v-if="preview"
+        class="rounded-xl px-4 py-3"
+        :style="{ background: 'rgb(255 59 48 / 0.1)', boxShadow: 'inset 0 0 0 0.5px var(--hairline)' }"
+        data-test="delete-preview-result"
+      >
+        <p class="tabular text-sm font-semibold" :style="{ color: 'var(--sys-red)' }">{{ t('admin.promptAudit.events.filterDeleteCount', { count: preview.matched_count }) }}</p>
         <dl class="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs text-gray-600 dark:text-dark-300">
           <dt>{{ t('admin.promptAudit.events.snapshotMax') }}</dt>
-          <dd>{{ preview.snapshot_max_id }}</dd>
+          <dd class="tabular">{{ preview.snapshot_max_id }}</dd>
           <dt>Filter SHA-256</dt>
-          <dd class="break-all font-mono">{{ preview.filter_hash }}</dd>
+          <dd class="tabular break-all font-mono">{{ preview.filter_hash }}</dd>
           <dt>{{ t('admin.promptAudit.events.expiresAt') }}</dt>
-          <dd>{{ formatDate(preview.expires_at) }}</dd>
+          <dd class="tabular">{{ formatDate(preview.expires_at) }}</dd>
         </dl>
-        <p class="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">{{ t('admin.promptAudit.events.filterDeleteWarning') }}</p>
+        <p
+          class="mt-2 rounded-lg px-3 py-2 text-xs"
+          :style="{ background: 'rgb(255 149 0 / 0.14)', color: 'var(--sys-orange)' }"
+        >{{ t('admin.promptAudit.events.filterDeleteWarning') }}</p>
       </div>
       <p v-else class="rounded-xl border border-dashed border-gray-300 px-4 py-3 text-xs text-gray-500 dark:border-dark-600 dark:text-dark-400" data-test="delete-preview-empty">
         {{ t('admin.promptAudit.events.filterDeleteNeedPreview') }}

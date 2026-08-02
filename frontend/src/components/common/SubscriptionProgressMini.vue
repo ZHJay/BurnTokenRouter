@@ -3,7 +3,7 @@
     <!-- Mini Progress Display -->
     <button
       @click="toggleTooltip"
-      class="flex cursor-pointer items-center gap-2 rounded-xl bg-purple-50 px-3 py-1.5 transition-colors hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/30"
+      class="sub-mini-trigger flex cursor-pointer items-center gap-2 rounded-full bg-purple-50 px-3 py-1.5 hover:bg-purple-100 active:scale-[0.96] dark:bg-purple-900/20 dark:hover:bg-purple-900/30"
       :title="t('subscriptionProgress.viewDetails')"
     >
       <Icon name="creditCard" size="sm" class="text-purple-600 dark:text-purple-400" />
@@ -17,7 +17,7 @@
             :class="getProgressDotClass(sub)"
           ></div>
         </div>
-        <span class="text-xs font-medium text-purple-700 dark:text-purple-300">
+        <span class="tabular text-xs font-semibold text-purple-700 dark:text-purple-300">
           {{ activeSubscriptions.length }}
         </span>
       </div>
@@ -27,13 +27,13 @@
     <transition name="dropdown">
       <div
         v-if="tooltipOpen"
-        class="absolute right-0 z-50 mt-2 w-[340px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-dark-700 dark:bg-dark-800"
+        class="glass-thin glass-edge absolute right-0 z-50 mt-2 w-[340px] overflow-hidden rounded-xl"
       >
-        <div class="border-b border-gray-100 p-3 dark:border-dark-700">
-          <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+        <div class="hairline-bottom p-3">
+          <h3 class="text-sm font-semibold tracking-[-0.01em] text-gray-900 dark:text-white">
             {{ t('subscriptionProgress.title') }}
           </h3>
-          <p class="mt-0.5 text-xs text-gray-500 dark:text-dark-400">
+          <p class="tabular mt-0.5 text-xs text-gray-500 dark:text-dark-400">
             {{ t('subscriptionProgress.activeCount', { count: activeSubscriptions.length }) }}
           </p>
         </div>
@@ -42,7 +42,7 @@
           <div
             v-for="subscription in displaySubscriptions"
             :key="subscription.id"
-            class="border-b border-gray-50 p-3 last:border-b-0 dark:border-dark-700/50"
+            class="hairline-bottom p-3 last:shadow-none"
           >
             <div class="mb-2 flex items-center justify-between">
               <span class="text-sm font-medium text-gray-900 dark:text-white">
@@ -50,7 +50,7 @@
               </span>
               <span
                 v-if="subscription.expires_at"
-                class="text-xs"
+                class="tabular text-xs"
                 :class="getDaysRemainingClass(subscription.expires_at)"
               >
                 {{ formatDaysRemaining(subscription.expires_at) }}
@@ -62,7 +62,7 @@
               <!-- Unlimited subscription badge -->
               <div
                 v-if="isUnlimited(subscription)"
-                class="flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 px-2.5 py-1.5 dark:from-emerald-900/20 dark:to-teal-900/20"
+                class="flex items-center gap-2 rounded-lg bg-emerald-50 px-2.5 py-1.5 dark:bg-emerald-900/20"
               >
                 <span class="text-lg text-emerald-600 dark:text-emerald-400">∞</span>
                 <span class="text-xs font-medium text-emerald-700 dark:text-emerald-300">
@@ -76,9 +76,9 @@
                   <span class="w-8 flex-shrink-0 text-[10px] text-gray-500">{{
                     t('subscriptionProgress.daily')
                   }}</span>
-                  <div class="h-1.5 min-w-0 flex-1 rounded-full bg-gray-200 dark:bg-dark-600">
+                  <div class="progress min-w-0 flex-1">
                     <div
-                      class="h-1.5 rounded-full transition-all"
+                      class="h-full rounded-full transition-[width] duration-base ease-spring"
                       :class="
                         getProgressBarClass(
                           subscription.daily_usage_usd,
@@ -93,7 +93,7 @@
                       }"
                     ></div>
                   </div>
-                  <span class="w-24 flex-shrink-0 text-right text-[10px] text-gray-500">
+                  <span class="tabular w-24 flex-shrink-0 text-right text-[10px] text-gray-500">
                     {{
                       formatUsage(subscription.daily_usage_usd, subscription.group?.daily_limit_usd)
                     }}
@@ -104,9 +104,9 @@
                   <span class="w-8 flex-shrink-0 text-[10px] text-gray-500">{{
                     t('subscriptionProgress.weekly')
                   }}</span>
-                  <div class="h-1.5 min-w-0 flex-1 rounded-full bg-gray-200 dark:bg-dark-600">
+                  <div class="progress min-w-0 flex-1">
                     <div
-                      class="h-1.5 rounded-full transition-all"
+                      class="h-full rounded-full transition-[width] duration-base ease-spring"
                       :class="
                         getProgressBarClass(
                           subscription.weekly_usage_usd,
@@ -121,7 +121,7 @@
                       }"
                     ></div>
                   </div>
-                  <span class="w-24 flex-shrink-0 text-right text-[10px] text-gray-500">
+                  <span class="tabular w-24 flex-shrink-0 text-right text-[10px] text-gray-500">
                     {{
                       formatUsage(subscription.weekly_usage_usd, subscription.group?.weekly_limit_usd)
                     }}
@@ -132,9 +132,9 @@
                   <span class="w-8 flex-shrink-0 text-[10px] text-gray-500">{{
                     t('subscriptionProgress.monthly')
                   }}</span>
-                  <div class="h-1.5 min-w-0 flex-1 rounded-full bg-gray-200 dark:bg-dark-600">
+                  <div class="progress min-w-0 flex-1">
                     <div
-                      class="h-1.5 rounded-full transition-all"
+                      class="h-full rounded-full transition-[width] duration-base ease-spring"
                       :class="
                         getProgressBarClass(
                           subscription.monthly_usage_usd,
@@ -149,7 +149,7 @@
                       }"
                     ></div>
                   </div>
-                  <span class="w-24 flex-shrink-0 text-right text-[10px] text-gray-500">
+                  <span class="tabular w-24 flex-shrink-0 text-right text-[10px] text-gray-500">
                     {{
                       formatUsage(
                         subscription.monthly_usage_usd,
@@ -163,11 +163,11 @@
           </div>
         </div>
 
-        <div class="border-t border-gray-100 p-2 dark:border-dark-700">
+        <div class="hairline-top p-2">
           <router-link
             to="/subscriptions"
             @click="closeTooltip"
-            class="block w-full py-1 text-center text-xs text-primary-600 hover:underline dark:text-primary-400"
+            class="block w-full rounded-md py-1 text-center text-xs text-primary-600 transition-colors duration-fast ease-apple-out hover:underline focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] dark:text-primary-400"
           >
             {{ t('subscriptionProgress.viewAll') }}
           </router-link>
@@ -307,14 +307,32 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.hairline-bottom {
+  box-shadow: inset 0 -0.5px 0 var(--separator);
+}
+
+.hairline-top {
+  box-shadow: inset 0 0.5px 0 var(--separator);
+}
+
+.sub-mini-trigger {
+  transition:
+    background-color 240ms var(--ease-out),
+    transform 100ms var(--ease-out);
+}
+
+/* 从触发点生长：弹层锚定在唤起它的按钮上 */
 .dropdown-enter-active,
 .dropdown-leave-active {
-  transition: all 0.2s ease;
+  transition:
+    opacity 240ms var(--ease-out),
+    transform 240ms var(--spring);
+  transform-origin: top right;
 }
 
 .dropdown-enter-from,
 .dropdown-leave-to {
   opacity: 0;
-  transform: scale(0.95) translateY(-4px);
+  transform: scale(0.94) translateY(-4px);
 }
 </style>

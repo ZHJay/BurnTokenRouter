@@ -8,21 +8,21 @@
     <div v-if="account" class="space-y-4">
       <!-- Account Info -->
       <div
-        class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-dark-600 dark:bg-dark-700"
+        class="card-inset p-4"
       >
         <div class="flex items-center gap-3">
           <div
             :class="[
-              'flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br',
+              'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
               isOpenAILike
-                ? 'from-green-500 to-green-600'
+                ? 'bg-green-500'
                 : isGemini
-                  ? 'from-blue-500 to-blue-600'
+                  ? 'bg-blue-500'
                   : isAntigravity
-                    ? 'from-purple-500 to-purple-600'
+                    ? 'bg-purple-500'
                     : isGrok
-                      ? 'from-zinc-700 to-zinc-900'
-                      : 'from-orange-500 to-orange-600'
+                      ? 'bg-zinc-900'
+                      : 'bg-orange-500'
             ]"
           >
             <Icon name="sparkles" size="md" class="text-white" />
@@ -57,7 +57,7 @@
               v-model="addMethod"
               type="radio"
               value="oauth"
-              class="mr-2 text-primary-600 focus:ring-primary-500"
+              class="mr-2 text-primary-600 focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)]"
             />
             <span class="text-sm text-gray-700 dark:text-gray-300">{{
               t('admin.accounts.types.oauth')
@@ -68,7 +68,7 @@
               v-model="addMethod"
               type="radio"
               value="setup-token"
-              class="mr-2 text-primary-600 focus:ring-primary-500"
+              class="mr-2 text-primary-600 focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)]"
             />
             <span class="text-sm text-gray-700 dark:text-gray-300">{{
               t('admin.accounts.setupTokenLongLived')
@@ -78,7 +78,7 @@
       </fieldset>
 
       <!-- Gemini OAuth Type Display (read-only) -->
-      <div v-if="isGemini" class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-dark-600 dark:bg-dark-700">
+      <div v-if="isGemini" class="card-inset p-4">
         <div class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
           {{ t('admin.accounts.oauth.gemini.oauthTypeLabel') }}
         </div>

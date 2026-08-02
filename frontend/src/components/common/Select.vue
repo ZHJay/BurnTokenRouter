@@ -40,7 +40,7 @@
         <Icon
           name="chevronDown"
           size="md"
-          :class="['transition-transform duration-200', isOpen && 'rotate-180']"
+          :class="['transition-transform duration-fast ease-apple-out', isOpen && 'rotate-180']"
         />
       </span>
     </button>
@@ -471,28 +471,52 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* 触发器读作 input：不透明表面 + 内嵌发丝线，聚焦时 accent 环 */
 .select-trigger {
   @apply flex w-full items-center justify-between gap-2;
-  @apply rounded-xl px-4 py-2.5 text-sm;
-  @apply bg-white dark:bg-dark-800;
-  @apply border border-gray-200 dark:border-dark-600;
-  @apply text-gray-900 dark:text-gray-100;
-  @apply transition-all duration-200;
-  @apply focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30;
-  @apply hover:border-gray-300 dark:hover:border-dark-500;
-  @apply cursor-pointer;
+  @apply cursor-pointer rounded-lg px-4 py-2.5 text-sm;
+  background-color: var(--surface-secondary);
+  color: var(--label);
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--separator);
+  letter-spacing: -0.006em;
+  transition:
+    box-shadow 240ms var(--ease-out),
+    background-color 240ms var(--ease-out);
+}
+
+.select-trigger:hover:not(:disabled) {
+  box-shadow: inset 0 0 0 1px var(--label-quaternary);
+}
+
+.select-trigger:focus-visible {
+  outline: none;
+  background-color: var(--surface);
+  box-shadow:
+    inset 0 0 0 1.5px var(--accent),
+    0 0 0 3.5px var(--accent-tint);
 }
 
 .select-trigger-open {
-  @apply border-primary-500 ring-2 ring-primary-500/30;
+  background-color: var(--surface);
+  box-shadow:
+    inset 0 0 0 1.5px var(--accent),
+    0 0 0 3.5px var(--accent-tint);
 }
 
 .select-trigger-error {
-  @apply border-red-500 focus:border-red-500 focus:ring-red-500/30;
+  box-shadow: inset 0 0 0 1.5px var(--sys-red);
+}
+
+.select-trigger-error:focus-visible,
+.select-trigger-error.select-trigger-open {
+  box-shadow:
+    inset 0 0 0 1.5px var(--sys-red),
+    0 0 0 3.5px rgb(255 59 48 / 0.18);
 }
 
 .select-trigger-disabled {
-  @apply cursor-not-allowed bg-gray-100 opacity-60 dark:bg-dark-900;
+  @apply cursor-not-allowed opacity-60;
 }
 
 .select-value {
@@ -505,32 +529,43 @@ onUnmounted(() => {
 
 .select-clear {
   @apply flex flex-shrink-0 cursor-pointer items-center justify-center;
-  @apply rounded text-gray-400 transition-colors;
+  @apply rounded-full text-gray-400 transition-colors duration-fast ease-apple-out;
   @apply hover:text-gray-600 dark:hover:text-gray-200;
 }
 </style>
 
 <style>
+/* 弹层：短暂出现的浮层走 thin 材质 + 四层玻璃边缘 */
 .select-dropdown-portal {
   @apply w-max min-w-[200px];
-  @apply bg-white dark:bg-dark-800;
-  @apply rounded-xl;
-  @apply border border-gray-200 dark:border-dark-700;
-  @apply shadow-lg shadow-black/10 dark:shadow-black/30;
-  @apply overflow-hidden;
+  @apply overflow-hidden rounded-xl;
+  background: var(--mat-thin);
+  backdrop-filter: blur(var(--mat-blur-thin)) var(--mat-diffuse);
+  -webkit-backdrop-filter: blur(var(--mat-blur-thin)) var(--mat-diffuse);
+  border: 0;
+  box-shadow:
+    0 0 0 0.5px var(--glass-edge-outer),
+    inset 0 0 0 0.5px var(--glass-edge),
+    inset 0 -0.5px 0 0 var(--glass-counter),
+    inset 0 1px 0 0 var(--glass-specular),
+    var(--shadow-3);
   pointer-events: auto !important;
 }
 
 .select-dropdown-portal .select-search {
   @apply flex items-center gap-2 px-3 py-2;
-  @apply border-b border-gray-100 dark:border-dark-700;
+  border: 0;
+  box-shadow: inset 0 -0.5px 0 var(--separator);
 }
 
 .select-dropdown-portal .select-search-input {
   @apply flex-1 bg-transparent text-sm;
-  @apply text-gray-900 dark:text-gray-100;
-  @apply placeholder:text-gray-400 dark:placeholder:text-dark-400;
   @apply focus:outline-none;
+  color: var(--label);
+}
+
+.select-dropdown-portal .select-search-input::placeholder {
+  color: var(--label-tertiary);
 }
 
 .select-dropdown-portal .select-options {
@@ -540,19 +575,24 @@ onUnmounted(() => {
 .select-dropdown-portal .select-option {
   @apply flex items-center justify-between gap-2;
   @apply px-4 py-2.5 text-sm;
-  @apply text-gray-700 dark:text-gray-300;
-  @apply cursor-pointer transition-colors duration-150;
-  @apply hover:bg-gray-50 dark:hover:bg-dark-700;
+  @apply cursor-pointer;
+  color: var(--label);
+  transition: background-color 100ms var(--ease-out);
   pointer-events: auto !important;
 }
 
+.select-dropdown-portal .select-option:hover {
+  background-color: var(--surface-hover);
+}
+
 .select-dropdown-portal .select-option-selected {
-  @apply bg-primary-50 dark:bg-primary-900/20;
-  @apply text-primary-700 dark:text-primary-300;
+  background-color: var(--surface-selected);
+  color: var(--accent);
+  font-weight: 590;
 }
 
 .select-dropdown-portal .select-option-focused {
-  @apply bg-gray-100 dark:bg-dark-700;
+  background-color: var(--surface-pressed);
 }
 
 .select-dropdown-portal .select-option-disabled {
@@ -561,13 +601,15 @@ onUnmounted(() => {
 
 .select-dropdown-portal .select-option-group {
   @apply cursor-default select-none;
-  @apply bg-gray-50 dark:bg-dark-900;
-  @apply text-[11px] font-bold uppercase tracking-wider;
-  @apply text-gray-500 dark:text-gray-400;
+  @apply text-[11px] uppercase;
+  background-color: var(--surface-secondary);
+  font-weight: 590;
+  letter-spacing: 0.04em;
+  color: var(--label-tertiary);
 }
 
 .select-dropdown-portal .select-option-group:hover {
-  @apply bg-gray-50 dark:bg-dark-900;
+  background-color: var(--surface-secondary);
 }
 
 .select-dropdown-portal .select-option-label {
@@ -576,17 +618,21 @@ onUnmounted(() => {
 
 .select-dropdown-portal .select-empty {
   @apply px-4 py-8 text-center text-sm;
-  @apply text-gray-500 dark:text-dark-400;
+  color: var(--label-secondary);
 }
 
+/* 从锚点生长，而不是单纯位移淡入 */
 .select-dropdown-enter-active,
 .select-dropdown-leave-active {
-  transition: all 0.2s ease;
+  transition:
+    opacity 240ms var(--ease-out),
+    transform 240ms var(--spring);
+  transform-origin: top center;
 }
 
 .select-dropdown-enter-from,
 .select-dropdown-leave-to {
   opacity: 0;
-  transform: translateY(-8px);
+  transform: scale(0.96) translateY(-6px);
 }
 </style>

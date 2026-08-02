@@ -17,14 +17,14 @@
       <p class="input-hint">{{ t("admin.groups.form.maxReasoningEffortHint") }}</p>
     </div>
 
-    <div class="border-t border-gray-200 pt-4 dark:border-dark-600">
+    <div class="pt-4 shadow-[inset_0_0.5px_0_var(--separator)]">
       <div class="mb-3 flex items-center justify-between gap-3">
         <label class="input-label mb-0">
           {{ t("admin.groups.form.reasoningEffortMappings") }}
         </label>
         <button
           type="button"
-          class="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50 hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:text-primary-400 dark:hover:bg-primary-900/20 dark:hover:text-primary-300"
+          class="btn btn-ghost min-h-11 gap-1.5 px-2.5 text-primary-600 hover:bg-primary-50 hover:text-primary-700 dark:text-primary-400 dark:hover:bg-primary-900/20 dark:hover:text-primary-300"
           @click="addMapping"
         >
           <Icon name="plus" size="sm" />
@@ -36,7 +36,7 @@
         <div
           v-for="row in mappings"
           :key="row.id"
-          class="rounded-lg border border-gray-200 bg-gray-50/40 p-3 dark:border-dark-600 dark:bg-dark-800/40"
+          class="card-inset p-3"
         >
           <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto] md:items-start">
             <div>
@@ -97,7 +97,7 @@
 
             <button
               type="button"
-              class="flex h-11 w-11 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/30 md:mt-6 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+              class="flex h-11 w-11 items-center justify-center rounded-full text-gray-400 transition-[background-color,color,transform] duration-fast ease-apple-out hover:bg-red-50 hover:text-red-500 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[rgb(255_59_48_/_0.24)] active:scale-[0.96] md:mt-6 dark:hover:bg-red-900/20 dark:hover:text-red-400"
               :title="t('admin.groups.form.removeReasoningEffortMapping')"
               :aria-label="t('admin.groups.form.removeReasoningEffortMapping')"
               @click="removeMapping(row.id)"

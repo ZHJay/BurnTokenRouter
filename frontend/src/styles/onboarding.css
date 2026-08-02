@@ -1,4 +1,17 @@
-/* Sub2API Interactive Tour Styles - DOM Restructured Version */
+/* Sub2API Interactive Tour Styles - DOM Restructured Version
+ *
+ * Driver.js injects its own inline/stylesheet rules, which is why every
+ * declaration here keeps !important.
+ *
+ * Colors come from the Apple design tokens in style.css. Those custom
+ * properties are declared on :root/.dark and inherit into the popover even
+ * though driver.js appends it to <body>, so the light/dark variants no longer
+ * need duplicated .dark overrides.
+ *
+ * The popover stays an OPAQUE surface rather than glass: it carries dense
+ * explanatory text over already-dimmed content, and translucency would cost
+ * legibility for no benefit.
+ */
 
 /* 1. Overlay & Highlight */
 .driver-overlay {
@@ -22,29 +35,26 @@
 .driver-active-element {
   position: relative !important;
   z-index: 99999999 !important;
-  outline: 4px solid rgba(20, 184, 166, 0.2) !important;
-  border-radius: 4px !important;
+  outline: 4px solid var(--accent-tint-strong) !important;
+  border-radius: 8px !important;
 }
 
 /* 2. Popover Container */
 .driver-popover.theme-tour-popover {
   position: fixed !important;
   z-index: 100000000 !important;
-  background-color: #ffffff !important;
-  border: 1px solid #e5e7eb !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
-  border-radius: 12px !important;
+  background-color: var(--surface) !important;
+  border: 0 !important;
+  box-shadow:
+    inset 0 0 0 0.5px var(--hairline),
+    var(--shadow-4) !important;
+  border-radius: 20px !important;
   padding: 0 !important;
   max-width: min(440px, 90vw) !important; /* Responsive on small screens */
-  color: #1f2937 !important;
-  font-family: ui-sans-serif, system-ui, sans-serif !important;
+  color: var(--label) !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'PingFang SC',
+    sans-serif !important;
   overflow: hidden !important;
-}
-
-.dark .driver-popover.theme-tour-popover {
-  background-color: #1e293b !important;
-  border-color: #334155 !important;
-  color: #f3f4f6 !important;
 }
 
 /* 3. Header Area */
@@ -59,12 +69,12 @@
 
 .driver-popover-title-text {
   font-size: 18px !important;
-  font-weight: 700 !important;
-  color: #111827 !important;
+  font-weight: 600 !important;
+  color: var(--label) !important;
   line-height: 1.3 !important;
+  letter-spacing: -0.018em !important;
   padding-right: 100px !important; /* Ensure title doesn't overlap Skip/Close */
 }
-.dark .driver-popover-title-text { color: #ffffff !important; }
 
 /* Close Button */
 .theme-tour-popover .driver-popover-close-btn {
@@ -74,30 +84,31 @@
   width: 28px !important;
   height: 28px !important;
   padding: 0 !important;
-  color: #9ca3af !important;
+  color: var(--label-tertiary) !important;
   background-color: transparent !important;
   border: none !important;
   z-index: 20 !important;
-  border-radius: 4px !important;
+  border-radius: 999px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
 }
-.theme-tour-popover .driver-popover-close-btn:hover { background-color: #f3f4f6 !important; color: #4b5563 !important; }
-.dark .theme-tour-popover .driver-popover-close-btn:hover { background-color: #334155 !important; }
+.theme-tour-popover .driver-popover-close-btn:hover {
+  background-color: var(--surface-hover) !important;
+  color: var(--label) !important;
+}
 
 /* 4. Body Content */
 .theme-tour-popover .driver-popover-description {
   display: block !important;
   font-size: 14px !important;
   font-weight: 400 !important;
-  color: #4b5563 !important;
+  color: var(--label-secondary) !important;
   padding: 0 24px 24px 24px !important;
   margin: 0 !important;
   line-height: 1.6 !important;
   background-color: transparent !important;
 }
-.dark .theme-tour-popover .driver-popover-description { color: #cbd5e1 !important; }
 
 /* 5. Footer Area - Flex Row with Left/Right Containers */
 .theme-tour-popover .driver-popover-footer {
@@ -105,13 +116,10 @@
   align-items: center !important;
   justify-content: space-between !important; /* Push Left and Right apart */
   padding: 16px 24px !important;
-  background-color: #f9fafb !important;
-  border-top: 1px solid #f3f4f6 !important;
+  background-color: var(--surface-secondary) !important;
+  border-top: 0 !important;
+  box-shadow: inset 0 0.5px 0 var(--separator) !important;
   margin: 0 !important;
-}
-.dark .theme-tour-popover .driver-popover-footer {
-  background-color: #0f172a !important;
-  border-top-color: #1e293b !important;
 }
 
 /* Left Container: Progress + Shortcuts */
@@ -131,12 +139,12 @@
 /* Progress */
 .theme-tour-popover .driver-popover-progress-text {
   font-size: 13px !important;
-  color: #6b7280 !important;
+  color: var(--label-secondary) !important;
   margin: 0 !important;
   font-weight: 500 !important;
   white-space: nowrap !important;
+  font-variant-numeric: tabular-nums !important;
 }
-.dark .theme-tour-popover .driver-popover-progress-text { color: #9ca3af !important; }
 
 /* Shortcuts (Divider + Keys) */
 .footer-shortcuts {
@@ -144,39 +152,34 @@
   align-items: center !important;
   gap: 12px !important;
   padding-left: 16px !important;
-  border-left: 1px solid #e5e7eb !important;
+  border-left: 0.5px solid var(--separator) !important;
   height: 20px !important;
 }
-.dark .footer-shortcuts { border-left-color: #334155 !important; }
 
 .shortcut-item {
   display: flex !important;
   align-items: center !important;
   gap: 4px !important;
   font-size: 12px !important;
-  color: #6b7280 !important;
+  color: var(--label-secondary) !important;
   white-space: nowrap !important;
 }
-.dark .shortcut-item { color: #94a3b8 !important; }
 
 .shortcut-item kbd {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace !important;
-  background-color: #ffffff !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 4px !important;
+  font-family: ui-monospace, 'SF Mono', Menlo, Monaco, monospace !important;
+  background-color: var(--surface) !important;
+  border: 0 !important;
+  border-radius: 6px !important;
   padding: 1px 6px !important;
   font-size: 11px !important;
   font-weight: 600 !important;
-  color: #4b5563 !important;
-  box-shadow: 0 1px 0 rgba(0,0,0,0.05) !important;
+  color: var(--label-secondary) !important;
+  box-shadow:
+    inset 0 0 0 0.5px var(--separator),
+    var(--shadow-1) !important;
   min-width: 20px !important;
   text-align: center !important;
   display: inline-block !important;
-}
-.dark .shortcut-item kbd {
-  background-color: #1e293b !important;
-  border-color: #475569 !important;
-  color: #cbd5e1 !important;
 }
 
 /* Nav Buttons */
@@ -196,33 +199,65 @@
 }
 
 .theme-tour-popover .driver-popover-next-btn {
-  background-color: #14b8a6 !important;
-  color: #ffffff !important;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+  background-color: var(--accent) !important;
+  color: var(--on-accent) !important;
+  box-shadow: var(--shadow-accent) !important;
 }
-.theme-tour-popover .driver-popover-next-btn:hover { background-color: #0d9488 !important; }
+.theme-tour-popover .driver-popover-next-btn:hover {
+  background-color: var(--accent-hover) !important;
+}
+.theme-tour-popover .driver-popover-next-btn:active {
+  background-color: var(--accent-pressed) !important;
+  transform: scale(0.96) !important;
+}
 
 .theme-tour-popover .driver-popover-prev-btn {
-  background-color: white !important;
-  color: #6b7280 !important;
-  border: 1px solid #e5e7eb !important;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+  background-color: var(--surface) !important;
+  color: var(--label-secondary) !important;
+  border: 0 !important;
+  box-shadow:
+    inset 0 0 0 0.5px var(--separator),
+    var(--shadow-1) !important;
 }
-.theme-tour-popover .driver-popover-prev-btn:hover { background-color: #f9fafb !important; color: #374151 !important; }
-.dark .theme-tour-popover .driver-popover-prev-btn { 
-  background-color: #1e293b !important; 
-  border-color: #475569 !important; 
-  color: #9ca3af !important; 
+.theme-tour-popover .driver-popover-prev-btn:hover {
+  background-color: var(--surface-hover) !important;
+  color: var(--label) !important;
+}
+.theme-tour-popover .driver-popover-prev-btn:active {
+  transform: scale(0.96) !important;
 }
 
 /* Arrows */
 .driver-popover-arrow { z-index: 100000001 !important; }
-.driver-popover-arrow-side-left.driver-popover-arrow { border-left-color: #ffffff !important; }
-.driver-popover-arrow-side-right.driver-popover-arrow { border-right-color: #ffffff !important; }
-.driver-popover-arrow-side-top.driver-popover-arrow { border-top-color: #ffffff !important; }
-.driver-popover-arrow-side-bottom.driver-popover-arrow { border-bottom-color: #ffffff !important; }
+/* The arrow is a CSS triangle, so it takes the surface token directly and
+ * follows light/dark without duplicated overrides. */
+.driver-popover-arrow-side-left.driver-popover-arrow {
+  border-left-color: var(--surface) !important;
+}
+.driver-popover-arrow-side-right.driver-popover-arrow {
+  border-right-color: var(--surface) !important;
+}
+.driver-popover-arrow-side-top.driver-popover-arrow {
+  border-top-color: var(--surface) !important;
+}
+/* driver.js names the arrow by which side of the popover it sits on, and
+ * `side-bottom` is positioned `bottom: 100%` — i.e. entirely above the popover,
+ * against its TOP edge. So it must match the header fill, not the footer. */
+.driver-popover-arrow-side-bottom.driver-popover-arrow {
+  border-bottom-color: var(--surface) !important;
+}
 
-.dark .driver-popover-arrow-side-left.driver-popover-arrow { border-left-color: #1e293b !important; }
-.dark .driver-popover-arrow-side-right.driver-popover-arrow { border-right-color: #1e293b !important; }
-.dark .driver-popover-arrow-side-top.driver-popover-arrow { border-top-color: #1e293b !important; }
-.dark .driver-popover-arrow-side-bottom.driver-popover-arrow { border-bottom-color: #1e293b !important; }
+/* Buttons respond on press, matching .btn elsewhere in the panel. */
+.theme-tour-popover button {
+  transition:
+    transform 100ms var(--ease-out),
+    background-color 240ms var(--ease-out),
+    color 240ms var(--ease-out) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-tour-popover button {
+    transition-property: background-color, color !important;
+    transform: none !important;
+  }
+}

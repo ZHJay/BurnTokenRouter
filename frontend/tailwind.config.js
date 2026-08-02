@@ -14,7 +14,38 @@
  *   gray-50..400  -> label hierarchy (text) + lightest fills
  *   gray-500..950 -> surfaces, separators, sunken backgrounds
  *   dark-*        -> dark-mode counterpart of the same ramp
+ *
+ * The neutral ramps (gray + its slate/zinc/neutral/stone aliases) resolve through
+ * the `--c-gray-*` channel triplets declared in style.css `:root` / `.dark`, not
+ * through static hex. Reason: 196 class strings use `text-gray-500` with no
+ * `dark:text-*` override. A static darkening that fixes light mode would push
+ * those bare sites to ~3.6:1 in dark mode, worse than where they started. Routing
+ * through variables lets a bare utility resolve correctly in BOTH themes, and is a
+ * no-op for the 1400 strings that already carry a `dark:` override.
+ *
+ * `<alpha-value>` is required so opacity modifiers keep working:
+ *   text-gray-500/70  ->  rgb(var(--c-gray-500) / 0.7)
+ *
+ * `dark-*` is deliberately NOT converted: those values are only ever reached from
+ * inside `dark:` variants, so they are already theme-scoped by construction.
+ * Converting them would double-flip and invert in dark mode.
  */
+
+/** Neutral ramp routed through theme-flipping CSS variables (see style.css). */
+const neutralRamp = {
+  50: 'rgb(var(--c-gray-50) / <alpha-value>)',
+  100: 'rgb(var(--c-gray-100) / <alpha-value>)',
+  200: 'rgb(var(--c-gray-200) / <alpha-value>)',
+  300: 'rgb(var(--c-gray-300) / <alpha-value>)',
+  400: 'rgb(var(--c-gray-400) / <alpha-value>)',
+  500: 'rgb(var(--c-gray-500) / <alpha-value>)',
+  600: 'rgb(var(--c-gray-600) / <alpha-value>)',
+  700: 'rgb(var(--c-gray-700) / <alpha-value>)',
+  800: 'rgb(var(--c-gray-800) / <alpha-value>)',
+  900: 'rgb(var(--c-gray-900) / <alpha-value>)',
+  950: 'rgb(var(--c-gray-950) / <alpha-value>)'
+}
+
 export default {
   content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
   darkMode: 'class',
@@ -63,20 +94,9 @@ export default {
           900: '#1c1c1e',
           950: '#0b0b0d'
         },
-        // Apple 中性灰阶 - 覆盖 Tailwind 默认 gray
-        gray: {
-          50: '#f9f9fb',
-          100: '#f2f2f7',
-          200: '#e5e5ea',
-          300: '#d1d1d6',
-          400: '#aeaeb2',
-          500: '#8e8e93',
-          600: '#636366',
-          700: '#48484a',
-          800: '#3a3a3c',
-          900: '#1c1c1e',
-          950: '#0b0b0d'
-        },
+        // Apple 中性灰阶 - 覆盖 Tailwind 默认 gray。
+        // 走 --c-gray-* 变量，使裸 text-gray-500 在两个主题下各自取到正确的值。
+        gray: neutralRamp,
         // ---- Apple 系统语义色 ----
         // 保留色相家族，换成 Apple 对应系统色；语义不变。
         green: {
@@ -261,59 +281,13 @@ export default {
           900: '#7d152e',
           950: '#450816'
         },
-        // 中性别名 - 与 gray 同源，覆盖模板里零散的 slate/zinc/neutral/stone
-        slate: {
-          50: '#f9f9fb',
-          100: '#f2f2f7',
-          200: '#e5e5ea',
-          300: '#d1d1d6',
-          400: '#aeaeb2',
-          500: '#8e8e93',
-          600: '#636366',
-          700: '#48484a',
-          800: '#3a3a3c',
-          900: '#1c1c1e',
-          950: '#0b0b0d'
-        },
-        zinc: {
-          50: '#f9f9fb',
-          100: '#f2f2f7',
-          200: '#e5e5ea',
-          300: '#d1d1d6',
-          400: '#aeaeb2',
-          500: '#8e8e93',
-          600: '#636366',
-          700: '#48484a',
-          800: '#3a3a3c',
-          900: '#1c1c1e',
-          950: '#0b0b0d'
-        },
-        neutral: {
-          50: '#f9f9fb',
-          100: '#f2f2f7',
-          200: '#e5e5ea',
-          300: '#d1d1d6',
-          400: '#aeaeb2',
-          500: '#8e8e93',
-          600: '#636366',
-          700: '#48484a',
-          800: '#3a3a3c',
-          900: '#1c1c1e',
-          950: '#0b0b0d'
-        },
-        stone: {
-          50: '#f9f9fb',
-          100: '#f2f2f7',
-          200: '#e5e5ea',
-          300: '#d1d1d6',
-          400: '#aeaeb2',
-          500: '#8e8e93',
-          600: '#636366',
-          700: '#48484a',
-          800: '#3a3a3c',
-          900: '#1c1c1e',
-          950: '#0b0b0d'
-        }
+        // 中性别名 - 与 gray 同源，覆盖模板里零散的 slate/zinc/neutral/stone。
+        // 指向同一组变量，别名关系因此在定义上恒成立：修 gray 就等于修全部别名，
+        // 不会出现 text-slate-500 被修好、text-stone-500 被漏掉的偏移。
+        slate: neutralRamp,
+        zinc: neutralRamp,
+        neutral: neutralRamp,
+        stone: neutralRamp
       },
       fontFamily: {
         sans: [

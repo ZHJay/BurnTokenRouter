@@ -9,13 +9,11 @@
       <!-- Account Info Header -->
       <div
         v-if="account"
-        class="flex items-center justify-between rounded-xl border border-primary-200 bg-gradient-to-r from-primary-50 to-primary-100 p-3 dark:border-primary-700/50 dark:from-primary-900/20 dark:to-primary-800/20"
+        class="flex items-center justify-between rounded-xl bg-[color:var(--accent-tint)] p-3 shadow-[inset_0_0_0_0.5px_var(--hairline)]"
       >
         <div class="flex items-center gap-3">
-          <div
-            class="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary-500 to-primary-600"
-          >
-            <Icon name="chartBar" size="md" class="text-white" :stroke-width="2" />
+          <div class="stat-icon stat-icon-primary">
+            <Icon name="chartBar" size="md" :stroke-width="2" />
           </div>
           <div>
             <div class="font-semibold text-gray-900 dark:text-gray-100">{{ account.name }}</div>
@@ -26,10 +24,8 @@
         </div>
         <span
           :class="[
-            'rounded-full px-2.5 py-1 text-xs font-semibold',
-            account.status === 'active'
-              ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400'
-              : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+            'badge px-2.5 py-1',
+            account.status === 'active' ? 'badge-success' : 'badge-gray'
           ]"
         >
           {{ account.status }}
@@ -45,9 +41,11 @@
         <!-- Row 1: Main Stats Cards -->
         <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <!-- 30-Day Total Cost -->
-          <div
-            class="card border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-4 dark:border-emerald-800/30 dark:from-emerald-900/10 dark:to-dark-700"
-          >
+          <!--
+            Apple 的卡片是不透明高程 + 有色图标块，不是彩色渐变洗底：
+            渐变会与外层玻璃弹窗叠成两层半透明，密集数字随之发糊。
+          -->
+          <div class="card p-4">
             <div class="mb-2 flex items-center justify-between">
               <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{
                 t('admin.accounts.stats.totalCost')
@@ -68,10 +66,10 @@
                 </svg>
               </div>
             </div>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+            <p class="stat-value">
               ${{ formatCost(stats.summary.total_cost) }}
             </p>
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p class="tabular mt-1 text-xs text-gray-500 dark:text-gray-400">
               {{ t('admin.accounts.stats.accumulatedCost') }}
               <span class="text-gray-400 dark:text-gray-500">
                 ({{ t('usage.userBilled') }}: ${{ formatCost(stats.summary.total_user_cost) }} ·
@@ -83,9 +81,7 @@
           </div>
 
           <!-- 30-Day Total Requests -->
-          <div
-            class="card border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4 dark:border-blue-800/30 dark:from-blue-900/10 dark:to-dark-700"
-          >
+          <div class="card p-4">
             <div class="mb-2 flex items-center justify-between">
               <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{
                 t('admin.accounts.stats.totalRequests')
@@ -94,7 +90,7 @@
                 <Icon name="bolt" size="sm" class="text-blue-600 dark:text-blue-400" :stroke-width="2" />
               </div>
             </div>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+            <p class="stat-value">
               {{ formatNumber(stats.summary.total_requests) }}
             </p>
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -103,9 +99,7 @@
           </div>
 
           <!-- Daily Average Cost -->
-          <div
-            class="card border-amber-200 bg-gradient-to-br from-amber-50 to-white p-4 dark:border-amber-800/30 dark:from-amber-900/10 dark:to-dark-700"
-          >
+          <div class="card p-4">
             <div class="mb-2 flex items-center justify-between">
               <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{
                 t('admin.accounts.stats.avgDailyCost')
@@ -119,10 +113,10 @@
                 />
               </div>
             </div>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+            <p class="stat-value">
               ${{ formatCost(stats.summary.avg_daily_cost) }}
             </p>
-             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+             <p class="tabular mt-1 text-xs text-gray-500 dark:text-gray-400">
               {{
                 t('admin.accounts.stats.basedOnActualDays', {
                   days: stats.summary.actual_days_used
@@ -135,9 +129,7 @@
           </div>
 
           <!-- Daily Average Requests -->
-          <div
-            class="card border-purple-200 bg-gradient-to-br from-purple-50 to-white p-4 dark:border-purple-800/30 dark:from-purple-900/10 dark:to-dark-700"
-          >
+          <div class="card p-4">
             <div class="mb-2 flex items-center justify-between">
               <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{
                 t('admin.accounts.stats.avgDailyRequests')
@@ -158,7 +150,7 @@
                 </svg>
               </div>
             </div>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+            <p class="stat-value">
               {{ formatNumber(Math.round(stats.summary.avg_daily_requests)) }}
             </p>
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -194,13 +186,13 @@
             <div class="space-y-2">
               <div class="flex items-center justify-between">
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('usage.accountBilled') }}</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white"
+                <span class="tabular text-sm font-semibold text-gray-900 dark:text-white"
                   >${{ formatCost(stats.summary.today?.cost || 0) }}</span
                 >
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('usage.userBilled') }}</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white"
+                <span class="tabular text-sm font-semibold text-gray-900 dark:text-white"
                   >${{ formatCost(stats.summary.today?.user_cost || 0) }}</span
                 >
               </div>
@@ -208,7 +200,7 @@
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{
                   t('admin.accounts.stats.requests')
                 }}</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
+                <span class="tabular text-sm font-semibold text-gray-900 dark:text-white">{{
                   formatNumber(stats.summary.today?.requests || 0)
                 }}</span>
               </div>
@@ -216,7 +208,7 @@
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{
                   t('admin.accounts.stats.tokens')
                 }}</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
+                <span class="tabular text-sm font-semibold text-gray-900 dark:text-white">{{
                   formatTokens(stats.summary.today?.tokens || 0)
                 }}</span>
               </div>
@@ -243,19 +235,19 @@
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{
                   t('admin.accounts.stats.date')
                 }}</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
+                <span class="tabular text-sm font-semibold text-gray-900 dark:text-white">{{
                   stats.summary.highest_cost_day?.label || '-'
                 }}</span>
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('usage.accountBilled') }}</span>
-                <span class="text-sm font-semibold text-orange-600 dark:text-orange-400"
+                <span class="tabular text-sm font-semibold text-orange-600 dark:text-orange-400"
                   >${{ formatCost(stats.summary.highest_cost_day?.cost || 0) }}</span
                 >
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('usage.userBilled') }}</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white"
+                <span class="tabular text-sm font-semibold text-gray-900 dark:text-white"
                   >${{ formatCost(stats.summary.highest_cost_day?.user_cost || 0) }}</span
                 >
               </div>
@@ -263,7 +255,7 @@
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{
                   t('admin.accounts.stats.requests')
                 }}</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
+                <span class="tabular text-sm font-semibold text-gray-900 dark:text-white">{{
                   formatNumber(stats.summary.highest_cost_day?.requests || 0)
                 }}</span>
               </div>
@@ -290,7 +282,7 @@
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{
                   t('admin.accounts.stats.date')
                 }}</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
+                <span class="tabular text-sm font-semibold text-gray-900 dark:text-white">{{
                   stats.summary.highest_request_day?.label || '-'
                 }}</span>
               </div>
@@ -298,19 +290,19 @@
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{
                   t('admin.accounts.stats.requests')
                 }}</span>
-                <span class="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{{
+                <span class="tabular text-sm font-semibold text-indigo-600 dark:text-indigo-400">{{
                   formatNumber(stats.summary.highest_request_day?.requests || 0)
                 }}</span>
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('usage.accountBilled') }}</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white"
+                <span class="tabular text-sm font-semibold text-gray-900 dark:text-white"
                   >${{ formatCost(stats.summary.highest_request_day?.cost || 0) }}</span
                 >
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('usage.userBilled') }}</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white"
+                <span class="tabular text-sm font-semibold text-gray-900 dark:text-white"
                   >${{ formatCost(stats.summary.highest_request_day?.user_cost || 0) }}</span
                 >
               </div>
@@ -335,7 +327,7 @@
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{
                   t('admin.accounts.stats.totalTokens')
                 }}</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
+                <span class="tabular text-sm font-semibold text-gray-900 dark:text-white">{{
                   formatTokens(stats.summary.total_tokens)
                 }}</span>
               </div>
@@ -343,7 +335,7 @@
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{
                   t('admin.accounts.stats.dailyAvgTokens')
                 }}</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
+                <span class="tabular text-sm font-semibold text-gray-900 dark:text-white">{{
                   formatTokens(Math.round(stats.summary.avg_daily_tokens))
                 }}</span>
               </div>
@@ -365,7 +357,7 @@
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{
                   t('admin.accounts.stats.avgResponseTime')
                 }}</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
+                <span class="tabular text-sm font-semibold text-gray-900 dark:text-white">{{
                   formatDuration(stats.summary.avg_duration_ms)
                 }}</span>
               </div>
@@ -373,7 +365,7 @@
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{
                   t('admin.accounts.stats.daysActive')
                 }}</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white"
+                <span class="tabular text-sm font-semibold text-gray-900 dark:text-white"
                   >{{ stats.summary.actual_days_used }} / {{ stats.summary.days }}</span
                 >
               </div>
@@ -400,7 +392,7 @@
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{
                   t('admin.accounts.stats.todayRequests')
                 }}</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
+                <span class="tabular text-sm font-semibold text-gray-900 dark:text-white">{{
                   formatNumber(stats.summary.today?.requests || 0)
                 }}</span>
               </div>
@@ -408,19 +400,19 @@
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{
                   t('admin.accounts.stats.todayTokens')
                 }}</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
+                <span class="tabular text-sm font-semibold text-gray-900 dark:text-white">{{
                   formatTokens(stats.summary.today?.tokens || 0)
                 }}</span>
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('usage.accountBilled') }}</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white"
+                <span class="tabular text-sm font-semibold text-gray-900 dark:text-white"
                   >${{ formatCost(stats.summary.today?.cost || 0) }}</span
                 >
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('usage.userBilled') }}</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white"
+                <span class="tabular text-sm font-semibold text-gray-900 dark:text-white"
                   >${{ formatCost(stats.summary.today?.user_cost || 0) }}</span
                 >
               </div>
@@ -474,7 +466,7 @@
       <div class="flex justify-end">
         <button
           @click="handleClose"
-          class="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-dark-600 dark:text-gray-300 dark:hover:bg-dark-500"
+          class="btn btn-secondary"
         >
           {{ t('common.close') }}
         </button>
@@ -536,10 +528,15 @@ const isDarkMode = computed(() => {
   return document.documentElement.classList.contains('dark')
 })
 
-// Chart colors
+// Chart colors — Apple 系统色（见 style.css）
+// 多色语义须保留：账号计费 = 蓝，用户计费 = 绿，请求数 = 橙
+const SERIES_ACCOUNT_COST = '#007aff'
+const SERIES_USER_COST = '#34c759'
+const SERIES_REQUESTS = '#ff9500'
+
 const chartColors = computed(() => ({
-  text: isDarkMode.value ? '#e5e7eb' : '#374151',
-  grid: isDarkMode.value ? '#374151' : '#e5e7eb'
+  text: isDarkMode.value ? '#e5e5ea' : '#48484a',
+  grid: isDarkMode.value ? '#38383a' : '#e3e3e8'
 }))
 
 // Line chart data
@@ -552,8 +549,8 @@ const trendChartData = computed(() => {
       {
         label: t('usage.accountBilled') + ' (USD)',
         data: stats.value.history.map((h) => h.actual_cost),
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        borderColor: SERIES_ACCOUNT_COST,
+        backgroundColor: 'rgba(0, 122, 255, 0.1)',
         fill: true,
         tension: 0.3,
         yAxisID: 'y'
@@ -561,8 +558,8 @@ const trendChartData = computed(() => {
       {
         label: t('usage.userBilled') + ' (USD)',
         data: stats.value.history.map((h) => h.user_cost),
-        borderColor: '#10b981',
-        backgroundColor: 'rgba(16, 185, 129, 0.08)',
+        borderColor: SERIES_USER_COST,
+        backgroundColor: 'rgba(52, 199, 89, 0.08)',
         fill: false,
         tension: 0.3,
         borderDash: [5, 5],
@@ -571,8 +568,8 @@ const trendChartData = computed(() => {
       {
         label: t('admin.accounts.stats.requests'),
         data: stats.value.history.map((h) => h.requests),
-        borderColor: '#f97316',
-        backgroundColor: 'rgba(249, 115, 22, 0.1)',
+        borderColor: SERIES_REQUESTS,
+        backgroundColor: 'rgba(255, 149, 0, 0.1)',
         fill: false,
         tension: 0.3,
         yAxisID: 'y1'
@@ -637,7 +634,7 @@ const lineChartOptions = computed(() => ({
         color: chartColors.value.grid
       },
       ticks: {
-        color: '#3b82f6',
+        color: SERIES_ACCOUNT_COST,
         font: {
           size: 10
         },
@@ -646,7 +643,7 @@ const lineChartOptions = computed(() => ({
       title: {
         display: true,
         text: t('usage.accountBilled') + ' (USD)',
-        color: '#3b82f6',
+        color: SERIES_ACCOUNT_COST,
         font: {
           size: 11
         }
@@ -660,7 +657,7 @@ const lineChartOptions = computed(() => ({
         drawOnChartArea: false
       },
       ticks: {
-        color: '#f97316',
+        color: SERIES_REQUESTS,
         font: {
           size: 10
         },
@@ -669,7 +666,7 @@ const lineChartOptions = computed(() => ({
       title: {
         display: true,
         text: t('admin.accounts.stats.requests'),
-        color: '#f97316',
+        color: SERIES_REQUESTS,
         font: {
           size: 11
         }

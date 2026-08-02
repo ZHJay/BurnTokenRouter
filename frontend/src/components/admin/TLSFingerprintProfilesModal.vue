@@ -22,58 +22,59 @@
         <Icon name="refresh" size="lg" class="animate-spin text-gray-400" />
       </div>
 
-      <div v-else-if="profiles.length === 0" class="py-8 text-center">
-        <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-dark-700">
+      <div v-else-if="profiles.length === 0" class="empty-state py-8">
+        <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-dark-700">
           <Icon name="shield" size="lg" class="text-gray-400" />
         </div>
-        <h4 class="mb-1 text-sm font-medium text-gray-900 dark:text-white">
+        <h4 class="empty-state-title text-sm">
           {{ t('admin.tlsFingerprintProfiles.noProfiles') }}
         </h4>
-        <p class="text-sm text-gray-500 dark:text-gray-400">
+        <p class="empty-state-description">
           {{ t('admin.tlsFingerprintProfiles.createFirstProfile') }}
         </p>
       </div>
 
-      <div v-else class="max-h-96 overflow-auto rounded-lg border border-gray-200 dark:border-dark-600">
-        <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
-          <thead class="sticky top-0 bg-gray-50 dark:bg-dark-700">
+      <div v-else class="table-container max-h-96 overflow-auto">
+        <table class="table min-w-full">
+          <!-- 弹窗本身是 thin 材质：表头必须转不透明，半透明叠半透明会糊 -->
+          <thead class="sticky top-0 [&_th]:bg-[var(--surface)] [&_th]:backdrop-blur-none">
             <tr>
-              <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+              <th>
                 {{ t('admin.tlsFingerprintProfiles.columns.name') }}
               </th>
-              <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+              <th>
                 {{ t('admin.tlsFingerprintProfiles.columns.description') }}
               </th>
-              <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+              <th>
                 {{ t('admin.tlsFingerprintProfiles.columns.grease') }}
               </th>
-              <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+              <th>
                 {{ t('admin.tlsFingerprintProfiles.columns.alpn') }}
               </th>
-              <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+              <th>
                 {{ t('admin.tlsFingerprintProfiles.columns.actions') }}
               </th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-200 bg-white dark:divide-dark-700 dark:bg-dark-800">
-            <tr v-for="profile in profiles" :key="profile.id" class="hover:bg-gray-50 dark:hover:bg-dark-700">
-              <td class="px-3 py-2">
-                <div class="font-medium text-gray-900 dark:text-white text-sm">{{ profile.name }}</div>
+          <tbody>
+            <tr v-for="profile in profiles" :key="profile.id">
+              <td>
+                <div class="text-sm font-medium text-gray-900 dark:text-white">{{ profile.name }}</div>
               </td>
-              <td class="px-3 py-2">
-                <div v-if="profile.description" class="text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
+              <td>
+                <div v-if="profile.description" class="max-w-xs truncate text-sm text-gray-500 dark:text-gray-400">
                   {{ profile.description }}
                 </div>
                 <div v-else class="text-xs text-gray-400 dark:text-gray-600">—</div>
               </td>
-              <td class="px-3 py-2">
+              <td>
                 <Icon
                   :name="profile.enable_grease ? 'check' : 'lock'"
                   size="sm"
                   :class="profile.enable_grease ? 'text-green-500' : 'text-gray-400'"
                 />
               </td>
-              <td class="px-3 py-2">
+              <td>
                 <div v-if="profile.alpn_protocols?.length" class="flex flex-wrap gap-1">
                   <span
                     v-for="proto in profile.alpn_protocols.slice(0, 3)"
@@ -82,24 +83,24 @@
                   >
                     {{ proto }}
                   </span>
-                  <span v-if="profile.alpn_protocols.length > 3" class="text-xs text-gray-500">
+                  <span v-if="profile.alpn_protocols.length > 3" class="tabular text-xs text-gray-500">
                     +{{ profile.alpn_protocols.length - 3 }}
                   </span>
                 </div>
                 <div v-else class="text-xs text-gray-400 dark:text-gray-600">—</div>
               </td>
-              <td class="px-3 py-2">
+              <td>
                 <div class="flex items-center gap-1">
                   <button
                     @click="handleEdit(profile)"
-                    class="p-1 text-gray-500 hover:text-primary-600 dark:hover:text-primary-400"
+                    class="rounded-full p-1 text-gray-500 transition-[color,transform] duration-fast ease-apple-out hover:text-primary-600 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)] active:scale-[0.96] dark:hover:text-primary-400"
                     :title="t('common.edit')"
                   >
                     <Icon name="edit" size="sm" />
                   </button>
                   <button
                     @click="handleDelete(profile)"
-                    class="p-1 text-gray-500 hover:text-red-600 dark:hover:text-red-400"
+                    class="rounded-full p-1 text-gray-500 transition-[color,transform] duration-fast ease-apple-out hover:text-red-600 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[rgb(255_59_48_/_0.24)] active:scale-[0.96] dark:hover:text-red-400"
                     :title="t('common.delete')"
                   >
                     <Icon name="trash" size="sm" />
@@ -145,12 +146,12 @@
             </button>
             <p class="text-xs text-gray-500 dark:text-gray-400">
               {{ t('admin.tlsFingerprintProfiles.form.pasteYamlHint') }}
-              <a href="https://tls.sub2api.org" target="_blank" rel="noopener noreferrer" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 underline">{{ t('admin.tlsFingerprintProfiles.form.openCollector') }}</a>
+              <a href="https://tls.sub2api.org" target="_blank" rel="noopener noreferrer" class="rounded-full text-primary-600 underline transition-[color,transform] duration-fast ease-apple-out hover:text-primary-700 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)] active:scale-[0.96] dark:text-primary-400 dark:hover:text-primary-300">{{ t('admin.tlsFingerprintProfiles.form.openCollector') }}</a>
             </p>
           </div>
         </div>
 
-        <hr class="border-gray-200 dark:border-dark-600" />
+        <div class="divider"></div>
 
         <!-- Basic Info -->
         <div class="grid grid-cols-2 gap-4">
@@ -181,16 +182,11 @@
             type="button"
             @click="form.enable_grease = !form.enable_grease"
             :class="[
-              'relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-              form.enable_grease ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600'
+              'switch flex-shrink-0 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)]',
+              form.enable_grease ? 'switch-active' : ''
             ]"
           >
-            <span
-              :class="[
-                'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                form.enable_grease ? 'translate-x-4' : 'translate-x-0'
-              ]"
-            />
+            <span class="switch-thumb pointer-events-none" />
           </button>
           <div>
             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">

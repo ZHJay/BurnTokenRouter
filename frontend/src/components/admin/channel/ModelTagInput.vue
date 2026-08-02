@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Tags display -->
-    <div class="flex flex-wrap gap-1.5 rounded-lg border border-gray-200 bg-white p-2 dark:border-dark-600 dark:bg-dark-800 min-h-[2.5rem]">
+    <div class="flex min-h-[2.5rem] flex-wrap gap-1.5 rounded-lg bg-[var(--surface-secondary)] p-2 shadow-[inset_0_0_0_1px_var(--separator)] focus-within:bg-[var(--surface)] focus-within:shadow-[inset_0_0_0_1.5px_var(--accent),0_0_0_3.5px_var(--accent-tint)]">
       <span
         v-for="(model, idx) in models"
         :key="idx"
@@ -12,7 +12,7 @@
         <button
           type="button"
           @click="removeModel(idx)"
-          class="ml-0.5 rounded-full p-0.5 hover:bg-primary-200 dark:hover:bg-primary-800"
+          class="ml-0.5 rounded-full p-0.5 transition-[background-color,transform] duration-fast ease-apple-out hover:bg-primary-200 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)] active:scale-[0.96] dark:hover:bg-primary-800"
         >
           <Icon name="x" size="xs" />
         </button>

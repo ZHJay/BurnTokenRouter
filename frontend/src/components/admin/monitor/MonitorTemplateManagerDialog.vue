@@ -5,23 +5,23 @@
     width="wide"
     @close="$emit('close')"
   >
-    <!-- provider tabs -->
-    <div class="mb-4 border-b border-gray-200 dark:border-dark-700">
-      <div role="tablist" class="flex flex-wrap gap-1">
+    <!-- provider tabs（Apple 分段控件） -->
+    <div class="mb-4">
+      <div role="tablist" class="tabs flex-wrap">
         <button
           v-for="tab in providerTabs"
           :key="tab.value"
           type="button"
           role="tab"
           :aria-selected="activeProvider === tab.value"
-          class="px-4 py-2 text-sm font-medium transition-colors"
+          class="tab transition-transform duration-instant ease-apple-out active:scale-[0.96]"
           :class="tabClass(tab.value)"
           @click="activeProvider = tab.value"
         >
           {{ tab.label }}
           <span
             v-if="countByProvider[tab.value] > 0"
-            class="ml-1.5 rounded-full bg-gray-100 px-2 py-0.5 text-xs dark:bg-dark-700"
+            class="tabular ml-1.5 rounded-full bg-gray-100 px-2 py-0.5 text-xs dark:bg-dark-700"
           >
             {{ countByProvider[tab.value] }}
           </span>
@@ -53,28 +53,28 @@
         v-for="tpl in templatesForActiveProvider"
         v-else
         :key="tpl.id"
-        class="rounded-lg border border-gray-200 bg-white p-4 dark:border-dark-700 dark:bg-dark-800"
+        class="card p-4"
       >
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
               <span class="font-medium text-gray-900 dark:text-white">{{ tpl.name }}</span>
               <span
-                class="inline-flex items-center rounded-md px-1.5 py-0.5 text-xs"
+                class="badge rounded-md px-1.5"
                 :class="modeBadgeClass(tpl.body_override_mode)"
               >
                 {{ modeLabel(tpl.body_override_mode) }}
               </span>
               <span
                 v-if="tpl.provider === PROVIDER_OPENAI"
-                class="inline-flex items-center rounded-md px-1.5 py-0.5 text-xs"
+                class="badge rounded-md px-1.5"
                 :class="apiModeBadgeClass(tpl.api_mode)"
               >
                 {{ apiModeLabel(tpl.api_mode) }}
               </span>
               <span
                 v-if="tpl.associated_monitors > 0"
-                class="text-xs text-gray-500 dark:text-gray-400"
+                class="tabular text-xs text-gray-500 dark:text-gray-400"
               >
                 {{ t('admin.channelMonitor.template.associatedCount', { n: tpl.associated_monitors }) }}
               </span>
@@ -135,7 +135,7 @@
             v-for="opt in providerTabs"
             :key="opt.value"
             type="button"
-            class="rounded-lg border-2 px-3 py-2 text-sm font-medium transition-colors"
+            class="rounded-lg border-2 px-3 py-2 text-sm font-medium transition-[background-color,border-color,color,transform] duration-fast ease-apple-out focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)] active:scale-[0.96]"
             :class="providerPickerClass(opt.value, form.provider === opt.value)"
             @click="form.provider = opt.value"
           >
@@ -144,14 +144,14 @@
         </div>
       </div>
 
-      <div v-if="form.provider === PROVIDER_OPENAI" class="rounded-lg border border-blue-100 bg-blue-50/50 p-3 dark:border-blue-500/20 dark:bg-blue-500/10">
+      <div v-if="form.provider === PROVIDER_OPENAI" class="rounded-xl bg-[var(--accent-tint)] p-3 shadow-[inset_0_0_0_0.5px_var(--hairline)]">
         <label class="input-label">{{ t('admin.channelMonitor.form.apiMode') }}</label>
         <div class="grid gap-3 sm:grid-cols-2">
           <button
             v-for="opt in apiModeOptions"
             :key="opt.value"
             type="button"
-            class="rounded-lg border-2 px-3 py-2 text-left transition-colors"
+            class="rounded-lg px-3 py-2 text-left transition-[background-color,box-shadow,color,transform] duration-fast ease-apple-out focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)] active:scale-[0.96]"
             :class="apiModeButtonClass(opt.value)"
             @click="form.api_mode = opt.value"
           >
@@ -463,8 +463,8 @@ async function doDelete() {
 // --- misc ---
 function tabClass(value: Provider): string {
   return activeProvider.value === value
-    ? 'border-b-2 border-primary-500 text-primary-600 dark:text-primary-400'
-    : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+    ? 'tab-active text-primary-600 dark:text-primary-400'
+    : ''
 }
 
 function modeBadgeClass(mode: BodyOverrideMode): string {
@@ -508,9 +508,9 @@ function normalizeAPIMode(mode: APIMode | undefined | null): APIMode {
 function apiModeButtonClass(mode: APIMode): string {
   const active = form.api_mode === mode
   if (active) {
-    return 'border-primary-500 bg-white text-primary-700 shadow-sm dark:border-primary-400 dark:bg-primary-500/15 dark:text-primary-300'
+    return 'bg-[var(--surface)] text-primary-700 shadow-[inset_0_0_0_1.5px_var(--accent),var(--shadow-1)] dark:bg-primary-500/15 dark:text-primary-300'
   }
-  return 'border-blue-100 bg-white/70 text-gray-600 hover:border-primary-300 dark:border-dark-700 dark:bg-dark-800 dark:text-gray-400'
+  return 'bg-[var(--surface)] text-gray-600 shadow-[inset_0_0_0_0.5px_var(--hairline)] hover:bg-[var(--surface-hover)] dark:bg-dark-800 dark:text-gray-400'
 }
 
 function apiModeLabel(mode: APIMode): string {

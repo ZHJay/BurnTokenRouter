@@ -3,7 +3,8 @@
     <div :class="[isFullscreen ? 'p-4 md:p-6' : '', 'space-y-6 pb-12']">
       <div
         v-if="errorMessage"
-        class="rounded-2xl bg-red-50 p-4 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400"
+        class="rounded-xl p-4 text-sm"
+        :style="{ background: 'rgb(255 59 48 / 0.1)', color: 'var(--sys-red)' }"
       >
         {{ errorMessage }}
       </div>

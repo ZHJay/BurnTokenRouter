@@ -5,6 +5,7 @@ import { Chart as ChartJS, BarElement, CategoryScale, Legend, LinearScale, Toolt
 import { Bar } from 'vue-chartjs'
 import type { OpsLatencyHistogramResponse } from '@/api/admin/ops'
 import type { ChartState } from '../types'
+import { opsAxisFont, opsChartChrome, opsHue, opsScheme, opsTooltipStyle } from '../utils/chartTheme'
 import HelpTooltip from '@/components/common/HelpTooltip.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 
@@ -19,11 +20,16 @@ const props = defineProps<Props>()
 const { t } = useI18n()
 
 const isDarkMode = computed(() => document.documentElement.classList.contains('dark'))
-const colors = computed(() => ({
-  blue: '#3b82f6',
-  grid: isDarkMode.value ? '#374151' : '#f3f4f6',
-  text: isDarkMode.value ? '#9ca3af' : '#6b7280'
-}))
+const scheme = computed(() => opsScheme(isDarkMode.value))
+// 延迟直方图用系统靛蓝，与吞吐（蓝）/ 错误（红）区分开
+const colors = computed(() => {
+  const chrome = opsChartChrome(scheme.value)
+  return {
+    indigo: opsHue('indigo', scheme.value),
+    grid: chrome.grid,
+    text: chrome.axis
+  }
+})
 
 const hasData = computed(() => (props.latencyData?.total_requests ?? 0) > 0)
 
@@ -42,8 +48,8 @@ const chartData = computed(() => {
       {
         label: t('admin.ops.requests'),
         data: props.latencyData.buckets.map((b) => b.count),
-        backgroundColor: c.blue,
-        borderRadius: 4,
+        backgroundColor: c.indigo,
+        borderRadius: 6,
         barPercentage: 0.6
       }
     ]
@@ -56,17 +62,18 @@ const options = computed(() => {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { display: false }
+      legend: { display: false },
+      tooltip: opsTooltipStyle(scheme.value)
     },
     scales: {
       x: {
         grid: { display: false },
-        ticks: { color: c.text, font: { size: 10 } }
+        ticks: { color: c.text, font: opsAxisFont() }
       },
       y: {
         beginAtZero: true,
         grid: { color: c.grid, borderDash: [4, 4] },
-        ticks: { color: c.text, font: { size: 10 } }
+        ticks: { color: c.text, font: opsAxisFont() }
       }
     }
   }
@@ -74,10 +81,11 @@ const options = computed(() => {
 </script>
 
 <template>
-  <div class="flex h-full flex-col rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5 dark:bg-dark-800 dark:ring-dark-700">
+  <!-- 图表卡片保持不透明：数据密集的柱状图放在毛玻璃上会糊 -->
+  <div class="card flex h-full flex-col p-6">
     <div class="mb-4 flex items-center justify-between">
-      <h3 class="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white">
-        <svg class="h-4 w-4 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <h3 class="flex items-center gap-2 text-sm font-semibold tracking-[-0.01em] text-gray-900 dark:text-white">
+        <svg class="h-4 w-4" :style="{ color: 'var(--sys-indigo)' }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path
             stroke-linecap="round"
             stroke-linejoin="round"

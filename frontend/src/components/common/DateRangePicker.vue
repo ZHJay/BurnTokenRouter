@@ -15,7 +15,7 @@
         <Icon
           name="chevronDown"
           size="sm"
-          :class="['transition-transform duration-200', isOpen && 'rotate-180']"
+          :class="['transition-transform duration-fast ease-apple-out', isOpen && 'rotate-180']"
         />
       </span>
     </button>
@@ -321,20 +321,37 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* 触发器读作控件：不透明表面 + 内嵌发丝线，聚焦/展开时 accent 环 */
 .date-picker-trigger {
   @apply flex items-center gap-2;
-  @apply rounded-lg px-3 py-2 text-sm;
-  @apply bg-white dark:bg-dark-800;
-  @apply border border-gray-200 dark:border-dark-600;
-  @apply text-gray-700 dark:text-gray-300;
-  @apply transition-all duration-200;
-  @apply focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30;
-  @apply hover:border-gray-300 dark:hover:border-dark-500;
-  @apply cursor-pointer;
+  @apply cursor-pointer rounded-lg px-3 py-2 text-sm;
+  background-color: var(--surface-secondary);
+  color: var(--label);
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--separator);
+  letter-spacing: -0.006em;
+  transition:
+    box-shadow 240ms var(--ease-out),
+    background-color 240ms var(--ease-out);
+}
+
+.date-picker-trigger:hover {
+  box-shadow: inset 0 0 0 1px var(--label-quaternary);
+}
+
+.date-picker-trigger:focus-visible {
+  outline: none;
+  background-color: var(--surface);
+  box-shadow:
+    inset 0 0 0 1.5px var(--accent),
+    0 0 0 3.5px var(--accent-tint);
 }
 
 .date-picker-trigger-open {
-  @apply border-primary-500 ring-2 ring-primary-500/30;
+  background-color: var(--surface);
+  box-shadow:
+    inset 0 0 0 1.5px var(--accent),
+    0 0 0 3.5px var(--accent-tint);
 }
 
 .date-picker-icon {
@@ -343,20 +360,29 @@ onUnmounted(() => {
 
 .date-picker-value {
   @apply font-medium;
+  /* 等宽数位写成普通声明：SFC 的 <style> 是独立的 PostCSS 入口，
+     @apply 取不到 style.css 里 @layer 定义的 .tabular。 */
+  font-variant-numeric: tabular-nums;
 }
 
 .date-picker-chevron {
   @apply text-gray-400 dark:text-dark-400;
 }
 
+/* 弹层：短暂出现的浮层走 thin 材质 + 四层玻璃边缘 */
 .date-picker-dropdown {
   @apply absolute left-0 z-[100] mt-2;
-  @apply bg-white dark:bg-dark-800;
-  @apply rounded-xl;
-  @apply border border-gray-200 dark:border-dark-700;
-  @apply shadow-lg shadow-black/10 dark:shadow-black/30;
-  @apply overflow-hidden;
-  @apply min-w-[320px];
+  @apply min-w-[320px] overflow-hidden rounded-xl;
+  background: var(--mat-thin);
+  backdrop-filter: blur(var(--mat-blur-thin)) var(--mat-diffuse);
+  -webkit-backdrop-filter: blur(var(--mat-blur-thin)) var(--mat-diffuse);
+  border: 0;
+  box-shadow:
+    0 0 0 0.5px var(--glass-edge-outer),
+    inset 0 0 0 0.5px var(--glass-edge),
+    inset 0 -0.5px 0 0 var(--glass-counter),
+    inset 0 1px 0 0 var(--glass-specular),
+    var(--shadow-3);
 }
 
 .date-picker-presets {
@@ -364,19 +390,37 @@ onUnmounted(() => {
 }
 
 .date-picker-preset {
-  @apply rounded-md px-3 py-1.5 text-xs font-medium;
-  @apply text-gray-600 dark:text-gray-400;
-  @apply hover:bg-gray-100 dark:hover:bg-dark-700;
-  @apply transition-colors duration-150;
+  @apply rounded-full px-3 py-1.5 text-xs;
+  color: var(--label-secondary);
+  font-weight: 590;
+  transition:
+    background-color 100ms var(--ease-out),
+    color 100ms var(--ease-out),
+    transform 100ms var(--ease-out);
+}
+
+.date-picker-preset:hover {
+  background-color: var(--surface-hover);
+  color: var(--label);
+}
+
+.date-picker-preset:active {
+  transform: scale(0.96);
 }
 
 .date-picker-preset-active {
-  @apply bg-primary-100 dark:bg-primary-900/30;
-  @apply text-primary-700 dark:text-primary-300;
+  background-color: var(--accent-tint);
+  color: var(--accent);
+}
+
+.date-picker-preset-active:hover {
+  background-color: var(--accent-tint-strong);
+  color: var(--accent);
 }
 
 .date-picker-divider {
-  @apply border-t border-gray-100 dark:border-dark-700;
+  border: 0;
+  box-shadow: inset 0 0.5px 0 var(--separator);
 }
 
 .date-picker-custom {
@@ -388,15 +432,29 @@ onUnmounted(() => {
 }
 
 .date-picker-label {
-  @apply mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400;
+  @apply mb-1 block text-xs font-medium;
+  letter-spacing: 0.002em;
+  color: var(--label-secondary);
 }
 
 .date-picker-input {
-  @apply w-full rounded-md px-2 py-1.5 text-sm;
-  @apply bg-gray-50 dark:bg-dark-700;
-  @apply border border-gray-200 dark:border-dark-600;
-  @apply text-gray-900 dark:text-gray-100;
-  @apply focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30;
+  @apply w-full rounded-lg px-2 py-1.5 text-sm;
+  font-variant-numeric: tabular-nums;
+  background-color: var(--surface-secondary);
+  color: var(--label);
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--separator);
+  transition:
+    box-shadow 240ms var(--ease-out),
+    background-color 240ms var(--ease-out);
+}
+
+.date-picker-input:focus {
+  outline: none;
+  background-color: var(--surface);
+  box-shadow:
+    inset 0 0 0 1.5px var(--accent),
+    0 0 0 3.5px var(--accent-tint);
 }
 
 .date-picker-input::-webkit-calendar-picker-indicator {
@@ -417,21 +475,38 @@ onUnmounted(() => {
 }
 
 .date-picker-apply {
-  @apply rounded-lg px-4 py-1.5 text-sm font-medium;
-  @apply bg-primary-600 text-white;
-  @apply hover:bg-primary-700;
-  @apply transition-colors duration-150;
+  @apply rounded-full px-4 py-1.5 text-sm;
+  background-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 590;
+  letter-spacing: -0.006em;
+  box-shadow: var(--shadow-accent);
+  transition:
+    background-color 240ms var(--ease-out),
+    transform 100ms var(--ease-out);
 }
 
-/* Dropdown animation */
+.date-picker-apply:hover {
+  background-color: var(--accent-hover);
+}
+
+.date-picker-apply:active {
+  background-color: var(--accent-pressed);
+  transform: scale(0.96);
+}
+
+/* 从锚点生长，而不是单纯位移淡入 */
 .date-picker-dropdown-enter-active,
 .date-picker-dropdown-leave-active {
-  transition: all 0.2s ease;
+  transition:
+    opacity 240ms var(--ease-out),
+    transform 240ms var(--spring);
+  transform-origin: top left;
 }
 
 .date-picker-dropdown-enter-from,
 .date-picker-dropdown-leave-to {
   opacity: 0;
-  transform: translateY(-8px);
+  transform: scale(0.96) translateY(-6px);
 }
 </style>

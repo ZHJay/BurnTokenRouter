@@ -37,17 +37,17 @@
               <!-- User Dropdown -->
               <div
                 v-if="showFilterUserDropdown && (filterUserResults.length > 0 || filterUserKeyword)"
-                class="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg dark:border-dark-700 dark:bg-dark-800"
+                class="dropdown left-0 top-full mt-1 max-h-60 w-full origin-top overflow-auto"
               >
                 <div
                   v-if="filterUserLoading"
-                  class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400"
+                  class="px-2.5 py-2 text-sm text-gray-500 dark:text-gray-400"
                 >
                   {{ t('common.loading') }}
                 </div>
                 <div
                   v-else-if="filterUserResults.length === 0 && filterUserKeyword"
-                  class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400"
+                  class="px-2.5 py-2 text-sm text-gray-500 dark:text-gray-400"
                 >
                   {{ t('common.noOptionsFound') }}
                 </div>
@@ -56,10 +56,10 @@
                   :key="user.id"
                   type="button"
                   @click="selectFilterUser(user)"
-                  class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-dark-700"
+                  class="dropdown-item group w-full text-left"
                 >
-                  <span class="font-medium text-gray-900 dark:text-white">{{ user.email }}</span>
-                  <span class="ml-2 text-gray-500 dark:text-gray-400">#{{ user.id }}</span>
+                  <span class="font-medium text-gray-900 group-hover:text-white dark:text-white">{{ user.email }}</span>
+                  <span class="tabular ml-2 text-gray-500 group-hover:text-white/80 dark:text-gray-400">#{{ user.id }}</span>
                 </button>
               </div>
             </div>
@@ -116,27 +116,27 @@
               <!-- Dropdown menu -->
               <div
                 v-if="showColumnDropdown"
-                class="absolute right-0 z-50 mt-2 w-48 origin-top-right rounded-lg border border-gray-200 bg-white shadow-lg dark:border-dark-700 dark:bg-dark-800"
+                class="dropdown right-0 top-full mt-2 w-48"
               >
-                <div class="p-2">
+                <div>
                   <!-- User column mode selection -->
-                  <div class="mb-2 border-b border-gray-200 pb-2 dark:border-dark-700">
-                    <div class="px-3 py-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+                  <div class="mb-1 pb-1 shadow-[inset_0_-0.5px_0_var(--separator)]">
+                    <div class="px-2.5 py-1 text-xs font-medium text-gray-500 dark:text-gray-400">
                       {{ t('admin.subscriptions.columns.user') }}
                     </div>
                     <button
                       @click="setUserColumnMode('email')"
-                      class="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-dark-700"
+                      class="dropdown-item group w-full justify-between"
                     >
                       <span>{{ t('admin.users.columns.email') }}</span>
-                      <Icon v-if="userColumnMode === 'email'" name="check" size="sm" class="text-primary-500" />
+                      <Icon v-if="userColumnMode === 'email'" name="check" size="sm" class="text-primary-500 group-hover:text-white" />
                     </button>
                     <button
                       @click="setUserColumnMode('username')"
-                      class="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-dark-700"
+                      class="dropdown-item group w-full justify-between"
                     >
                       <span>{{ t('admin.users.columns.username') }}</span>
-                      <Icon v-if="userColumnMode === 'username'" name="check" size="sm" class="text-primary-500" />
+                      <Icon v-if="userColumnMode === 'username'" name="check" size="sm" class="text-primary-500 group-hover:text-white" />
                     </button>
                   </div>
                   <!-- Other columns toggle -->
@@ -144,10 +144,10 @@
                     v-for="col in toggleableColumns"
                     :key="col.key"
                     @click="toggleColumn(col.key)"
-                    class="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-dark-700"
+                    class="dropdown-item group w-full justify-between"
                   >
                     <span>{{ col.label }}</span>
-                    <Icon v-if="isColumnVisible(col.key)" name="check" size="sm" class="text-primary-500" />
+                    <Icon v-if="isColumnVisible(col.key)" name="check" size="sm" class="text-primary-500 group-hover:text-white" />
                   </button>
                 </div>
               </div>
@@ -181,9 +181,10 @@
           <template #cell-user="{ row }">
             <div class="flex items-center gap-2">
               <div
-                class="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30"
+                class="flex h-8 w-8 flex-none items-center justify-center rounded-full"
+                :style="{ backgroundImage: getAvatarGradient(String(row.user?.email || row.user_id)) }"
               >
-                <span class="text-sm font-medium text-primary-700 dark:text-primary-300">
+                <span class="text-xs font-semibold text-white">
                   {{ userColumnMode === 'email'
                     ? (row.user?.email?.charAt(0).toUpperCase() || '?')
                     : (row.user?.username?.charAt(0).toUpperCase() || '?')
@@ -217,9 +218,9 @@
               <div v-if="row.group?.daily_limit_usd" class="usage-row">
                 <div class="flex items-center gap-2">
                   <span class="usage-label">{{ t('admin.subscriptions.daily') }}</span>
-                  <div class="h-1.5 flex-1 rounded-full bg-gray-200 dark:bg-dark-600">
+                  <div class="progress flex-1">
                     <div
-                      class="h-1.5 rounded-full transition-all"
+                      class="h-1.5 rounded-full transition-[width] duration-base ease-spring"
                       :class="getProgressClass(row.daily_usage_usd, row.group?.daily_limit_usd)"
                       :style="{
                         width: getProgressWidth(row.daily_usage_usd, row.group?.daily_limit_usd)
@@ -254,9 +255,9 @@
               <div v-if="row.group?.weekly_limit_usd" class="usage-row">
                 <div class="flex items-center gap-2">
                   <span class="usage-label">{{ t('admin.subscriptions.weekly') }}</span>
-                  <div class="h-1.5 flex-1 rounded-full bg-gray-200 dark:bg-dark-600">
+                  <div class="progress flex-1">
                     <div
-                      class="h-1.5 rounded-full transition-all"
+                      class="h-1.5 rounded-full transition-[width] duration-base ease-spring"
                       :class="getProgressClass(row.weekly_usage_usd, row.group?.weekly_limit_usd)"
                       :style="{
                         width: getProgressWidth(row.weekly_usage_usd, row.group?.weekly_limit_usd)
@@ -291,9 +292,9 @@
               <div v-if="row.group?.monthly_limit_usd" class="usage-row">
                 <div class="flex items-center gap-2">
                   <span class="usage-label">{{ t('admin.subscriptions.monthly') }}</span>
-                  <div class="h-1.5 flex-1 rounded-full bg-gray-200 dark:bg-dark-600">
+                  <div class="progress flex-1">
                     <div
-                      class="h-1.5 rounded-full transition-all"
+                      class="h-1.5 rounded-full transition-[width] duration-base ease-spring"
                       :class="getProgressClass(row.monthly_usage_usd, row.group?.monthly_limit_usd)"
                       :style="{
                         width: getProgressWidth(row.monthly_usage_usd, row.group?.monthly_limit_usd)
@@ -331,7 +332,7 @@
                   !row.group?.weekly_limit_usd &&
                   !row.group?.monthly_limit_usd
                 "
-                class="flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 px-3 py-2 dark:from-emerald-900/20 dark:to-teal-900/20"
+                class="flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 dark:bg-emerald-500/[0.14]"
               >
                 <span class="text-lg text-emerald-600 dark:text-emerald-400">∞</span>
                 <span class="text-xs font-medium text-emerald-700 dark:text-emerald-300">
@@ -387,7 +388,7 @@
               <button
                 v-if="row.status === 'active' || row.status === 'expired'"
                 @click="handleExtend(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
+                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-transform duration-instant ease-apple-out active:scale-[0.96] hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400"
               >
                 <Icon name="calendar" size="sm" />
                 <span class="text-xs">{{ t('admin.subscriptions.adjust') }}</span>
@@ -396,7 +397,7 @@
                 v-if="row.status === 'active'"
                 @click="handleResetQuota(row)"
                 :disabled="resettingQuota && resettingSubscription?.id === row.id"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-900/20 dark:hover:text-orange-400 disabled:cursor-not-allowed disabled:opacity-50"
+                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-transform duration-instant ease-apple-out active:scale-[0.96] hover:bg-orange-500/10 hover:text-orange-600 dark:hover:text-orange-400 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Icon name="refresh" size="sm" />
                 <span class="text-xs">{{ t('admin.subscriptions.resetQuota') }}</span>
@@ -404,7 +405,7 @@
               <button
                 v-if="row.status === 'active'"
                 @click="handleRevoke(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-transform duration-instant ease-apple-out active:scale-[0.96] hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
               >
                 <Icon name="ban" size="sm" />
                 <span class="text-xs">{{ t('admin.subscriptions.revoke') }}</span>
@@ -412,7 +413,7 @@
               <button
                 v-if="row.status === 'revoked'"
                 @click="handleRestore(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400"
+                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-transform duration-instant ease-apple-out active:scale-[0.96] hover:bg-green-500/10 hover:text-green-600 dark:hover:text-green-400"
               >
                 <Icon name="refresh" size="sm" />
                 <span class="text-xs">{{ t('admin.subscriptions.restore') }}</span>
@@ -478,17 +479,17 @@
             <!-- User Dropdown -->
             <div
               v-if="showUserDropdown && (userSearchResults.length > 0 || userSearchKeyword)"
-              class="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg dark:border-dark-700 dark:bg-dark-800"
+              class="dropdown left-0 top-full mt-1 max-h-60 w-full origin-top overflow-auto"
             >
               <div
                 v-if="userSearchLoading"
-                class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400"
+                class="px-2.5 py-2 text-sm text-gray-500 dark:text-gray-400"
               >
                 {{ t('common.loading') }}
               </div>
               <div
                 v-else-if="userSearchResults.length === 0 && userSearchKeyword"
-                class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400"
+                class="px-2.5 py-2 text-sm text-gray-500 dark:text-gray-400"
               >
                 {{ t('common.noOptionsFound') }}
               </div>
@@ -497,10 +498,10 @@
                 :key="user.id"
                 type="button"
                 @click="selectUser(user)"
-                class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-dark-700"
+                class="dropdown-item group w-full text-left"
               >
-                <span class="font-medium text-gray-900 dark:text-white">{{ user.email }}</span>
-                <span class="ml-2 text-gray-500 dark:text-gray-400">#{{ user.id }}</span>
+                <span class="font-medium text-gray-900 group-hover:text-white dark:text-white">{{ user.email }}</span>
+                <span class="tabular ml-2 text-gray-500 group-hover:text-white/80 dark:text-gray-400">#{{ user.id }}</span>
               </button>
             </div>
           </div>
@@ -683,19 +684,19 @@
     <teleport to="body">
       <transition name="modal">
         <div v-if="showGuideModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @mousedown.self="showGuideModal = false">
-          <div class="fixed inset-0 bg-black/50" @click="showGuideModal = false"></div>
-          <div class="relative max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-6 shadow-2xl dark:bg-dark-800">
-            <button type="button" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" @click="showGuideModal = false">
+          <div class="modal-overlay" @click="showGuideModal = false"></div>
+          <div class="modal-content relative max-h-[85vh] w-full max-w-2xl overflow-y-auto p-6">
+            <button type="button" class="btn btn-ghost btn-icon absolute right-4 top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" @click="showGuideModal = false">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
 
-            <h2 class="mb-4 text-lg font-bold text-gray-900 dark:text-white">{{ t('admin.subscriptions.guide.title') }}</h2>
+            <h2 class="modal-title mb-4">{{ t('admin.subscriptions.guide.title') }}</h2>
             <p class="mb-5 text-sm text-gray-500 dark:text-gray-400">{{ t('admin.subscriptions.guide.subtitle') }}</p>
 
             <!-- Step 1 -->
             <div class="mb-5">
               <h3 class="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
-                <span class="flex h-6 w-6 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">1</span>
+                <span class="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-primary-500/[0.14] text-xs font-semibold text-primary-700 dark:bg-primary-500/20 dark:text-primary-300">1</span>
                 {{ t('admin.subscriptions.guide.step1.title') }}
               </h3>
               <ol class="ml-8 list-decimal space-y-1 text-sm text-gray-600 dark:text-gray-300">
@@ -718,7 +719,7 @@
             <!-- Step 2 -->
             <div class="mb-5">
               <h3 class="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
-                <span class="flex h-6 w-6 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">2</span>
+                <span class="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-primary-500/[0.14] text-xs font-semibold text-primary-700 dark:bg-primary-500/20 dark:text-primary-300">2</span>
                 {{ t('admin.subscriptions.guide.step2.title') }}
               </h3>
               <ol class="ml-8 list-decimal space-y-1 text-sm text-gray-600 dark:text-gray-300">
@@ -731,14 +732,14 @@
             <!-- Step 3 -->
             <div class="mb-5">
               <h3 class="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
-                <span class="flex h-6 w-6 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">3</span>
+                <span class="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-primary-500/[0.14] text-xs font-semibold text-primary-700 dark:bg-primary-500/20 dark:text-primary-300">3</span>
                 {{ t('admin.subscriptions.guide.step3.title') }}
               </h3>
-              <div class="ml-8 overflow-hidden rounded-lg border border-gray-200 dark:border-dark-600">
+              <div class="card-inset ml-8 overflow-hidden">
                 <table class="w-full text-sm">
                   <tbody>
-                    <tr v-for="(row, i) in guideActionRows" :key="i" class="border-b border-gray-100 dark:border-dark-700 last:border-0">
-                      <td class="whitespace-nowrap bg-gray-50 px-3 py-2 font-medium text-gray-700 dark:bg-dark-700 dark:text-gray-300">{{ row.action }}</td>
+                    <tr v-for="(row, i) in guideActionRows" :key="i" class="shadow-[inset_0_-0.5px_0_var(--separator)] last:shadow-none">
+                      <td class="whitespace-nowrap px-3 py-2 font-medium text-gray-700 dark:text-gray-300">{{ row.action }}</td>
                       <td class="px-3 py-2 text-gray-600 dark:text-gray-400">{{ row.desc }}</td>
                     </tr>
                   </tbody>
@@ -747,7 +748,7 @@
             </div>
 
             <!-- Tip -->
-            <div class="rounded-lg bg-blue-50 p-3 text-xs text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
+            <div class="rounded-lg bg-blue-500/10 p-3 text-xs text-blue-700 dark:text-blue-300">
               {{ t('admin.subscriptions.guide.tip') }}
             </div>
 
@@ -791,6 +792,30 @@ import {
 
 const { t } = useI18n()
 const appStore = useAppStore()
+
+/**
+ * Avatar gradients — decorative avatars keep a gradient (Apple controls stay
+ * flat). Identity color derives from the email so it is stable across reloads.
+ * Mirrors UsersView; kept local because src/utils is outside this change.
+ */
+const AVATAR_GRADIENTS = [
+  'linear-gradient(145deg, #007aff, #0a5fd0)',
+  'linear-gradient(145deg, #34c759, #248a3d)',
+  'linear-gradient(145deg, #ff9500, #c76b00)',
+  'linear-gradient(145deg, #af52de, #8944ab)',
+  'linear-gradient(145deg, #30b0c7, #1f7f92)',
+  'linear-gradient(145deg, #5856d6, #3f3ea8)',
+  'linear-gradient(145deg, #ff2d55, #c81e3f)',
+  'linear-gradient(145deg, #ffcc00, #c79a00)'
+] as const
+
+const getAvatarGradient = (seed: string): string => {
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) % 997
+  }
+  return AVATAR_GRADIENTS[hash % AVATAR_GRADIENTS.length]
+}
 
 interface GroupOption {
   value: number

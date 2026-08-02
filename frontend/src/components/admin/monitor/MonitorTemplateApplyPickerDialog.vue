@@ -33,7 +33,7 @@
         >
           {{ t('admin.channelMonitor.template.selectNone') }}
         </button>
-        <span class="ml-auto text-gray-500 dark:text-gray-400">
+        <span class="tabular ml-auto text-gray-500 dark:text-gray-400">
           {{ t('admin.channelMonitor.template.selectedCount', {
             n: selectedIds.length,
             total: monitors.length,
@@ -41,17 +41,17 @@
         </span>
       </div>
 
-      <ul class="max-h-80 divide-y divide-gray-100 overflow-y-auto rounded-lg border border-gray-200 dark:divide-dark-700 dark:border-dark-700">
+      <ul class="max-h-80 divide-y divide-gray-100 overflow-y-auto rounded-xl shadow-[inset_0_0_0_0.5px_var(--hairline)] dark:divide-dark-700">
         <li
           v-for="m in monitors"
           :key="m.id"
-          class="flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-dark-800"
+          class="flex cursor-pointer items-center gap-3 px-3 py-2 transition-[background-color,transform] duration-fast ease-apple-out hover:bg-gray-50 active:scale-[0.98] dark:hover:bg-dark-800"
           @click="toggle(m.id)"
         >
           <input
             type="checkbox"
             :checked="selectedSet.has(m.id)"
-            class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+            class="h-4 w-4 rounded border-gray-300 text-primary-600 focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)]"
             @click.stop="toggle(m.id)"
           />
           <span class="font-medium text-gray-900 dark:text-white">{{ m.name }}</span>
@@ -59,7 +59,7 @@
           <span v-if="m.provider === 'openai'" class="text-xs text-gray-400">{{ m.api_mode }}</span>
           <span
             v-if="!m.enabled"
-            class="ml-auto rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500 dark:bg-dark-700 dark:text-gray-400"
+            class="badge badge-gray ml-auto"
           >
             {{ t('admin.channelMonitor.onlyDisabled').replace(/^仅|^Only /, '') }}
           </span>

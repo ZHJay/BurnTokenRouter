@@ -8,7 +8,7 @@
     <div v-if="user" class="space-y-4">
       <div
         v-if="hasActiveSubscription"
-        class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
+        class="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700 ring-1 ring-inset ring-amber-200 dark:bg-amber-500/10 dark:text-amber-200 dark:ring-amber-500/30"
       >
         {{ t('admin.users.platformQuota.subscriptionWarning') }}
       </div>
@@ -17,77 +17,77 @@
       </p>
       <div v-if="loading" class="py-10 text-center text-gray-500">{{ t('common.loading') }}</div>
       <div v-else class="overflow-x-auto">
-        <table class="min-w-full text-sm">
+        <table class="table min-w-full">
           <thead>
-            <tr class="border-b border-gray-200 text-gray-700 dark:border-dark-700 dark:text-gray-300">
-              <th class="px-3 py-2 text-left font-medium">{{ t('admin.users.platformQuota.columns.platform') }}</th>
-              <th class="px-3 py-2 text-left font-medium">{{ t('admin.users.platformQuota.columns.daily') }}</th>
-              <th class="px-3 py-2 text-left font-medium">{{ t('admin.users.platformQuota.columns.weekly') }}</th>
-              <th class="px-3 py-2 text-left font-medium">{{ t('admin.users.platformQuota.columns.monthly') }}</th>
-              <th class="px-3 py-2 text-left font-medium">{{ t('admin.users.platformQuota.columns.usage') }}</th>
+            <tr>
+              <th>{{ t('admin.users.platformQuota.columns.platform') }}</th>
+              <th>{{ t('admin.users.platformQuota.columns.daily') }}</th>
+              <th>{{ t('admin.users.platformQuota.columns.weekly') }}</th>
+              <th>{{ t('admin.users.platformQuota.columns.monthly') }}</th>
+              <th>{{ t('admin.users.platformQuota.columns.usage') }}</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in quotas" :key="row.platform" class="border-b border-gray-100 dark:border-dark-800">
-              <td class="px-3 py-2 font-mono text-gray-900 dark:text-white">{{ row.platform }}</td>
-              <td class="px-3 py-2">
+            <tr v-for="row in quotas" :key="row.platform">
+              <td class="font-mono text-gray-900 dark:text-white">{{ row.platform }}</td>
+              <td>
                 <div class="flex items-center gap-1">
                   <input
                     v-model.number="row.daily_limit_usd"
                     type="number"
                     min="0"
                     step="0.01"
-                    class="input w-24"
+                    class="input tabular w-24"
                     :placeholder="t('admin.users.platformQuota.placeholder')"
                   />
                   <button
                     type="button"
-                    class="text-xs text-gray-400 hover:text-amber-500 disabled:opacity-50"
+                    class="rounded-full p-1 text-xs text-gray-400 transition-[color,transform] duration-fast ease-apple-out hover:text-amber-500 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)] active:scale-[0.96] disabled:opacity-50 disabled:active:scale-100"
                     :disabled="!!resetting[`${row.platform}.daily`]"
                     :title="t('admin.users.platformQuota.reset.button')"
                     @click="onReset(row.platform, 'daily')"
                   >↻</button>
                 </div>
               </td>
-              <td class="px-3 py-2">
+              <td>
                 <div class="flex items-center gap-1">
                   <input
                     v-model.number="row.weekly_limit_usd"
                     type="number"
                     min="0"
                     step="0.01"
-                    class="input w-24"
+                    class="input tabular w-24"
                     :placeholder="t('admin.users.platformQuota.placeholder')"
                   />
                   <button
                     type="button"
-                    class="text-xs text-gray-400 hover:text-amber-500 disabled:opacity-50"
+                    class="rounded-full p-1 text-xs text-gray-400 transition-[color,transform] duration-fast ease-apple-out hover:text-amber-500 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)] active:scale-[0.96] disabled:opacity-50 disabled:active:scale-100"
                     :disabled="!!resetting[`${row.platform}.weekly`]"
                     :title="t('admin.users.platformQuota.reset.button')"
                     @click="onReset(row.platform, 'weekly')"
                   >↻</button>
                 </div>
               </td>
-              <td class="px-3 py-2">
+              <td>
                 <div class="flex items-center gap-1">
                   <input
                     v-model.number="row.monthly_limit_usd"
                     type="number"
                     min="0"
                     step="0.01"
-                    class="input w-24"
+                    class="input tabular w-24"
                     :placeholder="t('admin.users.platformQuota.placeholder')"
                   />
                   <button
                     type="button"
-                    class="text-xs text-gray-400 hover:text-amber-500 disabled:opacity-50"
+                    class="rounded-full p-1 text-xs text-gray-400 transition-[color,transform] duration-fast ease-apple-out hover:text-amber-500 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)] active:scale-[0.96] disabled:opacity-50 disabled:active:scale-100"
                     :disabled="!!resetting[`${row.platform}.monthly`]"
                     :title="t('admin.users.platformQuota.reset.button')"
                     @click="onReset(row.platform, 'monthly')"
                   >↻</button>
                 </div>
               </td>
-              <td class="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
+              <td class="tabular text-xs text-gray-500 dark:text-gray-400">
                 {{ formatUsage(row.daily_usage_usd) }} / {{ formatUsage(row.weekly_usage_usd) }} / {{ formatUsage(row.monthly_usage_usd) }}
               </td>
             </tr>

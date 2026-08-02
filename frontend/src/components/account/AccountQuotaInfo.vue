@@ -2,7 +2,7 @@
   <div v-if="shouldShowQuota">
     <!-- First line: Platform + Tier Badge -->
     <div class="mb-1 flex items-center gap-1">
-      <span :class="['badge text-xs px-2 py-0.5 rounded font-medium', tierBadgeClass]">
+      <span :class="['badge rounded-md px-2 py-0.5 text-xs', tierBadgeClass]">
         {{ tierLabel }}
       </span>
     </div>
@@ -15,7 +15,7 @@
       <span
         v-else
         :class="[
-          'font-medium',
+          'tabular font-[590]',
           isUrgent
             ? 'text-red-600 dark:text-red-400 animate-pulse'
             : 'text-amber-600 dark:text-amber-400'

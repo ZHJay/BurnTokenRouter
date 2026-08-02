@@ -23,7 +23,7 @@
           <div>
             <label class="input-label">{{ t('auth.emailLabel') }}</label>
             <input
-              class="input w-full"
+              class="input h-11 w-full"
               type="email"
               :value="registrationEmail"
               readonly
@@ -35,7 +35,7 @@
             <input
               v-model="password"
               type="password"
-              class="input w-full"
+              class="input h-11 w-full"
               :placeholder="t('auth.createPasswordPlaceholder')"
               :disabled="isSubmitting"
               autocomplete="new-password"
@@ -47,7 +47,7 @@
             <input
               v-model="confirmPassword"
               type="password"
-              class="input w-full"
+              class="input h-11 w-full"
               :placeholder="t('auth.confirmPasswordPlaceholder')"
               :disabled="isSubmitting"
               autocomplete="new-password"
@@ -59,7 +59,7 @@
             <input
               v-model="invitationCode"
               type="text"
-              class="input w-full"
+              class="input h-11 w-full"
               :placeholder="t('auth.invitationCodePlaceholder')"
               :disabled="isSubmitting"
               @keyup.enter="handleSubmitRegistration"
@@ -69,7 +69,7 @@
             {{ registrationError }}
           </p>
           <button
-            class="btn btn-primary w-full"
+            class="btn btn-primary btn-lg w-full"
             type="button"
             :disabled="isSubmitting || !canSubmitRegistration"
             @click="handleSubmitRegistration"

@@ -168,6 +168,29 @@
         }}</span>
       </button>
 
+      <!--
+        Liquid Glass intensity. iOS 27 exposes this as a user-facing control
+        because the right amount of translucency depends on the wallpaper behind
+        it; the same is true of a dashboard's density. Cycles clear → standard
+        → frosted.
+      -->
+      <button
+        @click="cycleGlassIntensity"
+        class="sidebar-link mb-2 w-full"
+        :class="{ 'sidebar-link-collapsed': sidebarCollapsed }"
+        :title="sidebarCollapsed ? `${t('nav.glassMaterial')}: ${glassIntensityLabel}` : undefined"
+      >
+        <GlassIcon class="h-5 w-5 flex-shrink-0" />
+        <span
+          class="sidebar-label sidebar-label-flex"
+          :class="{ 'sidebar-label-collapsed': sidebarCollapsed }"
+          :aria-hidden="sidebarCollapsed ? 'true' : 'false'"
+        >
+          <span class="min-w-0 truncate">{{ t('nav.glassMaterial') }}</span>
+          <span class="badge badge-gray flex-shrink-0">{{ glassIntensityLabel }}</span>
+        </span>
+      </button>
+
       <!-- Collapse Button -->
       <button
         @click="toggleSidebar"
@@ -197,6 +220,7 @@ import { computed, h, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'v
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAdminSettingsStore, useAppStore, useAuthStore, useOnboardingStore } from '@/stores'
+import type { GlassIntensity } from '@/stores/app'
 import VersionBadge from '@/components/common/VersionBadge.vue'
 import SpringCollapse from '@/components/common/SpringCollapse.vue'
 import { sanitizeSvg } from '@/utils/sanitize'
@@ -558,6 +582,29 @@ const MoonIcon = {
     )
 }
 
+// Stacked translucent panes, reading as layered glass.
+const GlassIcon = {
+  render: () =>
+    h(
+      'svg',
+      { fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', 'stroke-width': '1.5' },
+      [
+        h('rect', {
+          x: '3.5',
+          y: '3.5',
+          width: '13',
+          height: '13',
+          rx: '3.4'
+        }),
+        h('path', {
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+          d: 'M7.5 20.5h9a4 4 0 004-4v-9'
+        })
+      ]
+    )
+}
+
 const ChevronDoubleLeftIcon = {
   render: () =>
     h(
@@ -849,6 +896,27 @@ function toggleTheme() {
   isDark.value = !isDark.value
   document.documentElement.classList.toggle('dark', isDark.value)
   localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
+}
+
+/**
+ * Cycles the Liquid Glass intensity: clear -> default -> frosted -> clear.
+ * Persistence and the <html data-glass> attribute are handled by the store.
+ */
+const GLASS_CYCLE = ['clear', 'default', 'frosted'] as const
+
+const glassIntensityLabel = computed(() => {
+  const labels: Record<GlassIntensity, string> = {
+    clear: t('nav.glassClear'),
+    default: t('nav.glassDefault'),
+    frosted: t('nav.glassFrosted')
+  }
+  return labels[appStore.glassIntensity]
+})
+
+function cycleGlassIntensity() {
+  const current = GLASS_CYCLE.indexOf(appStore.glassIntensity)
+  const next = GLASS_CYCLE[(current + 1) % GLASS_CYCLE.length]
+  appStore.setGlassIntensity(next)
 }
 
 function closeMobile() {

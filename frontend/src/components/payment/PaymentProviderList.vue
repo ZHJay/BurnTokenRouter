@@ -1,7 +1,8 @@
 <template>
   <div class="card">
     <!-- Header -->
-    <div class="border-b border-gray-100 px-4 py-3 dark:border-dark-700">
+    <!-- Hairline under the header, drawn as an inset on the card surface. -->
+    <div class="px-4 py-3" style="box-shadow: inset 0 -0.5px 0 var(--separator)">
       <div class="flex items-center justify-between">
         <div>
           <h2 class="text-base font-semibold text-gray-900 dark:text-white">

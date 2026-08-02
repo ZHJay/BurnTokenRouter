@@ -6,10 +6,10 @@
       aria-atomic="true"
     >
       <TransitionGroup
-        enter-active-class="transition ease-out duration-300"
+        enter-active-class="transition ease-spring duration-base"
         enter-from-class="opacity-0 translate-x-full"
         enter-to-class="opacity-100 translate-x-0"
-        leave-active-class="transition ease-in duration-200"
+        leave-active-class="transition ease-apple-out duration-fast"
         leave-from-class="opacity-100 translate-x-0"
         leave-to-class="opacity-0 translate-x-full"
       >
@@ -17,9 +17,9 @@
           v-for="toast in toasts"
           :key="toast.id"
           :class="[
-            'pointer-events-auto min-w-[320px] max-w-md overflow-hidden rounded-lg shadow-lg',
-            'bg-white dark:bg-dark-800',
-            'border-l-4',
+            'pointer-events-auto min-w-[320px] max-w-md overflow-hidden rounded-xl',
+            'glass-thin shadow-glass-edge',
+            'border-l-[3px] border-solid',
             getBorderColor(toast.type)
           ]"
         >
@@ -55,7 +55,7 @@
               <!-- Close button -->
               <button
                 @click="removeToast(toast.id)"
-                class="-m-1 flex-shrink-0 rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-dark-700 dark:hover:text-gray-300"
+                class="btn btn-ghost btn-icon -m-1 flex-shrink-0 p-1"
                 aria-label="Close notification"
               >
                 <Icon name="x" size="sm" />
@@ -64,7 +64,7 @@
           </div>
 
           <!-- Progress bar -->
-          <div v-if="toast.duration" class="h-1 bg-gray-100 dark:bg-dark-700">
+          <div v-if="toast.duration" class="h-1 bg-gray-200/60 dark:bg-dark-700/60">
             <div
               :class="['h-full toast-progress', getProgressBarColor(toast.type)]"
               :style="{ animationDuration: `${toast.duration}ms` }"
@@ -103,7 +103,7 @@ const getIconColor = (type: string): string => {
   const colors: Record<string, string> = {
     success: 'text-green-500',
     error: 'text-red-500',
-    warning: 'text-yellow-500',
+    warning: 'text-orange-500',
     info: 'text-blue-500'
   }
   return colors[type] || colors.info
@@ -111,10 +111,10 @@ const getIconColor = (type: string): string => {
 
 const getBorderColor = (type: string): string => {
   const colors: Record<string, string> = {
-    success: 'border-green-500',
-    error: 'border-red-500',
-    warning: 'border-yellow-500',
-    info: 'border-blue-500'
+    success: 'toast-success',
+    error: 'toast-error',
+    warning: 'toast-warning',
+    info: 'toast-info'
   }
   return colors[type] || colors.info
 }
@@ -123,7 +123,7 @@ const getProgressBarColor = (type: string): string => {
   const colors: Record<string, string> = {
     success: 'bg-green-500',
     error: 'bg-red-500',
-    warning: 'bg-yellow-500',
+    warning: 'bg-orange-500',
     info: 'bg-blue-500'
   }
   return colors[type] || colors.info

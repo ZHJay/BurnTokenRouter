@@ -3,7 +3,9 @@
     <span
       ref="triggerEl"
       :class="[
-        'inline-flex cursor-help items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium transition-colors',
+        'inline-flex cursor-help items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium',
+        'transition duration-fast ease-apple-out focus-visible:outline-none',
+        'focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]',
         effectivePlatform
           ? platformBadgeClass(effectivePlatform)
           : 'border-gray-200 bg-gray-50 text-gray-700 dark:border-dark-600 dark:bg-dark-800 dark:text-gray-300',
@@ -21,7 +23,7 @@
       />
       <span
         v-if="showPlatform && model.platform"
-        class="rounded bg-gray-200/60 px-1 text-[10px] uppercase text-gray-600 dark:bg-dark-700 dark:text-gray-400"
+        class="rounded-md bg-gray-200 px-1 text-[10px] uppercase text-gray-600 dark:bg-dark-700 dark:text-gray-400"
       >
         {{ model.platform }}
       </span>
@@ -36,19 +38,19 @@
         v-show="show"
         ref="popoverEl"
         role="tooltip"
-        class="pointer-events-none fixed z-[99999] w-80 max-w-[min(22rem,calc(100vw-1rem))] rounded-lg border bg-white text-xs shadow-xl dark:bg-dark-800"
+        class="pointer-events-none fixed z-[99999] w-80 max-w-[min(22rem,calc(100vw-1rem))] rounded-xl border bg-white text-xs shadow-elev-4 dark:bg-dark-800"
         :class="[popoverBorderClass]"
         :style="popoverStyle"
       >
         <!-- Header：平台主题色背景，含模型名 + 平台徽章 -->
         <div
-          class="flex items-center justify-between gap-2 rounded-t-lg border-b px-3 py-2"
+          class="flex items-center justify-between gap-2 rounded-t-xl border-b px-3 py-2"
           :class="[popoverHeaderClass, popoverBorderClass]"
         >
           <span class="truncate font-semibold">{{ model.name }}</span>
           <span
             v-if="model.platform"
-            class="flex-shrink-0 rounded bg-white/70 px-1.5 py-0.5 text-[10px] uppercase tracking-wide dark:bg-dark-900/60"
+            class="flex-shrink-0 rounded-md bg-white px-1.5 py-0.5 text-[10px] uppercase tracking-wide dark:bg-dark-900"
           >
             {{ model.platform }}
           </span>
@@ -144,9 +146,9 @@
                 >
                   <span class="text-gray-500 dark:text-gray-400">
                     <template v-if="iv.tier_label">{{ iv.tier_label }}</template>
-                    <template v-else>{{ formatRange(iv.min_tokens, iv.max_tokens) }}</template>
+                    <template v-else><span class="tabular">{{ formatRange(iv.min_tokens, iv.max_tokens) }}</span></template>
                   </span>
-                  <span>{{ formatInterval(iv, model.pricing.billing_mode) }}</span>
+                  <span class="tabular">{{ formatInterval(iv, model.pricing.billing_mode) }}</span>
                 </div>
               </div>
             </div>
@@ -213,7 +215,7 @@ const popoverBorderClass = computed(() =>
 const popoverHeaderClass = computed(() =>
   effectivePlatform.value
     ? platformBadgeLightClass(effectivePlatform.value)
-    : 'bg-gray-50 text-gray-700 dark:bg-dark-700/60 dark:text-gray-300',
+    : 'bg-gray-50 text-gray-700 dark:bg-dark-700 dark:text-gray-300',
 )
 
 function prefixKey(k: string): string {

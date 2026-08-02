@@ -4,7 +4,7 @@
       v-model="email"
       :data-testid="`${testIdPrefix}-create-account-email`"
       type="email"
-      class="input w-full"
+      class="input h-11 w-full"
       :placeholder="t('auth.emailPlaceholder')"
       :disabled="isSubmitting || isSendingCode"
     />
@@ -12,7 +12,7 @@
       v-model="password"
       :data-testid="`${testIdPrefix}-create-account-password`"
       type="password"
-      class="input w-full"
+      class="input h-11 w-full"
       :placeholder="t('auth.passwordPlaceholder')"
       :disabled="isSubmitting"
     />
@@ -32,14 +32,14 @@
         type="text"
         inputmode="numeric"
         maxlength="6"
-        class="input min-w-0 flex-1"
+        class="input tabular h-11 min-w-0 flex-1"
         placeholder="123456"
         :disabled="isSubmitting"
       />
       <button
         :data-testid="`${testIdPrefix}-create-account-send-code`"
         type="button"
-        class="btn btn-secondary shrink-0"
+        class="btn btn-secondary h-11 shrink-0"
         :disabled="isSubmitting || isSendingCode || countdown > 0 || !email.trim() || (turnstileEnabled && !turnstileToken)"
         @click="handleSendCode"
       >
@@ -52,7 +52,7 @@
         }}
       </button>
     </div>
-    <p v-if="emailVerifyEnabled && sendCodeSuccess" class="text-sm text-green-600 dark:text-green-400">
+    <p v-if="emailVerifyEnabled && sendCodeSuccess" class="text-xs text-green-600 dark:text-green-400">
       {{ t('auth.codeSentSuccess') }}
     </p>
     <p v-else-if="emailVerifyEnabled" class="text-xs text-gray-500 dark:text-dark-400">
@@ -63,14 +63,14 @@
       v-model="invitationCode"
       :data-testid="`${testIdPrefix}-create-account-invitation-code`"
       type="text"
-      class="input w-full"
+      class="input h-11 w-full"
       :placeholder="t('auth.invitationCodePlaceholder')"
       :disabled="isSubmitting"
     />
     <button
       :data-testid="`${testIdPrefix}-create-account-submit`"
       type="button"
-      class="btn btn-primary w-full"
+      class="btn btn-primary btn-lg w-full"
       :disabled="isSubmitting || !email.trim() || password.length < 6 || (invitationCodeEnabled && !invitationCode.trim())"
       @click="handleSubmit"
     >
@@ -78,7 +78,7 @@
     </button>
     <button
       type="button"
-      class="btn btn-secondary w-full"
+      class="btn btn-secondary h-10 w-full"
       :disabled="isSubmitting"
       @click="emitSwitchToBind"
     >

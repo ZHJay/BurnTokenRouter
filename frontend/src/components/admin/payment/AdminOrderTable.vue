@@ -44,20 +44,20 @@
 
     <DataTable :columns="columns" :data="orders" :loading="loading">
       <template #cell-id="{ value }">
-        <span class="font-mono text-sm">#{{ value }}</span>
+        <span class="tabular font-mono text-sm">#{{ value }}</span>
       </template>
 
       <template #cell-user_id="{ value }">
-        <span class="text-sm text-gray-600 dark:text-gray-400">#{{ value }}</span>
+        <span class="tabular text-sm text-gray-600 dark:text-gray-400">#{{ value }}</span>
       </template>
 
       <template #cell-pay_amount="{ value, row }">
         <div class="text-sm">
-          <span class="font-medium text-gray-900 dark:text-white">{{ paymentAmountSymbol(row) }}{{ value.toFixed(2) }}</span>
-          <span v-if="row.fee_rate > 0" class="ml-1 text-xs text-gray-400" :title="t('payment.orders.fee') + ': ' + row.fee_rate + '%'">
+          <span class="tabular font-semibold text-gray-900 dark:text-white">{{ paymentAmountSymbol(row) }}{{ value.toFixed(2) }}</span>
+          <span v-if="row.fee_rate > 0" class="tabular ml-1 text-xs text-gray-400" :title="t('payment.orders.fee') + ': ' + row.fee_rate + '%'">
             ({{ row.fee_rate }}%)
           </span>
-          <div v-if="row.amount !== row.pay_amount" class="text-xs text-gray-500">
+          <div v-if="row.amount !== row.pay_amount" class="tabular text-xs text-gray-500">
             {{ t('payment.orders.creditedAmount') }}: {{ creditedAmountSymbol }}{{ row.amount.toFixed(2) }}
           </div>
         </div>
@@ -82,14 +82,14 @@
       </template>
 
       <template #cell-created_at="{ value }">
-        <span class="text-xs text-gray-500 dark:text-gray-400">{{ formatDateTime(value) }}</span>
+        <span class="tabular text-xs text-gray-500 dark:text-gray-400">{{ formatDateTime(value) }}</span>
       </template>
 
       <template #cell-actions="{ row }">
         <div class="flex items-center gap-2">
           <button
             @click="emit('detail', row)"
-            class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:hover:bg-gray-800/50 dark:hover:text-gray-300"
+            class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-[background-color,color,transform] duration-fast ease-apple-out hover:bg-gray-50 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)] active:scale-[0.96] dark:hover:bg-gray-800/50 dark:hover:text-gray-300"
           >
             <Icon name="eye" size="sm" />
             <span class="text-xs">{{ t('common.view') }}</span>
@@ -97,7 +97,7 @@
           <button
             v-if="row.status === 'PENDING'"
             @click="emit('cancel', row)"
-            class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-yellow-50 hover:text-yellow-600 dark:hover:bg-yellow-900/20 dark:hover:text-yellow-400"
+            class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-[background-color,color,transform] duration-fast ease-apple-out hover:bg-yellow-50 hover:text-yellow-600 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[rgb(255_149_0_/_0.24)] active:scale-[0.96] dark:hover:bg-yellow-900/20 dark:hover:text-yellow-400"
           >
             <Icon name="x" size="sm" />
             <span class="text-xs">{{ t('payment.orders.cancel') }}</span>
@@ -105,7 +105,7 @@
           <button
             v-if="row.status === 'FAILED'"
             @click="emit('retry', row)"
-            class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
+            class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-[background-color,color,transform] duration-fast ease-apple-out hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)] active:scale-[0.96] dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
           >
             <Icon name="refresh" size="sm" />
             <span class="text-xs">{{ t('payment.admin.retry') }}</span>
@@ -113,7 +113,7 @@
           <button
             v-if="canRefundRow(row)"
             @click="emit('refund', row)"
-            class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+            class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-[background-color,color,transform] duration-fast ease-apple-out hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[rgb(255_59_48_/_0.24)] active:scale-[0.96] dark:hover:bg-red-900/20 dark:hover:text-red-400"
           >
             <Icon name="dollar" size="sm" />
             <span class="text-xs">{{ t('payment.admin.refund') }}</span>

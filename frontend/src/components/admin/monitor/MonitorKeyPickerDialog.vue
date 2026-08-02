@@ -28,20 +28,21 @@
       <div v-else-if="filteredKeys.length === 0" class="py-6 text-center text-sm text-gray-500">
         {{ t('admin.channelMonitor.form.noActiveKey') }}
       </div>
-      <div v-else class="max-h-96 overflow-auto rounded-lg border border-gray-200 dark:border-dark-600">
-        <table class="w-full text-sm">
-          <thead class="bg-gray-50 dark:bg-dark-800 sticky top-0 z-10">
-            <tr class="text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+      <div v-else class="table-container max-h-96 overflow-auto">
+        <table class="table">
+          <!-- 弹窗本身是 thin 材质：表头必须转不透明，半透明叠半透明会糊 -->
+          <thead class="sticky top-0 z-10 [&_th]:bg-[var(--surface)] [&_th]:backdrop-blur-none">
+            <tr>
               <th class="px-3 py-2">{{ t('common.name') }}</th>
               <th class="px-3 py-2">{{ t('keys.apiKey') }}</th>
               <th class="px-3 py-2">{{ t('keys.group') }}</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-200 dark:divide-dark-700">
+          <tbody>
             <tr
               v-for="k in filteredKeys"
               :key="k.id"
-              class="cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-700"
+              class="cursor-pointer active:bg-[var(--surface-pressed)]"
               @click="$emit('pick', k)"
             >
               <td class="px-3 py-2 font-medium text-gray-900 dark:text-white">{{ k.name }}</td>

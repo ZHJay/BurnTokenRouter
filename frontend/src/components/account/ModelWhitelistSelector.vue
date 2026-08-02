@@ -4,13 +4,13 @@
     <div class="relative mb-3">
       <div
         @click="toggleDropdown"
-        class="cursor-pointer rounded-lg border border-gray-300 bg-white px-3 py-2 dark:border-dark-500 dark:bg-dark-700"
+        class="cursor-pointer rounded-lg bg-[var(--surface-secondary)] px-3 py-2 shadow-[inset_0_0_0_1px_var(--separator)] transition-shadow duration-fast ease-apple-out hover:shadow-[inset_0_0_0_1px_var(--label-quaternary)]"
       >
         <div class="grid grid-cols-2 gap-1.5">
           <span
             v-for="model in modelValue"
             :key="model"
-            class="inline-flex items-center justify-between gap-1 rounded bg-gray-100 px-2 py-1 text-xs text-gray-700 dark:bg-dark-600 dark:text-gray-300"
+            class="inline-flex items-center justify-between gap-1 rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-700 dark:bg-dark-600 dark:text-gray-300"
           >
             <span class="flex items-center gap-1 truncate">
               <ModelIcon :model="model" size="14px" />
@@ -19,25 +19,29 @@
             <button
               type="button"
               @click.stop="removeModel(model)"
-              class="shrink-0 rounded-full hover:bg-gray-200 dark:hover:bg-dark-500"
+              class="shrink-0 rounded-full transition-transform duration-instant ease-apple-out hover:bg-gray-200 active:scale-[0.96] dark:hover:bg-dark-500"
             >
               <Icon name="x" size="xs" class="h-3.5 w-3.5" :stroke-width="2" />
             </button>
           </span>
         </div>
-        <div class="mt-2 flex items-center justify-between border-t border-gray-200 pt-2 dark:border-dark-600">
-          <span class="text-xs text-gray-400">{{ t('admin.accounts.modelCount', { count: modelValue.length }) }}</span>
+        <div class="mt-2 flex items-center justify-between pt-2 shadow-[inset_0_0.5px_0_var(--separator)]">
+          <span class="tabular text-xs text-gray-400">{{ t('admin.accounts.modelCount', { count: modelValue.length }) }}</span>
           <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </div>
       </div>
       <!-- Dropdown List -->
+      <!--
+        选择器整体已嵌在玻璃弹窗里，这层浮层必须不透明：
+        半透明叠半透明会让模型名糊掉（见 style.css 顶部材质规则）。
+      -->
       <div
         v-if="showDropdown"
-        class="absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-dark-600 dark:bg-dark-700"
+        class="absolute left-0 right-0 top-full z-50 mt-1 origin-top animate-scale-in overflow-hidden rounded-xl bg-[var(--surface)] shadow-[inset_0_0_0_0.5px_var(--hairline),var(--shadow-3)]"
       >
-        <div class="sticky top-0 border-b border-gray-200 bg-white p-2 dark:border-dark-600 dark:bg-dark-700">
+        <div class="sticky top-0 bg-[var(--surface)] p-2 shadow-[inset_0_-0.5px_0_var(--separator)]">
           <input
             v-model="searchQuery"
             type="text"
@@ -61,10 +65,10 @@
             >
               <span
                 :class="[
-                  'flex h-4 w-4 shrink-0 items-center justify-center rounded border',
+                  'flex h-4 w-4 shrink-0 items-center justify-center rounded-[5px] transition-colors duration-instant ease-apple-out',
                   modelValue.includes(model.value)
-                    ? 'border-primary-500 bg-primary-500 text-white'
-                    : 'border-gray-300 dark:border-dark-500'
+                    ? 'bg-[var(--accent)] text-white shadow-[inset_0_0_0_1px_var(--accent)]'
+                    : 'shadow-[inset_0_0_0_1px_var(--label-quaternary)]'
                 ]"
               >
                 <svg v-if="modelValue.includes(model.value)" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -77,7 +81,7 @@
             <button
               type="button"
               data-testid="copy-model-id"
-              class="mr-2 rounded p-1.5 text-gray-400 opacity-70 transition-colors hover:bg-gray-200 hover:text-primary-600 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 group-hover:opacity-100 dark:text-gray-500 dark:hover:bg-dark-500 dark:hover:text-primary-400"
+              class="mr-2 rounded-full p-1.5 text-gray-400 opacity-70 transition-transform duration-instant ease-apple-out hover:bg-gray-200 hover:text-primary-600 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] active:scale-[0.96] group-hover:opacity-100 dark:text-gray-500 dark:hover:bg-dark-500 dark:hover:text-primary-400"
               :title="`${t('common.copy')} ${model.value}`"
               :aria-label="`${t('common.copy')} ${model.value}`"
               @click="copyModelId(model.value)"
@@ -97,7 +101,7 @@
       <button
         type="button"
         @click="fillRelated"
-        class="rounded-lg border border-blue-200 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/30"
+        class="btn btn-sm bg-blue-500/10 py-1.5 text-sm text-blue-600 hover:bg-blue-500/[0.16] dark:text-blue-400"
       >
         {{ t('admin.accounts.fillRelatedModels') }}
       </button>
@@ -106,14 +110,14 @@
         type="button"
         @click="syncUpstreamModels"
         :disabled="isSyncingUpstream"
-        class="rounded-lg border border-emerald-200 px-3 py-1.5 text-sm text-emerald-600 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
+        class="btn btn-sm bg-emerald-500/10 py-1.5 text-sm text-emerald-600 hover:bg-emerald-500/[0.16] dark:text-emerald-400"
       >
         {{ isSyncingUpstream ? t('admin.accounts.syncUpstreamModelsLoading') : t('admin.accounts.syncUpstreamModels') }}
       </button>
       <button
         type="button"
         @click="clearAll"
-        class="rounded-lg border border-red-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/30"
+        class="btn btn-sm bg-red-500/10 py-1.5 text-sm text-red-600 hover:bg-red-500/[0.16] dark:text-red-400"
       >
         {{ t('admin.accounts.clearAllModels') }}
       </button>
@@ -121,7 +125,7 @@
 
     <!-- Custom Model Input -->
     <div class="mb-3">
-      <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.accounts.customModelName') }}</label>
+      <label class="input-label text-sm">{{ t('admin.accounts.customModelName') }}</label>
       <div class="flex gap-2">
         <input
           v-model="customModel"
@@ -135,7 +139,7 @@
         <button
           type="button"
           @click="addCustom"
-          class="rounded-lg bg-primary-50 px-4 py-2 text-sm font-medium text-primary-600 hover:bg-primary-100 dark:bg-primary-900/30 dark:text-primary-400 dark:hover:bg-primary-900/50"
+          class="btn btn-md bg-[color:var(--accent-tint)] text-[color:var(--accent)] hover:bg-[color:var(--accent-tint-strong)]"
         >
           {{ t('admin.accounts.addModel') }}
         </button>

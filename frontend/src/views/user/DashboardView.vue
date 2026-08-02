@@ -1,13 +1,15 @@
 <template>
   <AppLayout>
-    <div class="space-y-6">
+    <!-- 分区节奏 20px、栅格间距 16px —— 与设计稿一致 -->
+    <div class="space-y-5">
       <div v-if="loading" class="flex items-center justify-center py-12"><LoadingSpinner /></div>
       <template v-else-if="stats">
         <UserDashboardStats :stats="stats" :balance="user?.balance || 0" :is-simple="authStore.isSimpleMode" :platform-quotas="platformQuotas" />
         <UserDashboardCharts v-model:startDate="startDate" v-model:endDate="endDate" v-model:granularity="granularity" :loading="loadingCharts" :trend="trendData" :models="modelStats" @dateRangeChange="loadCharts" @granularityChange="loadCharts" @refresh="refreshAll" />
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div class="lg:col-span-2"><UserDashboardRecentUsage :data="recentUsage" :loading="loadingUsage" /></div>
-          <div class="lg:col-span-1"><UserDashboardQuickActions /></div>
+        <!-- 明细区 : 操作区 = 1.62 : 1，宽列承载表格，窄列承载快捷入口 -->
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.62fr)_minmax(0,1fr)]">
+          <div class="min-w-0"><UserDashboardRecentUsage :data="recentUsage" :loading="loadingUsage" /></div>
+          <div class="min-w-0"><UserDashboardQuickActions /></div>
         </div>
       </template>
     </div>

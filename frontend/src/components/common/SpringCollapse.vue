@@ -62,6 +62,7 @@ function onLeave(element: Element, done: () => void): void {
 function onCancelled(element: Element): void {
   // Keep the inline height so the opposite direction resumes from the current
   // value instead of snapping.
-  ;(element as HTMLElement).style.willChange = ''
+  const el = element as HTMLElement
+  el.style.willChange = ''
 }
 </script>

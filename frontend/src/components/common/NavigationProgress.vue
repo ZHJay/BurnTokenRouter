@@ -43,27 +43,18 @@ const isVisible = computed(() => isLoading.value)
 .navigation-progress-bar {
   height: 100%;
   width: 100%;
+  /* Indeterminate sweep. The soft ends are the accent fading to transparent, so
+     one token carries the whole bar and it keeps a solid centre plateau rather
+     than a single bright pixel. --accent flips on .dark by itself, which is why
+     the old :root.dark duplicate is gone. */
   background: linear-gradient(
     90deg,
     transparent 0%,
-    theme('colors.primary.400') 20%,
-    theme('colors.primary.500') 50%,
-    theme('colors.primary.400') 80%,
+    var(--accent) 30%,
+    var(--accent) 70%,
     transparent 100%
   );
-  animation: progress-slide 1.5s ease-in-out infinite;
-}
-
-/* 暗色模式下的进度条颜色 */
-:root.dark .navigation-progress-bar {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    theme('colors.primary.500') 20%,
-    theme('colors.primary.400') 50%,
-    theme('colors.primary.500') 80%,
-    transparent 100%
-  );
+  animation: progress-slide 1.5s var(--ease-out) infinite;
 }
 
 /* 进度条滑动动画 */
@@ -78,11 +69,11 @@ const isVisible = computed(() => isLoading.value)
 
 /* 淡入淡出过渡 */
 .progress-fade-enter-active {
-  transition: opacity 0.15s ease-out;
+  transition: opacity 0.15s var(--ease-out);
 }
 
 .progress-fade-leave-active {
-  transition: opacity 0.3s ease-out;
+  transition: opacity 0.3s var(--ease-out);
 }
 
 .progress-fade-enter-from,
@@ -93,7 +84,7 @@ const isVisible = computed(() => isLoading.value)
 /* 减少动画模式 */
 @media (prefers-reduced-motion: reduce) {
   .navigation-progress-bar {
-    animation: progress-pulse 2s ease-in-out infinite;
+    animation: progress-pulse 2s var(--ease-out) infinite;
   }
 
   @keyframes progress-pulse {

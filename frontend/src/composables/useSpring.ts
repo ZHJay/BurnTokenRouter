@@ -87,9 +87,17 @@ export function useSpring(options: SpringOptions = {}): SpringController {
   }
 
   function settle(): void {
+    // Cancel any queued frame before resting. Without this, a frame scheduled
+    // by the previous tick still fires, finds itself already at rest, and calls
+    // settle() a second time — so onRest, documented as firing once, fires
+    // twice. Reachable when reduced motion turns on mid-flight: to() takes the
+    // immediate-settle branch while a frame is still pending.
+    if (frame !== null) {
+      cancelAnimationFrame(frame)
+      frame = null
+    }
     velocity = 0
     emit(target)
-    frame = null
     isAnimating.value = false
     onRest?.()
   }

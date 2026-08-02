@@ -16,6 +16,15 @@ import { Line } from 'vue-chartjs'
 import type { OpsErrorTrendPoint } from '@/api/admin/ops'
 import type { ChartState } from '../types'
 import { formatHistoryLabel, sumNumbers } from '../utils/opsFormatters'
+import {
+  opsAreaFill,
+  opsAxisFont,
+  opsChartChrome,
+  opsHue,
+  opsLegendStyle,
+  opsScheme,
+  opsTooltipStyle
+} from '../utils/chartTheme'
 import HelpTooltip from '@/components/common/HelpTooltip.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 
@@ -35,15 +44,18 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const isDarkMode = computed(() => document.documentElement.classList.contains('dark'))
-const colors = computed(() => ({
-  red: '#ef4444',
-  redAlpha: '#ef444420',
-  purple: '#8b5cf6',
-  purpleAlpha: '#8b5cf620',
-  gray: '#9ca3af',
-  grid: isDarkMode.value ? '#374151' : '#f3f4f6',
-  text: isDarkMode.value ? '#9ca3af' : '#6b7280'
-}))
+const scheme = computed(() => opsScheme(isDarkMode.value))
+// 请求错误=红，上游错误=紫，业务限流=中性虚线：三类错误的严重度靠色相拉开
+const colors = computed(() => {
+  const chrome = opsChartChrome(scheme.value)
+  return {
+    red: opsHue('red', scheme.value),
+    purple: opsHue('purple', scheme.value),
+    gray: opsHue('gray', scheme.value),
+    grid: chrome.grid,
+    text: chrome.axis
+  }
+})
 
 const totalRequestErrors = computed(() => sumNumbers(props.points.map((p) => p.error_count_sla ?? 0)))
 
@@ -69,9 +81,10 @@ const chartData = computed(() => {
         label: t('admin.ops.errorsSla'),
         data: props.points.map((p) => p.error_count_sla ?? 0),
         borderColor: colors.value.red,
-        backgroundColor: colors.value.redAlpha,
+        backgroundColor: opsAreaFill(colors.value.red),
         fill: true,
         tension: 0.35,
+        borderWidth: 2,
         pointRadius: 0,
         pointHitRadius: 10
       },
@@ -79,9 +92,10 @@ const chartData = computed(() => {
         label: t('admin.ops.upstreamExcl429529'),
         data: props.points.map((p) => p.upstream_error_count_excl_429_529 ?? 0),
         borderColor: colors.value.purple,
-        backgroundColor: colors.value.purpleAlpha,
+        backgroundColor: opsAreaFill(colors.value.purple),
         fill: true,
         tension: 0.35,
+        borderWidth: 2,
         pointRadius: 0,
         pointHitRadius: 10
       },
@@ -93,6 +107,7 @@ const chartData = computed(() => {
         borderDash: [6, 6],
         fill: false,
         tension: 0.35,
+        borderWidth: 1.5,
         pointRadius: 0,
         pointHitRadius: 10
       }
@@ -116,17 +131,9 @@ const options = computed(() => {
       legend: {
         position: 'top' as const,
         align: 'end' as const,
-        labels: { color: c.text, usePointStyle: true, boxWidth: 6, font: { size: 10 } }
+        labels: opsLegendStyle(scheme.value)
       },
-      tooltip: {
-        backgroundColor: isDarkMode.value ? '#1f2937' : '#ffffff',
-        titleColor: isDarkMode.value ? '#f3f4f6' : '#111827',
-        bodyColor: isDarkMode.value ? '#d1d5db' : '#4b5563',
-        borderColor: c.grid,
-        borderWidth: 1,
-        padding: 10,
-        displayColors: true
-      }
+      tooltip: opsTooltipStyle(scheme.value)
     },
     scales: {
       x: {
@@ -134,7 +141,7 @@ const options = computed(() => {
         grid: { display: false },
         ticks: {
           color: c.text,
-          font: { size: 10 },
+          font: opsAxisFont(),
           maxTicksLimit: 8,
           autoSkip: true,
           autoSkipPadding: 10
@@ -145,7 +152,7 @@ const options = computed(() => {
         display: true,
         position: 'left' as const,
         grid: { color: c.grid, borderDash: [4, 4] },
-        ticks: { color: c.text, font: { size: 10 }, precision: 0 }
+        ticks: { color: c.text, font: opsAxisFont(), precision: 0 }
       }
     }
   }
@@ -153,10 +160,11 @@ const options = computed(() => {
 </script>
 
 <template>
-  <div class="flex h-full flex-col rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5 dark:bg-dark-800 dark:ring-dark-700">
+  <!-- 图表卡片保持不透明：数据密集的折线放在毛玻璃上会糊 -->
+  <div class="card flex h-full flex-col p-6">
     <div class="mb-4 flex shrink-0 items-center justify-between">
-      <h3 class="flex items-center gap-2 text-sm font-bold text-gray-900 dark:text-white">
-        <svg class="h-4 w-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <h3 class="flex items-center gap-2 text-sm font-semibold tracking-[-0.01em] text-gray-900 dark:text-white">
+        <svg class="h-4 w-4" :style="{ color: 'var(--sys-red)' }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
@@ -170,7 +178,7 @@ const options = computed(() => {
       <div class="flex items-center gap-2">
         <button
           type="button"
-          class="inline-flex items-center rounded-lg border border-gray-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50 dark:border-dark-700 dark:bg-dark-900 dark:text-gray-300 dark:hover:bg-dark-800"
+          class="btn btn-secondary btn-sm"
           :disabled="!hasRequestErrors"
           @click="emit('openRequestErrors')"
         >
@@ -178,7 +186,7 @@ const options = computed(() => {
         </button>
         <button
           type="button"
-          class="inline-flex items-center rounded-lg border border-gray-200 bg-white px-2 py-1 text-[11px] font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50 dark:border-dark-700 dark:bg-dark-900 dark:text-gray-300 dark:hover:bg-dark-800"
+          class="btn btn-secondary btn-sm"
           :disabled="!hasUpstreamErrors"
           @click="emit('openUpstreamErrors')"
         >

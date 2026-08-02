@@ -269,8 +269,9 @@ const iconInfo = computed(() => iconKey.value ? iconData[iconKey.value] : null)
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 6px;
+  /* 装饰性头像保留渐变，色值换成 Apple 系统色 */
+  background: linear-gradient(135deg, var(--sys-indigo), var(--sys-purple));
   color: white;
   font-weight: 600;
   flex-shrink: 0;

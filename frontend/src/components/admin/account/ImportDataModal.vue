@@ -11,7 +11,7 @@
         {{ t('admin.accounts.dataImportHint') }}
       </div>
       <div
-        class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-600 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400"
+        class="rounded-xl bg-amber-50 p-3 text-xs tracking-[0.01em] text-amber-600 ring-1 ring-inset ring-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:ring-amber-800"
       >
         {{ t('admin.accounts.dataImportWarning') }}
       </div>
@@ -19,10 +19,10 @@
       <div>
         <label class="input-label">{{ t('admin.accounts.dataImportFile') }}</label>
         <div
-          class="flex items-center justify-between gap-3 rounded-lg border border-dashed px-4 py-3 transition-colors"
+          class="flex items-center justify-between gap-3 rounded-xl border border-dashed px-4 py-3 transition-colors duration-fast ease-apple-out"
           :class="dragActive
-            ? 'border-primary-400 bg-primary-50/70 dark:border-primary-500 dark:bg-primary-900/20'
-            : 'border-gray-300 bg-gray-50 dark:border-dark-600 dark:bg-dark-800'"
+            ? 'border-primary-400 bg-[var(--accent-tint)] dark:border-primary-500'
+            : 'border-gray-300 bg-[var(--surface-secondary)] dark:border-dark-600'"
           @dragenter.prevent="handleDragEnter"
           @dragover.prevent
           @dragleave.prevent="handleDragLeave"
@@ -53,7 +53,7 @@
 
       <div
         v-if="result"
-        class="space-y-2 rounded-xl border border-gray-200 p-4 dark:border-dark-700"
+        class="card-inset space-y-2 rounded-xl p-4"
       >
         <div class="text-sm font-medium text-gray-900 dark:text-white">
           {{ t('admin.accounts.dataImportResult') }}
@@ -67,7 +67,7 @@
             {{ t('admin.accounts.dataImportErrors') }}
           </div>
           <div
-            class="mt-2 max-h-48 overflow-auto rounded-lg bg-gray-50 p-3 font-mono text-xs dark:bg-dark-800"
+            class="mt-2 max-h-48 overflow-auto rounded-lg bg-[var(--surface-secondary)] p-3 font-mono text-xs shadow-[inset_0_0_0_0.5px_var(--hairline)]"
           >
             <div v-for="(item, idx) in errorItems" :key="idx" class="whitespace-pre-wrap">
               {{ item.kind }} {{ item.name || item.proxy_key || '-' }} — {{ item.message }}

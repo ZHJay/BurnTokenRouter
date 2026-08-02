@@ -1,5 +1,5 @@
 <template>
-  <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-dark-700 dark:bg-dark-800/50">
+  <div class="card-inset rounded-xl p-4">
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <div class="text-sm font-medium text-gray-900 dark:text-white">
@@ -18,7 +18,7 @@
             value="all"
             :checked="mode === 'all'"
             @change="setMode('all')"
-            class="h-4 w-4"
+            class="h-4 w-4 text-primary-600 focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)]"
           />
           {{ t('admin.announcements.form.targetingAll') }}
         </label>
@@ -29,7 +29,7 @@
             value="custom"
             :checked="mode === 'custom'"
             @change="setMode('custom')"
-            class="h-4 w-4"
+            class="h-4 w-4 text-primary-600 focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)]"
           />
           {{ t('admin.announcements.form.targetingCustom') }}
         </label>
@@ -40,7 +40,7 @@
       <div class="flex items-center justify-between">
         <div class="text-sm font-medium text-gray-900 dark:text-white">
           OR
-          <span class="ml-1 text-xs font-normal text-gray-500 dark:text-dark-400">
+          <span class="tabular ml-1 text-xs font-normal text-gray-500 dark:text-dark-400">
             ({{ anyOf.length }}/50)
           </span>
         </div>
@@ -62,13 +62,13 @@
       <div
         v-for="(group, groupIndex) in anyOf"
         :key="groupIndex"
-        class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-dark-700 dark:bg-dark-800"
+        class="card p-4"
       >
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
             <div class="text-sm font-medium text-gray-900 dark:text-white">
               {{ t('admin.announcements.form.targetingCustom') }} #{{ groupIndex + 1 }}
-              <span class="ml-2 text-xs font-normal text-gray-500 dark:text-dark-400">AND ({{ (group.all_of?.length || 0) }}/50)</span>
+              <span class="tabular ml-2 text-xs font-normal text-gray-500 dark:text-dark-400">AND ({{ (group.all_of?.length || 0) }}/50)</span>
             </div>
             <div class="mt-1 text-xs text-gray-500 dark:text-dark-400">
               {{ t('admin.announcements.form.addAndCondition') }}
@@ -89,7 +89,7 @@
           <div
             v-for="(cond, condIndex) in (group.all_of || [])"
             :key="condIndex"
-            class="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-dark-700 dark:bg-dark-900/30"
+            class="card-inset rounded-xl p-3"
           >
             <div class="flex flex-col gap-3 md:flex-row md:items-end">
               <div class="w-full md:w-52">
@@ -124,7 +124,7 @@
                     :value="String(cond.value ?? '')"
                     type="number"
                     step="any"
-                    class="input"
+                    class="input tabular"
                     @input="(e) => setBalanceValue(groupIndex, condIndex, (e.target as HTMLInputElement).value)"
                   />
                 </div>
@@ -157,7 +157,7 @@
         </div>
       </div>
 
-      <div v-if="validationError" class="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/30 dark:bg-red-900/10 dark:text-red-300">
+      <div v-if="validationError" class="rounded-xl bg-red-50 p-3 text-sm text-red-700 ring-1 ring-inset ring-red-200 dark:bg-red-900/10 dark:text-red-300 dark:ring-red-900/30">
         {{ validationError }}
       </div>
     </div>

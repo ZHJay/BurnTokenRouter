@@ -4,7 +4,7 @@
     <HelpTooltip>
       <template #trigger>
         <span
-          class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium"
+          class="badge text-[11px]"
           :class="statusBadgeClass(row.primary_status)"
         >
           {{ statusLabel(row.primary_status) }}
@@ -14,7 +14,7 @@
         <div class="text-xs font-semibold text-gray-100">
           {{ row.primary_model }}
           <span
-            class="ml-1 inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium"
+            class="badge ml-1 px-1.5 text-[10px]"
             :class="statusBadgeClass(row.primary_status)"
           >
             {{ statusLabel(row.primary_status) }}
@@ -40,13 +40,13 @@
                 <td class="py-0.5 pr-2 text-gray-100">{{ m.model }}</td>
                 <td class="py-0.5 pr-2">
                   <span
-                    class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px]"
+                    class="badge px-1.5 text-[10px] font-medium"
                     :class="statusBadgeClass(m.status)"
                   >
                     {{ statusLabel(m.status) }}
                   </span>
                 </td>
-                <td class="py-0.5 text-gray-100">{{ formatLatency(m.latency_ms) }}</td>
+                <td class="tabular py-0.5 text-gray-100">{{ formatLatency(m.latency_ms) }}</td>
               </tr>
             </tbody>
           </table>

@@ -7,23 +7,22 @@
   >
     <div v-if="account" class="space-y-4">
       <!-- Account Info -->
-      <div
-        class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-dark-600 dark:bg-dark-700"
-      >
+      <div class="card-inset p-4">
         <div class="flex items-center gap-3">
+          <!-- Apple 的控件/标识块是实色，不是渐变；这里保留厂商识别色相。 -->
           <div
             :class="[
-              'flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br',
+              'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white',
               isOpenAILike
-                ? 'from-green-500 to-green-600'
+                ? 'bg-green-500'
                 : isGemini
-                  ? 'from-blue-500 to-blue-600'
+                  ? 'bg-blue-500'
                   : isAntigravity
-                    ? 'from-purple-500 to-purple-600'
-                    : 'from-orange-500 to-orange-600'
+                    ? 'bg-purple-500'
+                    : 'bg-orange-500'
             ]"
           >
-            <Icon name="sparkles" size="md" class="text-white" />
+            <Icon name="sparkles" size="md" />
           </div>
           <div>
             <span class="block font-semibold text-gray-900 dark:text-white">{{
@@ -74,8 +73,8 @@
       </fieldset>
 
       <!-- Gemini OAuth Type Display (read-only) -->
-      <div v-if="isGemini" class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-dark-600 dark:bg-dark-700">
-        <div class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+      <div v-if="isGemini" class="card-inset p-4">
+        <div class="input-label mb-2 text-sm">
           {{ t('admin.accounts.oauth.gemini.oauthTypeLabel') }}
         </div>
         <div class="flex items-center gap-3">

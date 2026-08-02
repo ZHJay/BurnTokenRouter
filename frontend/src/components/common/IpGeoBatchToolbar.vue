@@ -1,14 +1,14 @@
 <template>
   <div
     v-if="uniqueIps.length > 0"
-    class="flex flex-shrink-0 items-center justify-end gap-2 border-b border-gray-200 px-4 py-2 dark:border-dark-700"
+    class="hairline-bottom flex flex-shrink-0 items-center justify-end gap-2 px-4 py-2"
   >
-    <span v-if="pendingCount > 0" class="text-xs text-gray-500 dark:text-gray-400">
+    <span v-if="pendingCount > 0" class="tabular text-xs text-gray-500 dark:text-gray-400">
       {{ t('usage.ipGeo.pending', { count: pendingCount }) }}
     </span>
     <button
       type="button"
-      class="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-primary-600 transition-colors hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-primary-400 dark:hover:bg-primary-900/30"
+      class="batch-fetch-btn inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs"
       :disabled="loading || pendingCount === 0"
       @click="run"
     >
@@ -57,3 +57,37 @@ const run = async () => {
   }
 }
 </script>
+
+<style scoped>
+.hairline-bottom {
+  box-shadow: inset 0 -0.5px 0 var(--separator);
+}
+
+/* accent 文字按钮：染色底 + pointer-down 反馈，保持工具条轻量 */
+.batch-fetch-btn {
+  color: var(--accent);
+  font-weight: 590;
+  transition:
+    background-color 240ms var(--ease-out),
+    transform 100ms var(--ease-out);
+}
+
+.batch-fetch-btn:hover:not(:disabled) {
+  background-color: var(--accent-tint);
+}
+
+.batch-fetch-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.batch-fetch-btn:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3.5px var(--accent-tint-strong),
+    0 0 0 1px var(--accent);
+}
+
+.batch-fetch-btn:disabled {
+  @apply cursor-not-allowed opacity-40;
+}
+</style>

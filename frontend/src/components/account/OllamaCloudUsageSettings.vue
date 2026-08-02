@@ -1,5 +1,5 @@
 <template>
-  <section v-if="state?.eligible" class="space-y-4 border-t border-gray-200 pt-4 dark:border-dark-600" data-testid="ollama-cloud-usage-settings">
+  <section v-if="state?.eligible" class="space-y-4 pt-4 shadow-[inset_0_0.5px_0_var(--separator)]" data-testid="ollama-cloud-usage-settings">
     <div class="flex items-start justify-between gap-4">
       <div>
         <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
@@ -10,10 +10,10 @@
         </p>
       </div>
       <span
-        class="whitespace-nowrap rounded px-2 py-1 text-xs font-medium"
+        class="badge whitespace-nowrap px-2 py-1"
         :class="state.configured
-          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-          : 'bg-gray-100 text-gray-600 dark:bg-dark-700 dark:text-gray-300'"
+          ? 'badge-success'
+          : 'badge-gray'"
       >
         {{ state.configured ? t('admin.accounts.ollamaCloud.configured') : t('admin.accounts.ollamaCloud.notConfigured') }}
       </span>
@@ -23,32 +23,32 @@
       <Icon name="refresh" size="sm" class="animate-spin" />
     </div>
     <template v-else>
-      <div v-if="!state.encryption_key_configured" class="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/50 dark:bg-amber-900/20 dark:text-amber-200">
+      <div v-if="!state.encryption_key_configured" class="rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-800 shadow-[inset_0_0_0_0.5px_rgb(255_149_0_/_0.28)] dark:text-amber-200">
         {{ t('admin.accounts.ollamaCloud.encryptionKeyRequired') }}
       </div>
 
       <div
         v-if="snapshot"
-        class="border-y border-gray-100 py-3 dark:border-dark-700"
+        class="py-3 shadow-[inset_0_0.5px_0_var(--separator),inset_0_-0.5px_0_var(--separator)]"
         data-testid="ollama-cloud-usage-details"
       >
         <div class="grid grid-cols-[minmax(4rem,auto)_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-xs">
           <span class="text-gray-500 dark:text-gray-400">{{ t('admin.accounts.ollamaCloud.plan') }}</span>
           <span class="break-words text-gray-900 dark:text-white">{{ snapshot.data?.plan || '-' }}</span>
           <span class="text-gray-500 dark:text-gray-400">{{ t('admin.accounts.ollamaCloud.fiveHour') }}</span>
-          <span class="break-words text-gray-900 dark:text-white">{{ windowSummary(snapshot.data?.five_hour) }}</span>
+          <span class="tabular break-words text-gray-900 dark:text-white">{{ windowSummary(snapshot.data?.five_hour) }}</span>
           <span class="text-gray-500 dark:text-gray-400">{{ t('admin.accounts.ollamaCloud.sevenDay') }}</span>
-          <span class="break-words text-gray-900 dark:text-white">{{ windowSummary(snapshot.data?.seven_day) }}</span>
+          <span class="tabular break-words text-gray-900 dark:text-white">{{ windowSummary(snapshot.data?.seven_day) }}</span>
           <span class="text-gray-500 dark:text-gray-400">{{ t('admin.accounts.ollamaCloud.balance') }}</span>
-          <span class="break-words text-gray-900 dark:text-white">{{ snapshot.data?.balance || '-' }}</span>
+          <span class="tabular break-words text-gray-900 dark:text-white">{{ snapshot.data?.balance || '-' }}</span>
           <span class="text-gray-500 dark:text-gray-400">{{ t('admin.accounts.ollamaCloud.models') }}</span>
           <span class="break-words text-gray-900 dark:text-white">{{ modelSummary }}</span>
           <span class="text-gray-500 dark:text-gray-400">{{ t('admin.accounts.ollamaCloud.status') }}</span>
           <span class="break-words font-medium text-gray-900 dark:text-white">{{ statusLabel }}</span>
           <span class="text-gray-500 dark:text-gray-400">{{ t('admin.accounts.ollamaCloud.updatedAt') }}</span>
-          <span class="break-words text-gray-900 dark:text-white">{{ formatDate(snapshot.fetched_at || snapshot.last_attempt_at) }}</span>
+          <span class="tabular break-words text-gray-900 dark:text-white">{{ formatDate(snapshot.fetched_at || snapshot.last_attempt_at) }}</span>
         </div>
-        <p v-if="snapshot.last_error" class="mt-2 break-words border-t border-gray-100 pt-2 text-xs text-amber-700 dark:border-dark-700 dark:text-amber-300">
+        <p v-if="snapshot.last_error" class="mt-2 break-words pt-2 text-xs text-amber-700 shadow-[inset_0_0.5px_0_var(--separator)] dark:text-amber-300">
           {{ t(`admin.accounts.ollamaCloud.errors.${snapshot.last_error}`, snapshot.last_error) }}
         </p>
       </div>
@@ -104,7 +104,7 @@
         </button>
       </div>
 
-      <div v-if="state.configured" class="flex items-center justify-between gap-4 border-t border-gray-100 pt-4 dark:border-dark-700">
+      <div v-if="state.configured" class="flex items-center justify-between gap-4 pt-4 shadow-[inset_0_0.5px_0_var(--separator)]">
         <div>
           <label class="text-sm font-medium text-gray-900 dark:text-white">
             {{ t('admin.accounts.ollamaCloud.autoRefresh') }}

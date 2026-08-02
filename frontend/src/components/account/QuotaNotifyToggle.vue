@@ -20,14 +20,17 @@ const emit = defineEmits<{
       type="button"
       @click="emit('update:enabled', !enabled)"
       :class="[
-        'relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
-        enabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600'
+        'switch h-5 w-9 flex-shrink-0 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]',
+        enabled && 'switch-active'
       ]"
     >
+      <!-- 尺寸比标准 switch 小一档，thumb 位移随之收窄。
+           .switch-active .switch-thumb 是双类选择器（0-2-0），单类工具类压不过，
+           故位移用 ! 提权。 -->
       <span
         :class="[
-          'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-          enabled ? 'translate-x-4' : 'translate-x-0'
+          'switch-thumb pointer-events-none h-4 w-4',
+          enabled ? '!translate-x-4' : 'translate-x-0'
         ]"
       />
     </button>

@@ -31,9 +31,15 @@
     --sys-yellow: #ffcc00;
 
     /* 品牌强调色 = Apple 系统蓝 */
-    --accent: #007aff;
+    /* #007aff 作为文字只有 4.02:1，作为白字底色同样 4.02:1 —— 两个角色同时失败。
+       #0072ef 让文字与填充在浅色下都过 4.51:1，是同时修好两者的最小改动。 */
+    --accent: #0072ef;
     --accent-hover: #0071eb;
     --accent-pressed: #0062cc;
+    /* 填充专用 accent。浅色下与 --accent 同值；深色下必须分家：
+       深色 #0a84ff 作文字 4.66:1（过），作白字底色只有 3.65:1（不过），
+       而任何修好填充的值都会让文字掉到 4.5 以下。 */
+    --accent-fill: var(--accent);
     --accent-tint: rgba(0, 122, 255, 0.1);
     --accent-tint-strong: rgba(0, 122, 255, 0.16);
     --on-accent: #fff;
@@ -49,9 +55,46 @@
 
     /* 标签色层级 */
     --label: rgba(0, 0, 0, 0.88);
-    --label-secondary: rgba(60, 60, 67, 0.6);
+    /* 0.6 → 3.44:1 on --surface，是整个浅色副文字层的失败点。
+       0.70 得 4.49:1（差 0.01），故取 0.74 → 5.02:1 / 4.67:1 on --bg-base。 */
+    --label-secondary: rgba(60, 60, 67, 0.74);
     --label-tertiary: rgba(60, 60, 67, 0.36);
     --label-quaternary: rgba(60, 60, 67, 0.2);
+
+    /* 开关轨道：不动 --label-quaternary（它在别处的低对比是刻意的），
+       给控件边界自己的值。0.55 → 3.03:1，满足 SC 1.4.11 的 3:1。 */
+    --switch-track: rgba(60, 60, 67, 0.55);
+    --switch-track-on: #1f9d43;
+
+    /* 语义色的"文字角色"。--sys-* 同时驱动填充、图表与 toast 边框，
+       不能整体压暗（图表语义须保持原样），故文字用途单独开 token。 */
+    --sys-red-text: #d70015;
+    --sys-green-text: #24883d;
+    --sys-orange-text: #ae6500;
+
+    /* ------------------------------------------------------------------
+       中性色阶通道三元组（Tailwind 变量色）。
+
+       为什么不能直接把 gray-500 写死成 #6d6d72：1596 个含 text-gray-500 的
+       class 串里有 1400 个自带 dark:text-* 覆盖，但 196 个是裸的。写死浅色值
+       会修好浅色、同时把这 196 处在深色下打坏（#6d6d72 on #1c1c1e ≈ 3.6:1，
+       比原 #8e8e93 的 ≈5.2:1 更差）。所以做成随主题翻转的变量：
+       裸类在两个主题下各自取到正确的值，带 dark: 覆盖的 1400 处不受影响。
+
+       只有 500 档需要分主题取值，其余档位两个主题同值 —— 保持机制统一，
+       且任一档位日后需要分主题时改一行即可。
+       ------------------------------------------------------------------ */
+    --c-gray-50: 249 249 251;
+    --c-gray-100: 242 242 247;
+    --c-gray-200: 229 229 234;
+    --c-gray-300: 209 209 214;
+    --c-gray-400: 174 174 178;
+    --c-gray-500: 109 109 114;
+    --c-gray-600: 99 99 102;
+    --c-gray-700: 72 72 74;
+    --c-gray-800: 58 58 60;
+    --c-gray-900: 28 28 30;
+    --c-gray-950: 11 11 13;
 
     /* 分隔线 */
     --separator: rgba(60, 60, 67, 0.12);
@@ -117,8 +160,13 @@
     --sys-yellow: #ffd60a;
 
     --accent: #0a84ff;
-    --accent-hover: #3a9bff;
-    --accent-pressed: #0071e3;
+    /* #3a9bff 作白字底色只有 2.87:1 —— 比静止态 3.65:1 更差，hover 反而更难读。
+       深色下同样应该"按下去变暗"，与浅色行为一致。 */
+    --accent-hover: #0062cc;
+    --accent-pressed: #0a4da8;
+    /* 文字角色继续用 --accent(#0a84ff, 4.66:1)，填充角色改用更暗的蓝：
+       #0071e3 让白字从 3.65 → 4.70:1。 */
+    --accent-fill: #0071e3;
     --accent-tint: rgba(10, 132, 255, 0.16);
     --accent-tint-strong: rgba(10, 132, 255, 0.24);
 
@@ -135,6 +183,18 @@
     --label-secondary: rgba(235, 235, 245, 0.6);
     --label-tertiary: rgba(235, 235, 245, 0.34);
     --label-quaternary: rgba(235, 235, 245, 0.18);
+
+    /* 深色 OFF 轨道原为 --label-quaternary → 1.68:1，控件几乎不可见。 */
+    --switch-track: rgba(235, 235, 245, 0.38);
+
+    /* 深色下语义色本身已经够亮（green/orange 8.4:1，red 4.99:1），文字角色沿用系统色 */
+    --sys-red-text: var(--sys-red);
+    --sys-green-text: var(--sys-green);
+    --sys-orange-text: var(--sys-orange);
+
+    /* 中性色阶：只有 500 档随主题翻转 —— 裸 text-gray-500 在深色下需要更亮的值，
+       #8e8e93 on --surface 已有 5.22:1。其余档位与浅色同值（见 :root 注释）。 */
+    --c-gray-500: 142 142 147;
 
     --separator: rgba(84, 84, 88, 0.5);
     --separator-opaque: #38383a;
@@ -318,7 +378,7 @@
   }
 
   .btn-primary {
-    background-color: var(--accent);
+    background-color: var(--accent-fill);
     color: var(--on-accent);
     box-shadow: var(--shadow-accent);
   }
@@ -360,7 +420,9 @@
   }
 
   .btn-danger {
-    background-color: var(--sys-red);
+    /* 白字底色：--sys-red 只有 3.55:1（深色 3.41:1）。#d70015 → 5.38:1。
+       只压填充，--sys-red 本身留给图表 / toast 边框 / .input-error 描边。 */
+    background-color: #d70015;
     @apply text-white;
     box-shadow: 0 4px 14px -2px rgb(255 59 48 / 0.32);
   }
@@ -370,7 +432,8 @@
   }
 
   .btn-success {
-    background-color: var(--sys-green);
+    /* 白字底色：--sys-green 只有 2.22:1（深色 2.02:1）。#24883d → 4.50:1。 */
+    background-color: #24883d;
     @apply text-white;
     box-shadow: 0 4px 14px -2px rgb(52 199 89 / 0.32);
   }
@@ -380,7 +443,8 @@
   }
 
   .btn-warning {
-    background-color: var(--sys-orange);
+    /* 白字底色：--sys-orange 只有 2.20:1（深色 2.06:1）。#ae6500 → 4.51:1。 */
+    background-color: #ae6500;
     @apply text-white;
     box-shadow: 0 4px 14px -2px rgb(255 149 0 / 0.32);
   }
@@ -447,7 +511,8 @@
   }
 
   .input::placeholder {
-    color: var(--label-tertiary);
+    /* placeholder 常常承载字段唯一的提示，属于必要文字，不能用装饰层（1.94:1） */
+    color: var(--label-secondary);
   }
 
   .input:hover:not(:disabled):not(:focus) {
@@ -493,12 +558,14 @@
 
   .input-hint {
     @apply mt-1 text-xs;
-    color: var(--label-tertiary);
+    /* 字段下方的说明是指导性内容而非装饰（114 处使用）：1.94 → 5.02:1 */
+    color: var(--label-secondary);
   }
 
   .input-error-text {
     @apply mt-1 text-xs;
-    color: var(--sys-red);
+    /* 用户必须读到的校验错误：--sys-red 在浅色下只有 3.55:1 */
+    color: var(--sys-red-text);
   }
 
   /* Hide number input spinner buttons for cleaner UI */
@@ -619,7 +686,13 @@
   .card {
     background-color: var(--surface);
     @apply rounded-xl;
-    border: 0;
+    /* `border: 0` 同时把 border-style 置为 none，而没有任何 Tailwind 颜色工具类会
+       恢复 border-style（整个产物里只有 5 条 border-style 声明）。于是
+       `class="card border-emerald-200"` 只设了 border-color、边框却不存在。
+       1px solid transparent 保留无边框的默认观感，同时让组件加的语义色边框可见。
+       颜色必须显式写 transparent：基础层 `* { border-gray-200 }` 设的是 border-COLOR，
+       省略颜色会让全局灰边框在每张卡片上突然显形。 */
+    border: 1px solid transparent;
     box-shadow:
       inset 0 0 0 0.5px var(--hairline),
       var(--shadow-2);
@@ -1193,7 +1266,8 @@
     @apply text-xs uppercase;
     font-weight: 590;
     letter-spacing: 0.04em;
-    color: var(--label-tertiary);
+    /* 导航分组标题是结构性信息，不是装饰（~1.95:1） */
+    color: var(--label-secondary);
   }
 
   /* ============ 页面头部 ============ */
@@ -1300,12 +1374,15 @@
   /* ============ 开关 ============ */
   .switch {
     @apply relative h-6 w-11 cursor-pointer rounded-full;
-    background-color: var(--label-quaternary);
+    background-color: var(--switch-track);
     transition: background-color 240ms var(--ease-out);
   }
 
   .switch-active {
-    background-color: var(--sys-green);
+    /* --sys-green 下白色滑块只有 2.22:1，轨道对表面也是 2.22:1 —— 开关状态读不出来。
+       #1f9d43：白滑块 3.52:1，轨道对浅色表面 3.52:1，对深色表面 4.83:1。
+       只作用于 .switch-active，--sys-green 仍供 .toast-success 边框与 .stat-trend-up。 */
+    background-color: var(--switch-track-on);
   }
 
   .switch-thumb {
@@ -1399,12 +1476,19 @@
     .card,
     .card-hover,
     .sidebar-link,
-    .switch-thumb,
     .progress-bar,
     .tab {
       transition-property: opacity, background-color, color !important;
       transition-duration: 120ms !important;
       transform: none !important;
+    }
+
+    /* .switch-thumb 必须排除在 transform 清除之外。
+       `transform: none !important` 会盖掉 ON 态的 translate-x-5，滑块物理上无法移动，
+       开/关退化为一次 2.22:1 的颜色变化 —— 同时违反 1.4.1（仅用颜色表意）与 1.4.11。
+       这里只中和过渡时长，位移本身保留。 */
+    .switch-thumb {
+      transition-duration: 1ms !important;
     }
 
     .btn:active,
@@ -1414,10 +1498,49 @@
       transform: none !important;
     }
 
+    /* 侧边栏是全应用最大的移动面，300ms 的 width/transform 过渡此前未被覆盖。
+       不能用 transform: none —— 移动端抽屉靠 translate 收起，清掉会让它永久展开。
+       只把位移变成瞬时。 */
+    .sidebar {
+      transition-duration: 1ms !important;
+    }
+
+    /* 入场动效保留淡入（“减弱动效不等于没有反馈”），只去掉位移与缩放 */
     .dropdown,
     .toast,
     .glass-card {
-      animation: none !important;
+      animation: rm-fade-in 120ms var(--ease-out) both !important;
+    }
+
+    /* 无限动画：pulse / shimmer / glow 换成不移动的轻微呼吸，
+       animate-ping 的放大扩散是其中最容易引发前庭反应的一个。
+       animate-spin 保留 —— 加载指示器需要持续的进行中信号。 */
+    .animate-pulse,
+    .animate-pulse-slow,
+    .skeleton,
+    .animate-shimmer,
+    .animate-glow {
+      animation: rm-breathe 2s var(--ease-out) infinite !important;
+    }
+
+    .animate-ping {
+      /* 保留可见的静态标记，去掉 scale(2) 的扩散 */
+      animation: rm-breathe 2s var(--ease-out) infinite !important;
+      transform: none !important;
+    }
+
+    /* 模板里直接用的位移类入场动画（config 定义，此前完全绕过本分支） */
+    .animate-fade-in,
+    .animate-slide-up,
+    .animate-slide-down,
+    .animate-slide-in-right,
+    .animate-scale-in,
+    .animate-materialize {
+      animation: rm-fade-in 120ms var(--ease-out) both !important;
+    }
+
+    html {
+      scroll-behavior: auto !important;
     }
   }
 
@@ -1440,14 +1563,43 @@
       -webkit-backdrop-filter: none !important;
     }
 
+    /* 遮罩此前保留 backdrop-filter: blur(2px)，与本偏好直接冲突。
+       变暗的 scrim 可以留下，模糊必须去掉。 */
+    .modal-overlay,
+    .dialog-overlay {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    /* ::after 早已停用而 ::before 没有 —— 这个不一致本身是 bug */
+    .glass-lens::before,
     .glass-lens::after,
     .sidebar::after {
       display: none;
+    }
+
+    /* 半透明渐变光层，此前完全不受本偏好影响 */
+    .ambient-layer {
+      display: none !important;
     }
   }
 
   /* 高对比：近实色背景 + 明确描边 */
   @media (prefers-contrast: more) {
+    /* 此前本分支只加描边、完全没有提高文字对比度 —— 而这正是请求高对比的用户
+       首先想要的东西。副文字层在浅色下仍停在 3.44:1。 */
+    :root {
+      --label-secondary: rgba(60, 60, 67, 0.86); /* → 7.14:1 */
+      --label-tertiary: rgba(60, 60, 67, 0.7); /* → 4.49:1 */
+      /* 色阶已改为变量，因此在这里同样可达 */
+      --c-gray-400: 99 99 102;
+      --c-gray-500: 88 88 93;
+    }
+
+    .dark {
+      --label-tertiary: rgba(235, 235, 245, 0.75); /* → 8.56:1 */
+    }
+
     .glass,
     .glass-thick,
     .glass-thin,
@@ -1456,20 +1608,48 @@
     .sidebar,
     .dropdown,
     .modal-content,
-    .dialog-container {
-      background: var(--surface);
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-      box-shadow: inset 0 0 0 1px var(--label);
+    .dialog-container,
+    /* .btn-secondary / .table th / .toast 此前只出现在 reduced-transparency 分支里，
+       在高对比下仍是半透明玻璃 */
+    .btn-secondary,
+    .table th,
+    .toast {
+      /* 此前本分支不带 !important，只靠源码顺序取胜 —— 同层里任何后续规则都能翻掉它 */
+      background: var(--surface) !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      box-shadow: inset 0 0 0 1px var(--label) !important;
     }
 
     .card {
-      box-shadow: inset 0 0 0 1px var(--label-secondary);
+      box-shadow: inset 0 0 0 1px var(--label-secondary) !important;
     }
 
     .input {
-      box-shadow: inset 0 0 0 1px var(--label);
+      box-shadow: inset 0 0 0 1px var(--label) !important;
     }
+  }
+}
+
+/* 减弱动效分支用到的关键帧。必须定义在 @layer 之外：@layer 内的 @keyframes
+   在未被引用时会被 Tailwind 摇掉，而这里的引用只存在于 media query 内。 */
+@keyframes rm-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 不含位移/缩放的轻微呼吸：替代 pulse / ping / shimmer / glow */
+@keyframes rm-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.62;
   }
 }
 

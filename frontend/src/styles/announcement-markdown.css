@@ -1,31 +1,72 @@
-/* Shared rich-text styles for announcement popup and bell detail content. */
+/* Shared rich-text styles for announcement popup and bell detail content.
+ *
+ * Colors come from the Apple design tokens in style.css. Those custom
+ * properties are declared on :root/.dark and flip automatically, so the
+ * duplicated `dark:` variants that used to live here were deleted rather than
+ * ported — 30 of them across 20 rules.
+ *
+ * Announcement bodies render inside a modal, which is already a thin
+ * translucent material. The content therefore stays OPAQUE elevation: stacking
+ * one translucent surface on another collapses legibility.
+ */
 .markdown-body {
-  @apply text-[15px] leading-[1.75];
-  @apply text-gray-700 dark:text-gray-300;
+  @apply text-[15px];
+  line-height: 1.6;
+  letter-spacing: -0.006em;
+  color: var(--label);
 }
 
+/* Headings tighten tracking as the type scales up. */
 .markdown-body h1 {
-  @apply mb-6 mt-8 border-b border-gray-200 pb-3 text-3xl font-bold text-gray-900 dark:border-dark-600 dark:text-white;
+  @apply mb-6 mt-8 pb-3 text-3xl;
+  font-weight: 600;
+  letter-spacing: -0.026em;
+  color: var(--label);
+  border: 0;
+  box-shadow: inset 0 -0.5px 0 var(--separator);
 }
 
 .markdown-body h2 {
-  @apply mb-4 mt-7 border-b border-gray-100 pb-2 text-2xl font-bold text-gray-900 dark:border-dark-700 dark:text-white;
+  @apply mb-4 mt-7 pb-2 text-2xl;
+  font-weight: 600;
+  letter-spacing: -0.022em;
+  color: var(--label);
+  border: 0;
+  box-shadow: inset 0 -0.5px 0 var(--separator);
 }
 
 .markdown-body h3 {
-  @apply mb-3 mt-6 text-xl font-semibold text-gray-900 dark:text-white;
+  @apply mb-3 mt-6 text-xl;
+  font-weight: 600;
+  letter-spacing: -0.018em;
+  color: var(--label);
 }
 
 .markdown-body h4 {
-  @apply mb-2 mt-5 text-lg font-semibold text-gray-900 dark:text-white;
+  @apply mb-2 mt-5 text-lg;
+  font-weight: 600;
+  letter-spacing: -0.014em;
+  color: var(--label);
 }
 
 .markdown-body p {
-  @apply mb-4 leading-relaxed;
+  @apply mb-4;
+  line-height: 1.6;
 }
 
 .markdown-body a {
-  @apply font-medium text-blue-600 underline decoration-blue-600/30 decoration-2 underline-offset-2 transition-all hover:decoration-blue-600 dark:text-blue-400 dark:decoration-blue-400/30 dark:hover:decoration-blue-400;
+  @apply underline decoration-2 underline-offset-2;
+  font-weight: 500;
+  color: var(--accent);
+  text-decoration-color: var(--accent-tint-strong);
+  transition:
+    color 240ms var(--ease-out),
+    text-decoration-color 240ms var(--ease-out);
+}
+
+.markdown-body a:hover {
+  color: var(--accent-hover);
+  text-decoration-color: var(--accent);
 }
 
 .markdown-body ul,
@@ -42,72 +83,119 @@
 }
 
 .markdown-body li {
-  @apply pl-2 leading-relaxed;
+  @apply pl-2;
+  line-height: 1.6;
 }
 
 .markdown-body li::marker {
-  @apply text-blue-600 dark:text-blue-400;
+  color: var(--accent);
 }
 
+/* An announcement quote is emphasis, so the left rule takes the accent. */
 .markdown-body blockquote {
-  @apply relative my-5 border-l-4 border-blue-500 bg-blue-50/50 py-3 pl-5 pr-4 italic text-gray-700 dark:border-blue-400 dark:bg-blue-900/10 dark:text-gray-300;
+  @apply relative my-5 rounded-md py-3 pl-5 pr-4 italic;
+  border: 0;
+  border-left: 4px solid var(--accent);
+  background-color: var(--accent-tint);
+  color: var(--label-secondary);
 }
 
 .markdown-body blockquote::before {
   content: '"';
-  @apply absolute -left-1 top-0 font-serif text-5xl text-blue-500/20 dark:text-blue-400/20;
+  @apply absolute -left-1 top-0 font-serif text-5xl;
+  color: var(--accent-tint-strong);
 }
 
+/* Inline code mirrors .code in style.css: secondary fill, hairline ring, accent text. */
 .markdown-body code {
-  @apply rounded-lg bg-gray-100 px-2 py-1 font-mono text-[13px] text-pink-600 dark:bg-dark-700 dark:text-pink-400;
+  @apply rounded-md px-2 py-1 font-mono text-[13px];
+  background-color: var(--surface-secondary);
+  box-shadow: inset 0 0 0 0.5px var(--separator);
+  color: var(--accent);
+  letter-spacing: -0.01em;
 }
 
+/* Code blocks take the .code-block treatment: a dark surface in BOTH themes,
+ * which is why this needs no dark override. bg-gray-900 is the palette entry
+ * for #1c1c1e, the same surface .code-block uses in style.css. */
 .markdown-body pre {
-  @apply my-5 overflow-x-auto rounded-xl border border-gray-200 bg-gray-50 p-5 dark:border-dark-600 dark:bg-dark-900/50;
+  @apply my-5 overflow-x-auto rounded-xl bg-gray-900 p-5 font-mono;
+  border: 0;
+  color: rgb(255 255 255 / 0.94);
+  letter-spacing: -0.01em;
 }
 
 .markdown-body pre code {
-  @apply bg-transparent p-0 text-[13px] text-gray-800 dark:text-gray-200;
+  @apply bg-transparent p-0 text-[13px];
+  box-shadow: none;
+  color: inherit;
 }
 
 .markdown-body hr {
-  @apply my-8 border-0 border-t-2 border-gray-200 dark:border-dark-700;
+  @apply my-8;
+  border: 0;
+  border-top: 0.5px solid var(--separator);
 }
 
 .markdown-body table {
-  @apply mb-5 w-full overflow-hidden rounded-lg border border-gray-200 dark:border-dark-600;
+  @apply mb-5 w-full overflow-hidden rounded-lg;
+  border: 0;
+  box-shadow: inset 0 0 0 0.5px var(--hairline);
 }
 
+/* Hairline cell separators via inset shadow, not 1px borders. The table's own
+ * ring covers the outer edge, so cells only draw their right/bottom side. */
 .markdown-body th,
 .markdown-body td {
-  @apply border-b border-r border-gray-200 px-4 py-3 text-left dark:border-dark-600;
+  @apply px-4 py-3 text-left;
+  border: 0;
+  box-shadow:
+    inset -0.5px 0 0 var(--separator),
+    inset 0 -0.5px 0 var(--separator);
 }
 
 .markdown-body th:last-child,
 .markdown-body td:last-child {
-  @apply border-r-0;
+  box-shadow: inset 0 -0.5px 0 var(--separator);
 }
 
 .markdown-body tr:last-child td {
-  @apply border-b-0;
+  box-shadow: inset -0.5px 0 0 var(--separator);
+}
+
+/* Bottom-right cell: both neighbours are the table ring. */
+.markdown-body tr:last-child td:last-child {
+  box-shadow: none;
 }
 
 .markdown-body th {
-  @apply bg-gradient-to-br from-blue-50 to-indigo-50 font-semibold text-gray-900 dark:from-blue-900/20 dark:to-indigo-900/10 dark:text-white;
+  font-weight: 600;
+  color: var(--label);
+  background-color: var(--surface-secondary);
 }
 
 .markdown-body tbody tr {
-  @apply transition-colors hover:bg-gray-50 dark:hover:bg-dark-700/30;
+  transition: background-color 240ms var(--ease-out);
+}
+
+.markdown-body tbody tr:hover {
+  background-color: var(--surface-hover);
 }
 
 .markdown-body img {
-  @apply my-5 max-w-full rounded-xl border border-gray-200 shadow-md dark:border-dark-600;
+  @apply my-5 max-w-full rounded-xl;
+  border: 0;
+  box-shadow:
+    inset 0 0 0 0.5px var(--hairline),
+    var(--shadow-2);
 }
 
 .markdown-body strong {
-  @apply font-semibold text-gray-900 dark:text-white;
+  font-weight: 600;
+  color: var(--label);
 }
 
 .markdown-body em {
-  @apply italic text-gray-600 dark:text-gray-400;
+  @apply italic;
+  color: var(--label-secondary);
 }

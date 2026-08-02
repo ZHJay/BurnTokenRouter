@@ -17,7 +17,7 @@
         <Icon
           name="chevronDown"
           size="md"
-          :class="['transition-transform duration-200', isOpen && 'rotate-180']"
+          :class="['transition-transform duration-fast ease-apple-out', isOpen && 'rotate-180']"
         />
       </span>
     </button>
@@ -88,7 +88,7 @@
                 <!-- Account count badge -->
                 <span
                   v-if="proxy.account_count !== undefined"
-                  class="inline-flex flex-shrink-0 items-center rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-dark-600 dark:text-gray-400"
+                  class="badge badge-gray tabular flex-shrink-0 px-1.5"
                 >
                   {{ proxy.account_count }}
                 </span>
@@ -96,7 +96,7 @@
                 <template v-if="testResults[proxy.id]">
                   <span
                     v-if="testResults[proxy.id].success"
-                    class="inline-flex flex-shrink-0 items-center gap-1 rounded bg-emerald-100 px-1.5 py-0.5 text-xs text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                    class="badge badge-success tabular flex-shrink-0 px-1.5"
                   >
                     <span v-if="testResults[proxy.id].country">{{
                       testResults[proxy.id].country
@@ -107,7 +107,7 @@
                   </span>
                   <span
                     v-else
-                    class="inline-flex flex-shrink-0 items-center rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                    class="badge badge-danger flex-shrink-0 px-1.5"
                   >
                     {{ t('admin.proxies.testFailed') }}
                   </span>
@@ -319,24 +319,41 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* 触发器读作 input：不透明表面 + 内嵌发丝线，聚焦时 accent 环 */
 .select-trigger {
   @apply flex w-full items-center justify-between gap-2;
-  @apply rounded-xl px-4 py-2.5 text-sm;
-  @apply bg-white dark:bg-dark-800;
-  @apply border border-gray-200 dark:border-dark-600;
-  @apply text-gray-900 dark:text-gray-100;
-  @apply transition-all duration-200;
-  @apply focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30;
-  @apply hover:border-gray-300 dark:hover:border-dark-500;
-  @apply cursor-pointer;
+  @apply cursor-pointer rounded-lg px-4 py-2.5 text-sm;
+  background-color: var(--surface-secondary);
+  color: var(--label);
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--separator);
+  letter-spacing: -0.006em;
+  transition:
+    box-shadow 240ms var(--ease-out),
+    background-color 240ms var(--ease-out);
+}
+
+.select-trigger:hover:not(:disabled) {
+  box-shadow: inset 0 0 0 1px var(--label-quaternary);
+}
+
+.select-trigger:focus-visible {
+  outline: none;
+  background-color: var(--surface);
+  box-shadow:
+    inset 0 0 0 1.5px var(--accent),
+    0 0 0 3.5px var(--accent-tint);
 }
 
 .select-trigger-open {
-  @apply border-primary-500 ring-2 ring-primary-500/30;
+  background-color: var(--surface);
+  box-shadow:
+    inset 0 0 0 1.5px var(--accent),
+    0 0 0 3.5px var(--accent-tint);
 }
 
 .select-trigger-disabled {
-  @apply cursor-not-allowed bg-gray-100 opacity-60 dark:bg-dark-900;
+  @apply cursor-not-allowed opacity-60;
 }
 
 .select-value {
@@ -347,18 +364,26 @@ onUnmounted(() => {
   @apply flex-shrink-0 text-gray-400 dark:text-dark-400;
 }
 
+/* 弹层：短暂出现的浮层走 thin 材质 + 四层玻璃边缘 */
 .select-dropdown {
   @apply absolute z-[100] mt-2 w-full;
-  @apply bg-white dark:bg-dark-800;
-  @apply rounded-xl;
-  @apply border border-gray-200 dark:border-dark-700;
-  @apply shadow-lg shadow-black/10 dark:shadow-black/30;
-  @apply overflow-hidden;
+  @apply overflow-hidden rounded-xl;
+  background: var(--mat-thin);
+  backdrop-filter: blur(var(--mat-blur-thin)) var(--mat-diffuse);
+  -webkit-backdrop-filter: blur(var(--mat-blur-thin)) var(--mat-diffuse);
+  border: 0;
+  box-shadow:
+    0 0 0 0.5px var(--glass-edge-outer),
+    inset 0 0 0 0.5px var(--glass-edge),
+    inset 0 -0.5px 0 0 var(--glass-counter),
+    inset 0 1px 0 0 var(--glass-specular),
+    var(--shadow-3);
 }
 
 .select-header {
   @apply flex items-center gap-2 px-3 py-2;
-  @apply border-b border-gray-100 dark:border-dark-700;
+  border: 0;
+  box-shadow: inset 0 -0.5px 0 var(--separator);
 }
 
 .select-search {
@@ -367,16 +392,20 @@ onUnmounted(() => {
 
 .select-search-input {
   @apply flex-1 bg-transparent text-sm;
-  @apply text-gray-900 dark:text-gray-100;
-  @apply placeholder:text-gray-400 dark:placeholder:text-dark-400;
   @apply focus:outline-none;
+  color: var(--label);
+}
+
+.select-search-input::placeholder {
+  color: var(--label-tertiary);
 }
 
 .batch-test-btn {
-  @apply flex-shrink-0 rounded-lg p-1.5;
+  @apply flex-shrink-0 rounded-full p-1.5;
   @apply text-gray-500 hover:text-emerald-600 dark:hover:text-emerald-400;
   @apply hover:bg-emerald-50 dark:hover:bg-emerald-900/20;
-  @apply transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  @apply transition-colors duration-fast ease-apple-out active:scale-[0.96];
+  @apply disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100;
 }
 
 .select-options {
@@ -386,14 +415,18 @@ onUnmounted(() => {
 .select-option {
   @apply flex items-center justify-between gap-2;
   @apply px-4 py-2.5 text-sm;
-  @apply text-gray-700 dark:text-gray-300;
-  @apply cursor-pointer transition-colors duration-150;
-  @apply hover:bg-gray-50 dark:hover:bg-dark-700;
+  @apply cursor-pointer;
+  color: var(--label);
+  transition: background-color 100ms var(--ease-out);
+}
+
+.select-option:hover {
+  background-color: var(--surface-hover);
 }
 
 .select-option-selected {
-  @apply bg-primary-50 dark:bg-primary-900/20;
-  @apply text-primary-700 dark:text-primary-300;
+  background-color: var(--surface-selected);
+  color: var(--accent);
 }
 
 .select-option-label {
@@ -402,25 +435,29 @@ onUnmounted(() => {
 
 .select-empty {
   @apply px-4 py-8 text-center text-sm;
-  @apply text-gray-500 dark:text-dark-400;
+  color: var(--label-secondary);
 }
 
 .test-btn {
-  @apply flex-shrink-0 rounded p-1;
+  @apply flex-shrink-0 rounded-full p-1;
   @apply text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400;
   @apply hover:bg-emerald-50 dark:hover:bg-emerald-900/20;
-  @apply transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  @apply transition-colors duration-fast ease-apple-out active:scale-[0.96];
+  @apply disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100;
 }
 
-/* Dropdown animation */
+/* 从锚点生长，而不是单纯位移淡入 */
 .select-dropdown-enter-active,
 .select-dropdown-leave-active {
-  transition: all 0.2s ease;
+  transition:
+    opacity 240ms var(--ease-out),
+    transform 240ms var(--spring);
+  transform-origin: top center;
 }
 
 .select-dropdown-enter-from,
 .select-dropdown-leave-to {
   opacity: 0;
-  transform: translateY(-8px);
+  transform: scale(0.96) translateY(-6px);
 }
 </style>

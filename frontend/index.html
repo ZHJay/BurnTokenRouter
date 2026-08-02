@@ -4,7 +4,37 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Let form controls, scrollbars and browser chrome follow the active theme. -->
+    <meta name="color-scheme" content="light dark" />
     <title>Sub2API - AI API Gateway</title>
+    <!--
+      Anti-flash paint. main.ts sets the `dark` class on <html> before mount, but
+      the browser can paint the default white canvas before the bundle's CSS is
+      parsed, which flashes white at dark-mode users. These two values are the
+      --bg-base tokens from style.css, inlined on purpose: this rule has to work
+      with zero network dependency, so it cannot reference a custom property the
+      bundle has not defined yet.
+
+      Order matters. Before the class lands, the media query supplies the OS
+      preference; once main.ts applies `dark`, html.dark outranks it and wins
+      even for a saved preference that disagrees with the OS.
+    -->
+    <style>
+      html,
+      body {
+        background-color: #eff0f5;
+      }
+      @media (prefers-color-scheme: dark) {
+        html,
+        body {
+          background-color: #0b0b0d;
+        }
+      }
+      html.dark,
+      html.dark body {
+        background-color: #0b0b0d;
+      }
+    </style>
   </head>
   <body>
     <div id="app"></div>

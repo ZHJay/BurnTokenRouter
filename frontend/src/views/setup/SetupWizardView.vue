@@ -1,17 +1,28 @@
 <template>
   <div
-    class="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4 dark:from-dark-900 dark:to-dark-800"
+    class="relative flex min-h-screen items-center justify-center overflow-hidden p-4"
+    style="background-color: var(--bg-base)"
   >
-    <div class="w-full max-w-2xl">
+    <!-- Ambient light: what the panel material refracts -->
+    <div class="ambient-layer absolute"></div>
+
+    <div class="relative z-10 w-full max-w-2xl">
       <!-- Logo & Title -->
       <div class="mb-8 text-center">
         <div
-          class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 shadow-lg"
+          class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600"
+          style="
+            box-shadow:
+              0 8px 28px -6px rgb(0 122 255 / 0.5),
+              inset 0 1px 0 rgb(255 255 255 / 0.45);
+          "
         >
           <Icon name="cog" size="xl" class="text-white" />
         </div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('setup.title') }}</h1>
-        <p class="mt-2 text-gray-500 dark:text-dark-400">{{ t('setup.description') }}</p>
+        <h1 class="text-3xl font-bold leading-none tracking-[-0.028em] text-gray-900 dark:text-white">
+          {{ t('setup.title') }}
+        </h1>
+        <p class="mt-1.5 text-[13px] text-gray-500 dark:text-dark-400">{{ t('setup.description') }}</p>
       </div>
 
       <!-- Progress Steps -->
@@ -25,7 +36,7 @@
                   currentStep > index
                     ? 'bg-primary-500 text-white'
                     : currentStep === index
-                      ? 'bg-primary-500 text-white ring-4 ring-primary-100 dark:ring-primary-900'
+                      ? 'bg-primary-500 text-white ring-4 ring-[color:var(--accent-tint-strong)]'
                       : 'bg-gray-200 text-gray-500 dark:bg-dark-700 dark:text-dark-400'
                 ]"
               >
@@ -50,7 +61,7 @@
             </div>
             <div
               v-if="index < steps.length - 1"
-              class="mx-2 h-0.5 w-6 sm:mx-3 sm:w-12"
+              class="mx-2 h-0.5 w-6 rounded-full sm:mx-3 sm:w-12"
               :class="currentStep > index ? 'bg-primary-500' : 'bg-gray-200 dark:bg-dark-700'"
             ></div>
           </template>
@@ -58,14 +69,15 @@
       </div>
 
       <!-- Step Content -->
-      <div class="rounded-2xl bg-white p-8 shadow-xl dark:bg-dark-800">
+      <div class="glass-card glass-lens p-8">
+        <div class="relative z-[3]">
         <!-- Step 1: Database -->
         <div v-if="currentStep === 0" class="space-y-6">
           <div class="mb-6 text-center">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 class="on-glass text-xl font-semibold tracking-[-0.014em] text-gray-900 dark:text-white">
               {{ t('setup.database.title') }}
             </h2>
-            <p class="mt-1 text-sm text-gray-500 dark:text-dark-400">
+            <p class="mt-1 text-[13px] text-gray-500 dark:text-dark-400">
               {{ t('setup.database.description') }}
             </p>
           </div>
@@ -76,7 +88,7 @@
               <input
                 v-model="formData.database.host"
                 type="text"
-                class="input"
+                class="input h-11"
                 placeholder="localhost"
               />
             </div>
@@ -85,13 +97,13 @@
               <input
                 v-model.number="formData.database.port"
                 type="number"
-                class="input"
+                class="input h-11"
                 placeholder="5432"
               />
             </div>
           </div>
 
-          <div class="flex items-center justify-between rounded-xl border border-gray-200 p-3 dark:border-dark-700">
+          <div class="card-inset flex items-center justify-between !rounded-xl p-3">
             <div>
               <p class="text-sm font-medium text-gray-900 dark:text-white">
                 {{ t("setup.redis.enableTls") }}
@@ -109,7 +121,7 @@
               <input
                 v-model="formData.database.user"
                 type="text"
-                class="input"
+                class="input h-11"
                 placeholder="postgres"
               />
             </div>
@@ -118,7 +130,7 @@
               <input
                 v-model="formData.database.password"
                 type="password"
-                class="input"
+                class="input h-11"
                 :placeholder="t('setup.database.passwordPlaceholder')"
               />
             </div>
@@ -130,7 +142,7 @@
               <input
                 v-model="formData.database.dbname"
                 type="text"
-                class="input"
+                class="input h-11"
                 placeholder="sub2api"
               />
             </div>
@@ -151,7 +163,7 @@
           <button
             @click="testDatabaseConnection"
             :disabled="testingDb"
-            class="btn btn-secondary w-full"
+            class="btn btn-secondary h-11 w-full"
           >
             <svg
               v-if="testingDb"
@@ -187,10 +199,10 @@
         <!-- Step 2: Redis -->
         <div v-if="currentStep === 1" class="space-y-6">
           <div class="mb-6 text-center">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 class="on-glass text-xl font-semibold tracking-[-0.014em] text-gray-900 dark:text-white">
               {{ t('setup.redis.title') }}
             </h2>
-            <p class="mt-1 text-sm text-gray-500 dark:text-dark-400">
+            <p class="mt-1 text-[13px] text-gray-500 dark:text-dark-400">
               {{ t('setup.redis.description') }}
             </p>
           </div>
@@ -201,7 +213,7 @@
               <input
                 v-model="formData.redis.host"
                 type="text"
-                class="input"
+                class="input h-11"
                 placeholder="localhost"
               />
             </div>
@@ -210,7 +222,7 @@
               <input
                 v-model.number="formData.redis.port"
                 type="number"
-                class="input"
+                class="input h-11"
                 placeholder="6379"
               />
             </div>
@@ -222,7 +234,7 @@
               <input
                 v-model="formData.redis.username"
                 type="text"
-                class="input"
+                class="input h-11"
                 :placeholder="t('setup.redis.usernamePlaceholder')"
               />
             </div>
@@ -231,7 +243,7 @@
               <input
                 v-model="formData.redis.password"
                 type="password"
-                class="input"
+                class="input h-11"
                 :placeholder="t('setup.redis.passwordPlaceholder')"
               />
             </div>
@@ -240,13 +252,13 @@
               <input
                 v-model.number="formData.redis.db"
                 type="number"
-                class="input"
+                class="input h-11"
                 placeholder="0"
               />
             </div>
           </div>
 
-          <div class="flex items-center justify-between rounded-xl border border-gray-200 p-3 dark:border-dark-700">
+          <div class="card-inset flex items-center justify-between !rounded-xl p-3">
             <div>
               <p class="text-sm font-medium text-gray-900 dark:text-white">
                 {{ t("setup.redis.enableTls") }}
@@ -261,7 +273,7 @@
           <button
             @click="testRedisConnection"
             :disabled="testingRedis"
-            class="btn btn-secondary w-full"
+            class="btn btn-secondary h-11 w-full"
           >
             <svg
               v-if="testingRedis"
@@ -303,10 +315,10 @@
         <!-- Step 3: Admin -->
         <div v-if="currentStep === 2" class="space-y-6">
           <div class="mb-6 text-center">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 class="on-glass text-xl font-semibold tracking-[-0.014em] text-gray-900 dark:text-white">
               {{ t('setup.admin.title') }}
             </h2>
-            <p class="mt-1 text-sm text-gray-500 dark:text-dark-400">
+            <p class="mt-1 text-[13px] text-gray-500 dark:text-dark-400">
               {{ t('setup.admin.description') }}
             </p>
           </div>
@@ -316,7 +328,7 @@
             <input
               v-model="formData.admin.email"
               type="email"
-              class="input"
+              class="input h-11"
               placeholder="admin@example.com"
             />
           </div>
@@ -326,7 +338,7 @@
             <input
               v-model="formData.admin.password"
               type="password"
-              class="input"
+              class="input h-11"
               :placeholder="t('setup.admin.passwordPlaceholder')"
             />
           </div>
@@ -336,7 +348,7 @@
             <input
               v-model="confirmPassword"
               type="password"
-              class="input"
+              class="input h-11"
               :placeholder="t('setup.admin.confirmPasswordPlaceholder')"
             />
             <p
@@ -351,40 +363,40 @@
         <!-- Step 4: Complete -->
         <div v-if="currentStep === 3" class="space-y-6">
           <div class="mb-6 text-center">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 class="on-glass text-xl font-semibold tracking-[-0.014em] text-gray-900 dark:text-white">
               {{ t('setup.ready.title') }}
             </h2>
-            <p class="mt-1 text-sm text-gray-500 dark:text-dark-400">
+            <p class="mt-1 text-[13px] text-gray-500 dark:text-dark-400">
               {{ t('setup.ready.description') }}
             </p>
           </div>
 
           <div class="space-y-4">
-            <div class="rounded-xl bg-gray-50 p-4 dark:bg-dark-700">
-              <h3 class="mb-2 text-sm font-medium text-gray-500 dark:text-dark-400">
+            <div class="card-inset !rounded-xl p-4">
+              <h3 class="mb-2 text-xs font-semibold text-gray-500 dark:text-dark-400">
                 {{ t('setup.ready.database') }}
               </h3>
-              <p class="text-gray-900 dark:text-white">
+              <p class="tabular text-gray-900 dark:text-white">
                 {{ formData.database.user }}@{{ formData.database.host }}:{{
                   formData.database.port
                 }}/{{ formData.database.dbname }}
               </p>
             </div>
 
-            <div class="rounded-xl bg-gray-50 p-4 dark:bg-dark-700">
-              <h3 class="mb-2 text-sm font-medium text-gray-500 dark:text-dark-400">
+            <div class="card-inset !rounded-xl p-4">
+              <h3 class="mb-2 text-xs font-semibold text-gray-500 dark:text-dark-400">
                 {{ t('setup.ready.redis') }}
               </h3>
-              <p class="text-gray-900 dark:text-white">
+              <p class="tabular text-gray-900 dark:text-white">
                 {{ formData.redis.host }}:{{ formData.redis.port }}
               </p>
             </div>
 
-            <div class="rounded-xl bg-gray-50 p-4 dark:bg-dark-700">
-              <h3 class="mb-2 text-sm font-medium text-gray-500 dark:text-dark-400">
+            <div class="card-inset !rounded-xl p-4">
+              <h3 class="mb-2 text-xs font-semibold text-gray-500 dark:text-dark-400">
                 {{ t('setup.ready.adminEmail') }}
               </h3>
-              <p class="text-gray-900 dark:text-white">{{ formData.admin.email }}</p>
+              <p class="tabular text-gray-900 dark:text-white">{{ formData.admin.email }}</p>
             </div>
           </div>
         </div>
@@ -392,18 +404,20 @@
         <!-- Error Message -->
         <div
           v-if="errorMessage"
-          class="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-800/50 dark:bg-red-900/20"
+          class="mt-6 rounded-xl p-4"
+          style="background: rgb(255 59 48 / 0.12); box-shadow: inset 0 0 0 0.5px rgb(255 59 48 / 0.26)"
         >
           <div class="flex items-start gap-3">
             <Icon name="exclamationCircle" size="md" class="flex-shrink-0 text-red-500" />
-            <p class="text-sm text-red-700 dark:text-red-400">{{ errorMessage }}</p>
+            <p class="text-[13px] text-red-700 dark:text-red-400">{{ errorMessage }}</p>
           </div>
         </div>
 
         <!-- Success Message -->
         <div
           v-if="installSuccess"
-          class="mt-6 rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-800/50 dark:bg-green-900/20"
+          class="mt-6 rounded-xl p-4"
+          style="background: rgb(52 199 89 / 0.12); box-shadow: inset 0 0 0 0.5px rgb(52 199 89 / 0.26)"
         >
           <div class="flex items-start gap-3">
             <svg
@@ -428,10 +442,10 @@
             </svg>
             <Icon v-else name="checkCircle" size="md" class="flex-shrink-0 text-green-500" />
             <div>
-              <p class="text-sm font-medium text-green-700 dark:text-green-400">
+              <p class="text-[13px] font-semibold text-green-700 dark:text-green-400">
                 {{ t('setup.status.completed') }}
               </p>
-              <p class="mt-1 text-sm text-green-600 dark:text-green-500">
+              <p class="mt-1 text-[13px] text-green-600 dark:text-green-500">
                 {{
                   serviceReady
                     ? t('setup.status.redirecting')
@@ -492,6 +506,7 @@
             </svg>
             {{ installing ? t('setup.status.installing') : t('setup.status.completeInstallation') }}
           </button>
+        </div>
         </div>
       </div>
     </div>
