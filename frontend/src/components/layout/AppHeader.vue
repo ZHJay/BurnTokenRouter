@@ -1,5 +1,18 @@
 <template>
-  <header class="glass sticky top-0 z-30 border-b border-gray-200/50 dark:border-dark-700/50">
+  <!--
+    Regular material, fixed so page content scrolls underneath the glass.
+    `left` tracks the sidebar width; on mobile the sidebar is off-canvas so the
+    bar spans the full viewport.
+  -->
+  <header
+    class="glass fixed right-0 top-0 z-30 left-0 transition-all duration-300"
+    :class="[sidebarCollapsed ? 'lg:left-[72px]' : 'lg:left-64']"
+    style="
+      box-shadow:
+        inset 0 -0.5px 0 var(--glass-edge),
+        inset 0 1px 0 var(--glass-specular);
+    "
+  >
     <div class="flex h-16 items-center justify-between gap-2 px-2 sm:px-4 md:px-6">
       <!-- Left: Mobile Menu Toggle + Page Title -->
       <div class="flex shrink-0 items-center gap-2 sm:gap-4">
@@ -12,10 +25,13 @@
         </button>
 
         <div class="hidden lg:block">
-          <h1 class="text-lg font-semibold text-gray-900 dark:text-white">
+          <!-- Vibrancy: text over glass gets heavier weight, never flat grey -->
+          <h1
+            class="on-glass truncate text-[17px] font-semibold leading-tight tracking-[-0.014em] text-gray-900 dark:text-white"
+          >
             {{ pageTitle }}
           </h1>
-          <p v-if="pageDescription" class="text-xs text-gray-500 dark:text-dark-400">
+          <p v-if="pageDescription" class="truncate text-xs text-gray-500 dark:text-dark-400">
             {{ pageDescription }}
           </p>
         </div>
@@ -57,7 +73,8 @@
         <!-- Balance Display -->
         <div
           v-if="user"
-          class="group relative hidden items-center gap-2 rounded-xl bg-primary-50 px-3 py-1.5 dark:bg-primary-900/20 sm:flex"
+          class="group relative hidden items-center gap-2 rounded-full px-3 py-1.5 sm:flex"
+          style="background: var(--accent-tint)"
         >
           <svg
             class="h-4 w-4 text-primary-600 dark:text-primary-400"
@@ -77,12 +94,12 @@
           </span>
           <span
             v-if="frozenBalance > 0"
-            class="rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-200"
+            class="badge badge-warning"
           >
             {{ balanceFrozenLabel }}
           </span>
           <div
-            class="pointer-events-none absolute right-0 top-full mt-2 hidden w-56 rounded-lg border border-gray-200 bg-white p-3 text-xs shadow-lg group-hover:block dark:border-dark-700 dark:bg-dark-800"
+            class="dropdown pointer-events-none absolute right-0 top-full mt-2 hidden w-56 p-3 text-xs group-hover:block"
           >
             <div class="flex items-center justify-between">
               <span class="text-gray-500 dark:text-dark-400">{{ balanceAvailableText }}</span>
@@ -105,10 +122,12 @@
         <div v-if="user" class="relative" ref="dropdownRef">
           <button
             @click="toggleDropdown"
-            class="flex items-center gap-2 rounded-xl p-1.5 transition-colors hover:bg-gray-100 dark:hover:bg-dark-800"
+            class="flex items-center gap-2 rounded-full p-1.5 transition-colors hover:bg-gray-100 dark:hover:bg-dark-800"
             :aria-label="t('common.userMenu')"
           >
-            <div class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 text-sm font-medium text-white shadow-sm">
+            <div
+              class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-sm font-medium text-white shadow-sm"
+            >
               <img
                 v-if="avatarUrl"
                 :src="avatarUrl"
@@ -275,6 +294,7 @@ const dropdownOpen = ref(false)
 const dropdownRef = ref<HTMLElement | null>(null)
 const contactInfo = computed(() => appStore.contactInfo)
 const docUrl = computed(() => sanitizeUrl(appStore.docUrl))
+const sidebarCollapsed = computed(() => appStore.sidebarCollapsed)
 const modelPlazaEnabled = computed(() => isFeatureFlagEnabled(FeatureFlags.modelPlaza))
 const avatarUrl = computed(() => user.value?.avatar_url?.trim() || '')
 const availableBalance = computed(() => Number(user.value?.balance || 0))

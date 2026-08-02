@@ -1,21 +1,30 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-dark-950">
-    <!-- Background Decoration -->
-    <div class="pointer-events-none fixed inset-0 bg-mesh-gradient"></div>
+  <div class="min-h-screen">
+    <!--
+      Ambient light layer. This is a hard requirement, not decoration: glass only
+      reads as glass when there is something behind it to refract. On a flat grey
+      or pure black page, backdrop-filter is a no-op and the material collapses
+      into a plain panel.
+    -->
+    <div class="ambient-layer"></div>
 
-    <!-- Sidebar -->
+    <!-- Sidebar: thick material, floats above content -->
     <AppSidebar />
 
-    <!-- Main Content Area -->
+    <!-- Header: regular material, fixed so content travels underneath it -->
+    <AppHeader />
+
+    <!--
+      Content is inset with padding rather than pushed with margin, so the
+      sidebar and top bar genuinely overlay it. With a margin layout the content
+      starts beside the glass instead of under it, leaving nothing to refract.
+    -->
     <div
       class="relative min-h-screen transition-all duration-300"
-      :class="[sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-64']"
+      :class="[sidebarCollapsed ? 'lg:pl-[72px]' : 'lg:pl-64']"
     >
-      <!-- Header -->
-      <AppHeader />
-
-      <!-- Main Content -->
-      <main class="p-4 md:p-6 lg:p-8">
+      <!-- pt reserves the 64px header plus breathing room -->
+      <main class="px-4 pb-4 pt-[4.5rem] md:px-6 md:pb-6 md:pt-[5rem] lg:px-8 lg:pb-8">
         <slot />
       </main>
     </div>

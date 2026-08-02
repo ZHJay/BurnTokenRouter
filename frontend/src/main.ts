@@ -44,6 +44,10 @@ async function bootstrap() {
   const appStore = useAppStore()
   appStore.initFromInjectedConfig()
 
+  // Restore the Liquid Glass intensity preference before first paint so the
+  // material does not visibly change level after mount.
+  appStore.initGlassIntensity()
+
   // Set document title immediately after config is loaded
   if (appStore.siteName && appStore.siteName !== 'Sub2API') {
     document.title = `${appStore.siteName} - AI API Gateway`

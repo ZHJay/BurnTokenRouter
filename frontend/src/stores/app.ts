@@ -14,6 +14,16 @@ import {
 } from '@/api/admin/system'
 import { getPublicSettings as fetchPublicSettingsAPI } from '@/api/auth'
 
+/** Liquid Glass intensity levels, matching the iOS 27 user-facing control. */
+export type GlassIntensity = 'clear' | 'default' | 'frosted'
+
+const GLASS_STORAGE_KEY = 'glass_intensity'
+const GLASS_LEVELS: readonly GlassIntensity[] = ['clear', 'default', 'frosted']
+
+function isGlassIntensity(value: unknown): value is GlassIntensity {
+  return typeof value === 'string' && (GLASS_LEVELS as readonly string[]).includes(value)
+}
+
 export const useAppStore = defineStore('app', () => {
   // ==================== State ====================
 
@@ -22,6 +32,13 @@ export const useAppStore = defineStore('app', () => {
   const sidebarScrollTop = ref<number>(0)
   const loading = ref<boolean>(false)
   const toasts = ref<Toast[]>([])
+
+  /**
+   * Liquid Glass intensity, mirroring the user-facing control iOS 27 ships.
+   * 'default' is the standard material; 'clear' is more transparent, 'frosted'
+   * approaches opaque. Applied as a data attribute on <html>.
+   */
+  const glassIntensity = ref<GlassIntensity>('default')
 
   // Public settings cache state
   const publicSettingsLoaded = ref<boolean>(false)
@@ -61,6 +78,61 @@ export const useAppStore = defineStore('app', () => {
    */
   function toggleSidebar(): void {
     sidebarCollapsed.value = !sidebarCollapsed.value
+  }
+
+  /**
+   * Apply the glass intensity to <html> as a data attribute.
+   * The standard level carries no attribute so the base tokens apply as-is.
+   */
+  function applyGlassIntensity(level: GlassIntensity): void {
+    if (typeof document === 'undefined') return
+    if (level === 'default') {
+      document.documentElement.removeAttribute('data-glass')
+    } else {
+      document.documentElement.setAttribute('data-glass', level)
+    }
+  }
+
+  /**
+   * Set the Liquid Glass intensity and persist it, mirroring how the theme
+   * preference is stored.
+   */
+  function setGlassIntensity(level: GlassIntensity): void {
+    glassIntensity.value = level
+    applyGlassIntensity(level)
+    try {
+      localStorage.setItem(GLASS_STORAGE_KEY, level)
+    } catch {
+      // Storage can be unavailable (private mode, quota). Non-fatal.
+    }
+  }
+
+  /**
+   * Restore the persisted glass intensity. When the user asks for reduced
+   * transparency and has no explicit preference, fall back to frosted.
+   */
+  function initGlassIntensity(): void {
+    let stored: string | null = null
+    try {
+      stored = localStorage.getItem(GLASS_STORAGE_KEY)
+    } catch {
+      stored = null
+    }
+
+    if (isGlassIntensity(stored)) {
+      glassIntensity.value = stored
+      applyGlassIntensity(stored)
+      return
+    }
+
+    const reducedTransparency =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-transparency: reduce)').matches
+
+    const initial: GlassIntensity = reducedTransparency ? 'frosted' : 'default'
+    glassIntensity.value = initial
+    applyGlassIntensity(initial)
   }
 
   /**
@@ -435,6 +507,7 @@ export const useAppStore = defineStore('app', () => {
     sidebarScrollTop,
     loading,
     toasts,
+    glassIntensity,
 
     // Public settings state
     publicSettingsLoaded,
@@ -463,6 +536,8 @@ export const useAppStore = defineStore('app', () => {
     toggleSidebar,
     setSidebarCollapsed,
     toggleMobileSidebar,
+    setGlassIntensity,
+    initGlassIntensity,
     setMobileOpen,
     setLoading,
     showToast,
