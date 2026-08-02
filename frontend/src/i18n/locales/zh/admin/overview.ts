@@ -50,6 +50,8 @@ export default {
       tokens: 'Token',
       cache: '缓存',
       recentUsage: '最近使用',
+      // 「模型分布 / 用户消费榜」面板切换控件的无障碍名称。
+      viewSelector: '视图',
       viewModelDistribution: '模型分布',
       viewSpendingRanking: '用户消费榜',
       spendingRankingTitle: '用户消费榜',

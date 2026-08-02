@@ -436,7 +436,7 @@ async function saveAllSettings() {
 
       <!-- 高级设置 -->
       <details class="card-inset">
-        <summary class="cursor-pointer p-4 text-sm font-semibold text-gray-900 dark:text-white">
+        <summary class="cursor-pointer rounded-lg p-4 text-sm font-semibold text-gray-900 transition-transform duration-instant ease-apple-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] dark:text-white">
           {{ t('admin.ops.settings.advancedSettings') }}
         </summary>
         <div class="space-y-4 px-4 pb-4">

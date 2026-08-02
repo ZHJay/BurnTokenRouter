@@ -307,6 +307,9 @@ export default {
     upstream: '上游',
     mapping: '映射',
     path: '路径',
+    // 同一张图表卡片内两个分段选择器的无障碍名称。
+    chartDataSource: '数据来源',
+    chartMetric: '统计指标',
     inboundEndpoint: '入站端点',
     upstreamEndpoint: '上游端点',
     type: '类型',

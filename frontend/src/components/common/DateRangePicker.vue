@@ -332,11 +332,18 @@ onUnmounted(() => {
   letter-spacing: -0.006em;
   transition:
     box-shadow 240ms var(--ease-out),
-    background-color 240ms var(--ease-out);
+    background-color 240ms var(--ease-out),
+    transform 100ms var(--ease-out);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .date-picker-trigger:hover {
   box-shadow: inset 0 0 0 1px var(--label-quaternary);
+}
+
+/* 反馈落在 pointer-down 而非 click，与 .btn 同约定 */
+.date-picker-trigger:active {
+  transform: scale(0.96);
 }
 
 .date-picker-trigger:focus-visible {
@@ -508,5 +515,22 @@ onUnmounted(() => {
 .date-picker-dropdown-leave-to {
   opacity: 0;
   transform: scale(0.96) translateY(-6px);
+}
+
+/* 与 style.css 的减弱动效分支同约定：那份分支是一份固定选择器清单
+   (.btn/.card/.card-hover/.sidebar-link/.progress-bar/.tab)，这里的按下缩放是
+   scoped 里的裸规则，不在清单内，因此本地中和位移、保留颜色反馈。 */
+@media (prefers-reduced-motion: reduce) {
+  .date-picker-trigger,
+  .date-picker-preset,
+  .date-picker-apply {
+    transition-property: background-color, box-shadow, color;
+  }
+
+  .date-picker-trigger:active,
+  .date-picker-preset:active,
+  .date-picker-apply:active {
+    transform: none;
+  }
 }
 </style>

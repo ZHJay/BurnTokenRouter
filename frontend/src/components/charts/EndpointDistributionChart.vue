@@ -5,11 +5,12 @@
         {{ title || t('usage.endpointDistribution') }}
       </h3>
       <div class="flex flex-wrap items-center justify-end gap-2">
+        <span v-if="showSourceToggle" :id="sourceLabelId" class="sr-only">{{ t('usage.chartDataSource') }}</span>
         <div
           v-if="showSourceToggle"
           class="tabs"
           role="radiogroup"
-          :aria-labelledby="titleId"
+          :aria-labelledby="sourceGroupLabelledBy"
         >
           <button
             type="button"
@@ -46,11 +47,12 @@
           </button>
         </div>
 
+        <span v-if="showMetricToggle" :id="metricLabelId" class="sr-only">{{ t('usage.chartMetric') }}</span>
         <div
           v-if="showMetricToggle"
           class="tabs"
           role="radiogroup"
-          :aria-labelledby="titleId"
+          :aria-labelledby="metricGroupLabelledBy"
         >
           <button
             type="button"
@@ -157,8 +159,15 @@ ChartJS.register(ArcElement, Tooltip, Legend)
 
 const { t } = useI18n()
 
-// 数据源 / 指标分段控件都是「选值」而非切面板，用 radiogroup 语义并从可见标题取无障碍名称。
+// 数据源 / 指标分段控件都是「选值」而非切面板，用 radiogroup 语义。
+// 两组都只指向 <h3> 会得到同名的无障碍名称，读屏用户无法区分「选数据源」和「选指标」，
+// 因此各自再挂一个视觉隐藏标签：名称读作「端点分布 数据来源 / 端点分布 统计指标」，
+// 同卡片内彼此可分，多张图表同页时也能分辨归属。
 const titleId = useId()
+const sourceLabelId = useId()
+const metricLabelId = useId()
+const sourceGroupLabelledBy = `${titleId} ${sourceLabelId}`
+const metricGroupLabelledBy = `${titleId} ${metricLabelId}`
 
 type DistributionMetric = 'tokens' | 'actual_cost'
 type EndpointSource = 'inbound' | 'upstream' | 'path'

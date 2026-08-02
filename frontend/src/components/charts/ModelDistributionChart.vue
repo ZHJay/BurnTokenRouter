@@ -7,11 +7,12 @@
           : t('admin.dashboard.spendingRankingTitle') }}
       </h3>
       <div class="flex flex-wrap items-center justify-end gap-2">
+        <span v-if="showSourceToggle" :id="sourceLabelId" class="sr-only">{{ t('usage.chartDataSource') }}</span>
         <div
           v-if="showSourceToggle"
           class="tabs"
           role="radiogroup"
-          :aria-labelledby="titleId"
+          :aria-labelledby="sourceGroupLabelledBy"
         >
           <button
             type="button"
@@ -47,11 +48,12 @@
             {{ t('usage.mapping') }}
           </button>
         </div>
+        <span v-if="showMetricToggle" :id="metricLabelId" class="sr-only">{{ t('usage.chartMetric') }}</span>
         <div
           v-if="showMetricToggle"
           class="tabs"
           role="radiogroup"
-          :aria-labelledby="titleId"
+          :aria-labelledby="metricGroupLabelledBy"
         >
           <button
             type="button"
@@ -76,36 +78,46 @@
             {{ t('admin.dashboard.metricActualCost') }}
           </button>
         </div>
-        <div v-if="enableRankingView" class="tabs" role="tablist">
-          <button
-            type="button"
-            role="tab"
-            :aria-selected="activeView === 'model_distribution'"
-            class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
-            :class="activeView === 'model_distribution' && 'tab-active'"
-            @click="activeView = 'model_distribution'"
-          >
-            {{ t('admin.dashboard.viewModelDistribution') }}
-          </button>
-          <button
-            type="button"
-            role="tab"
-            :aria-selected="activeView === 'spending_ranking'"
-            class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
-            :class="activeView === 'spending_ranking' && 'tab-active'"
-            @click="activeView = 'spending_ranking'"
-          >
-            {{ t('admin.dashboard.viewSpendingRanking') }}
-          </button>
-        </div>
+        <!-- 这一组是真正的面板切换（分布表 ↔ 消费榜），保留 tablist/tab 语义并补齐
+             无障碍名称与 tab ↔ tabpanel 的双向关联。 -->
+        <template v-if="enableRankingView">
+          <span :id="viewLabelId" class="sr-only">{{ t('admin.dashboard.viewSelector') }}</span>
+          <div class="tabs" role="tablist" :aria-labelledby="viewLabelId">
+            <button
+              :id="distributionTabId"
+              type="button"
+              role="tab"
+              :aria-selected="activeView === 'model_distribution'"
+              :aria-controls="activeView === 'model_distribution' ? distributionPanelId : undefined"
+              class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
+              :class="activeView === 'model_distribution' && 'tab-active'"
+              @click="activeView = 'model_distribution'"
+            >
+              {{ t('admin.dashboard.viewModelDistribution') }}
+            </button>
+            <button
+              :id="rankingTabId"
+              type="button"
+              role="tab"
+              :aria-selected="activeView === 'spending_ranking'"
+              :aria-controls="activeView === 'spending_ranking' ? rankingPanelId : undefined"
+              class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
+              :class="activeView === 'spending_ranking' && 'tab-active'"
+              @click="activeView = 'spending_ranking'"
+            >
+              {{ t('admin.dashboard.viewSpendingRanking') }}
+            </button>
+          </div>
+        </template>
       </div>
     </div>
 
-    <div v-if="activeView === 'model_distribution' && loading" class="flex h-48 items-center justify-center">
+    <div v-if="activeView === 'model_distribution' && loading" v-bind="distributionPanelAttrs" class="flex h-48 items-center justify-center">
       <LoadingSpinner />
     </div>
     <div
       v-else-if="activeView === 'model_distribution' && displayModelStats.length > 0 && chartData"
+      v-bind="distributionPanelAttrs"
       class="flex flex-col items-center gap-4 sm:flex-row sm:gap-6"
     >
       <div class="h-48 w-48 shrink-0">
@@ -173,21 +185,27 @@
     </div>
     <div
       v-else-if="activeView === 'model_distribution'"
+      v-bind="distributionPanelAttrs"
       class="flex h-48 items-center justify-center text-sm text-gray-500 dark:text-gray-400"
     >
       {{ t('admin.dashboard.noDataAvailable') }}
     </div>
 
-    <div v-else-if="rankingLoading" class="flex h-48 items-center justify-center">
+    <div v-else-if="rankingLoading" v-bind="rankingPanelAttrs" class="flex h-48 items-center justify-center">
       <LoadingSpinner />
     </div>
     <div
       v-else-if="rankingError"
+      v-bind="rankingPanelAttrs"
       class="flex h-48 items-center justify-center text-sm text-gray-500 dark:text-gray-400"
     >
       {{ t('admin.dashboard.failedToLoad') }}
     </div>
-    <div v-else-if="rankingDisplayItems.length > 0 && rankingChartData" class="flex flex-col items-center gap-4 sm:flex-row sm:gap-6">
+    <div
+      v-else-if="rankingDisplayItems.length > 0 && rankingChartData"
+      v-bind="rankingPanelAttrs"
+      class="flex flex-col items-center gap-4 sm:flex-row sm:gap-6"
+    >
       <div class="h-48 w-48 shrink-0">
         <Doughnut :data="rankingChartData" :options="rankingDoughnutOptions" />
       </div>
@@ -238,6 +256,7 @@
     </div>
     <div
       v-else
+      v-bind="rankingPanelAttrs"
       class="flex h-48 items-center justify-center text-sm text-gray-500 dark:text-gray-400"
     >
       {{ t('admin.dashboard.noDataAvailable') }}
@@ -266,9 +285,21 @@ ChartJS.register(ArcElement, Tooltip, Legend)
 
 const { t } = useI18n()
 
-// 数据源 / 指标分段控件是「选值」而非切面板，用 radiogroup 语义并从可见标题取无障碍名称。
+// 数据源 / 指标分段控件是「选值」而非切面板，用 radiogroup 语义。
+// 两组都只指向 <h3> 会得到同名的无障碍名称，读屏用户无法区分「选数据源」和「选指标」，
+// 因此各自再挂一个视觉隐藏标签：名称读作「模型分布 数据来源 / 模型分布 统计指标」。
 // activeView 那一组是真正的面板切换，保留 tablist/tab 语义。
+// 这些图表一页可能渲染多次（管理端 UsageView、AccountStatsModal），id 必须用 useId() 生成。
 const titleId = useId()
+const sourceLabelId = useId()
+const metricLabelId = useId()
+const sourceGroupLabelledBy = `${titleId} ${sourceLabelId}`
+const metricGroupLabelledBy = `${titleId} ${metricLabelId}`
+const viewLabelId = useId()
+const distributionTabId = useId()
+const rankingTabId = useId()
+const distributionPanelId = useId()
+const rankingPanelId = useId()
 
 type DistributionMetric = 'tokens' | 'actual_cost'
 type ModelSource = 'requested' | 'upstream' | 'mapping'
@@ -352,6 +383,23 @@ const enableRankingView = computed(() => props.enableRankingView)
 const showAccountCost = computed(() => props.showAccountCost)
 const distributionColspan = computed(() => showAccountCost.value ? 6 : 5)
 const activeView = ref<'model_distribution' | 'spending_ranking'>('model_distribution')
+
+/**
+ * tabpanel 关联属性。面板内容用 v-if 链渲染，同一时刻只有一个分支在 DOM 里，
+ * 所以把属性收在 computed 里 v-bind 到每个分支，保证无论落在哪个分支（加载 / 有数据 /
+ * 空态 / 出错）语义都一致。没有 tablist 时（enableRankingView 为 false）不加这些属性，
+ * 否则 aria-labelledby 会指向不存在的 tab。
+ */
+const distributionPanelAttrs = computed(() =>
+  enableRankingView.value
+    ? { role: 'tabpanel', id: distributionPanelId, 'aria-labelledby': distributionTabId }
+    : {},
+)
+const rankingPanelAttrs = computed(() =>
+  enableRankingView.value
+    ? { role: 'tabpanel', id: rankingPanelId, 'aria-labelledby': rankingTabId }
+    : {},
+)
 
 /**
  * canvas 读不到 CSS 变量，配色只能由 JS 侧驱动 —— `useChartScheme()` 用

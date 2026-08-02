@@ -374,18 +374,21 @@
       @close="closeCreateModal"
     >
       <!-- Tab Switch -->
+      <!-- Apple 分段控件：两个对等选项就地切换内容面板（标准 / 批量），
+           不是页面级 tab 条，因此收进分段控件而不保留下划线。
+           切换的是内容面板，语义用 tablist/tab/aria-selected。 -->
       <div
-        class="mb-6 flex items-center justify-between gap-3 border-b border-gray-200 dark:border-dark-600"
+        class="mb-6 flex items-center justify-between gap-3"
       >
-        <div class="flex min-w-0 shrink-0">
+        <div class="tabs min-w-0 shrink-0" role="tablist">
           <button
             type="button"
+            role="tab"
+            :aria-selected="createMode === 'standard'"
             @click="createMode = 'standard'"
             :class="[
-              '-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors',
-              createMode === 'standard'
-                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+              'tab inline-flex items-center transition-transform duration-instant ease-apple-out focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] active:scale-[0.96]',
+              createMode === 'standard' ? 'tab-active' : ''
             ]"
           >
             <Icon name="plus" size="sm" class="mr-1.5 inline" />
@@ -393,12 +396,12 @@
           </button>
           <button
             type="button"
+            role="tab"
+            :aria-selected="createMode === 'batch'"
             @click="createMode = 'batch'"
             :class="[
-              '-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors',
-              createMode === 'batch'
-                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+              'tab inline-flex items-center transition-transform duration-instant ease-apple-out focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] active:scale-[0.96]',
+              createMode === 'batch' ? 'tab-active' : ''
             ]"
           >
             <svg

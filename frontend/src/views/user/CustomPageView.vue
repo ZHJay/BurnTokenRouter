@@ -434,8 +434,37 @@ onUnmounted(() => {
   @apply absolute left-2 top-2 z-10 flex items-center px-2 py-1.5 rounded-md text-sm;
   @apply bg-white dark:bg-dark-700;
   @apply text-gray-600 dark:text-dark-300 hover:bg-gray-100 dark:hover:bg-dark-600;
-  @apply shadow-elev-1 transition-colors cursor-pointer;
+  @apply shadow-elev-1 cursor-pointer outline-none;
+  @apply active:scale-[0.96];
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 240ms var(--ease-out),
+    color 240ms var(--ease-out),
+    transform 100ms var(--ease-out);
   box-shadow: inset 0 0 0 0.5px var(--hairline), var(--shadow-1);
+}
+
+/* 焦点环写成显式 box-shadow：上面已有一条裸 box-shadow，
+   Tailwind 的 ring-* 也编译成 box-shadow，用 @apply 会被这条盖掉。
+   与 .btn / .select-trigger 的焦点态同一处理。 */
+.toc-toggle-btn:focus-visible {
+  box-shadow:
+    inset 0 0 0 0.5px var(--hairline),
+    0 0 0 3.5px var(--accent-tint-strong),
+    0 0 0 1px var(--accent);
+}
+
+/* 与 style.css 的减弱动效分支同约定：那份分支是一份固定选择器清单
+   (.btn/.card/.card-hover/.sidebar-link/.progress-bar/.tab)，这里的按下缩放
+   不在清单内，因此本地中和位移、保留颜色反馈。 */
+@media (prefers-reduced-motion: reduce) {
+  .toc-toggle-btn {
+    transition-property: background-color, color;
+  }
+
+  .toc-toggle-btn:active {
+    transform: none;
+  }
 }
 
 .custom-embed-shell {

@@ -482,11 +482,18 @@ onUnmounted(() => {
   letter-spacing: -0.006em;
   transition:
     box-shadow 240ms var(--ease-out),
-    background-color 240ms var(--ease-out);
+    background-color 240ms var(--ease-out),
+    transform 100ms var(--ease-out);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .select-trigger:hover:not(:disabled) {
   box-shadow: inset 0 0 0 1px var(--label-quaternary);
+}
+
+/* 反馈落在 pointer-down 而非 click，与 .btn 同约定 */
+.select-trigger:active:not(:disabled) {
+  transform: scale(0.96);
 }
 
 .select-trigger:focus-visible {
@@ -531,6 +538,21 @@ onUnmounted(() => {
   @apply flex flex-shrink-0 cursor-pointer items-center justify-center;
   @apply rounded-full text-gray-400 transition-colors duration-fast ease-apple-out;
   @apply hover:text-gray-600 dark:hover:text-gray-200;
+}
+
+/* 与 style.css 的减弱动效分支同约定：那份分支是一份固定选择器清单
+   (.btn/.card/.card-hover/.sidebar-link/.progress-bar/.tab)，这里的按下缩放是
+   scoped 里的裸规则，不在清单内，因此本地中和位移、保留颜色反馈。
+   .select-clear 刻意不给按下缩放：它嵌在 .select-trigger 内，
+   :active 会同时命中祖先，两层缩放相乘会变成 0.92。 */
+@media (prefers-reduced-motion: reduce) {
+  .select-trigger {
+    transition-property: background-color, box-shadow, color;
+  }
+
+  .select-trigger:active:not(:disabled) {
+    transform: none;
+  }
 }
 </style>
 
@@ -577,12 +599,20 @@ onUnmounted(() => {
   @apply px-4 py-2.5 text-sm;
   @apply cursor-pointer;
   color: var(--label);
-  transition: background-color 100ms var(--ease-out);
+  transition:
+    background-color 100ms var(--ease-out),
+    transform 100ms var(--ease-out);
   pointer-events: auto !important;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .select-dropdown-portal .select-option:hover {
   background-color: var(--surface-hover);
+}
+
+/* 列表项按下用 0.98：--surface-pressed 已被键盘焦点态占用，缩放是这里唯一没被占的信号 */
+.select-dropdown-portal .select-option:active:not(.select-option-disabled):not(.select-option-group) {
+  transform: scale(0.98);
 }
 
 .select-dropdown-portal .select-option-selected {
@@ -634,5 +664,18 @@ onUnmounted(() => {
 .select-dropdown-leave-to {
   opacity: 0;
   transform: scale(0.96) translateY(-6px);
+}
+
+/* 与 style.css 的减弱动效分支同约定：那份分支是一份固定选择器清单
+   (.btn/.card/.card-hover/.sidebar-link/.progress-bar/.tab)，这里的按下缩放是
+   scoped 里的裸规则，不在清单内，因此本地中和位移、保留颜色反馈。 */
+@media (prefers-reduced-motion: reduce) {
+  .select-dropdown-portal .select-option {
+    transition-property: background-color, color;
+  }
+
+  .select-dropdown-portal .select-option:active {
+    transform: none;
+  }
 }
 </style>

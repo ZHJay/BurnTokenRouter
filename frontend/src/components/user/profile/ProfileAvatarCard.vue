@@ -42,12 +42,15 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
-          <label class="btn btn-secondary btn-sm cursor-pointer">
+          <!-- sr-only 而非 hidden：display:none 的 input 不可聚焦，
+               键盘用户根本到不了这个上传按钮，label 上的 .btn:focus-visible 永远不命中。
+               relative 把 sr-only input 锚在按钮上，聚焦时不会滚到别处。 -->
+          <label class="btn btn-secondary btn-sm relative cursor-pointer focus-within:ring-[3.5px] focus-within:ring-[color:var(--accent-tint-strong)]">
             <input
               data-testid="profile-avatar-file-input"
               type="file"
               accept="image/*"
-              class="hidden"
+              class="sr-only"
               @change="handleAvatarFileChange"
             >
             {{ t('profile.avatar.uploadAction') }}

@@ -35,7 +35,7 @@
               </div>
               <div class="min-w-0 flex-1">
                 <div class="flex min-w-0 items-center justify-between gap-2">
-                  <p class="truncate text-xs font-medium text-gray-500 dark:text-gray-400">{{ item.label }}</p>
+                  <p class="stat-label truncate">{{ item.label }}</p>
                   <span
                     v-if="item.badge"
                     class="badge flex-shrink-0"
@@ -45,7 +45,7 @@
                   </span>
                 </div>
                 <div class="mt-1 flex min-w-0 items-baseline gap-2">
-                  <p class="tabular truncate text-xl font-semibold leading-7 tracking-[-0.026em] text-gray-900 dark:text-white">{{ item.value }}</p>
+                  <p class="stat-value truncate">{{ item.value }}</p>
                   <p v-if="item.meta" class="truncate text-xs text-gray-500 dark:text-gray-400">{{ item.meta }}</p>
                 </div>
               </div>

@@ -302,6 +302,9 @@ export default {
     upstream: 'Upstream',
     mapping: 'Mapping',
     path: 'Path',
+    // Accessible names for the two segmented pickers that share one chart card.
+    chartDataSource: 'Data source',
+    chartMetric: 'Metric',
     inboundEndpoint: 'Inbound Endpoint',
     upstreamEndpoint: 'Upstream Endpoint',
     type: 'Type',

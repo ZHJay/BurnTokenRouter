@@ -96,16 +96,17 @@
         <!-- Date Range Picker -->
         <div v-if="showDatePicker" class="mt-4">
           <div class="flex flex-wrap items-center gap-2 justify-center">
-            <span class="text-xs text-gray-500 dark:text-dark-400">{{ t('keyUsage.dateRange') }}</span>
-            <!-- Apple 分段控件：互斥的时间窗选择 -->
-            <div class="tabs" role="tablist">
+            <span :id="dateRangeLabelId" class="text-xs text-gray-500 dark:text-dark-400">{{ t('keyUsage.dateRange') }}</span>
+            <!-- Apple 分段控件：互斥的时间窗选择。选值而非切面板，故用 radiogroup 语义。 -->
+            <div class="tabs" role="radiogroup" :aria-labelledby="dateRangeLabelId">
               <button
                 v-for="range in dateRanges"
                 :key="range.key"
                 type="button"
-                role="tab"
-                :aria-selected="currentRange === range.key"
+                role="radio"
+                :aria-checked="currentRange === range.key"
                 @click="setDateRange(range.key)"
+                @keydown="handleRadioGroupKeydown"
                 class="tab text-xs active:scale-[0.96]"
                 :class="currentRange === range.key && 'tab-active'"
               >{{ range.label }}</button>
@@ -299,15 +300,17 @@
             class="fade-up fade-up-delay-4 card overflow-hidden"
           >
             <div class="flex flex-col gap-3 px-8 py-5 border-b border-gray-200 dark:border-dark-700 sm:flex-row sm:items-center sm:justify-between">
-              <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-dark-400">{{ t('keyUsage.dailyDetail') }}</h3>
-              <div class="tabs" role="tablist">
+              <h3 :id="dailyUsageLabelId" class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-dark-400">{{ t('keyUsage.dailyDetail') }}</h3>
+              <!-- 选值（统计天数）而非切面板，故用 radiogroup 语义。 -->
+              <div class="tabs" role="radiogroup" :aria-labelledby="dailyUsageLabelId">
                 <button
                   v-for="option in dailyUsageOptions"
                   :key="option.value"
                   type="button"
-                  role="tab"
-                  :aria-selected="dailyUsageDays === option.value"
+                  role="radio"
+                  :aria-checked="dailyUsageDays === option.value"
                   @click="setDailyUsageDays(option.value)"
+                  @keydown="handleRadioGroupKeydown"
                   class="tab min-w-12 text-xs active:scale-[0.96]"
                   :class="dailyUsageDays === option.value && 'tab-active'"
                 >
@@ -414,7 +417,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores'
 import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
@@ -422,6 +425,12 @@ import Icon from '@/components/icons/Icon.vue'
 import { buildGatewayUrl } from '@/api/client'
 import { formatDateLocalInput } from '@/utils/format'
 import { sanitizeUrl } from '@/utils/url'
+import { handleRadioGroupKeydown } from '@/utils/radioGroupKeyboard'
+
+// 时间窗 / 统计天数两组分段控件都是「选值」，不切换内容面板：用 radiogroup 语义，
+// 无障碍名称取自各自旁边已有的可见标签。
+const dateRangeLabelId = useId()
+const dailyUsageLabelId = useId()
 
 const { t, locale } = useI18n()
 const appStore = useAppStore()
