@@ -1491,6 +1491,48 @@
       transition-duration: 1ms !important;
     }
 
+    /* 上面那份六选择器清单只覆盖语义类。改版把按压反馈直接写成了模板里的裸工具类：
+       src 下有 354 处 class 含 active:scale-*，其中 319 处所在元素不带
+       .btn/.card/.card-hover/.sidebar-link/.progress-bar/.tab —— 这些按压缩放在本
+       偏好下原样保留。对前庭敏感用户来说，每次点按都跳一下正是这个偏好要消除的
+       东西。清单不会自动跟着模板长，所以这里改用属性选择器，一次覆盖全部工具类
+       落点，与元素是什么无关。
+
+       为什么中和变量而不是 transform: none：
+       Tailwind 3.4 把 active:scale-[0.96] 编译成
+         --tw-scale-x/y: 0.96  +  transform: translate(var(--tw-translate-x), …)
+                                             scaleX(var(--tw-scale-x)) …
+       （已用 npx tailwindcss 编译产物核对，非推测）。把变量钉回 1 得到恒等矩阵，
+       同时保留同一元素上的功能性位移 —— 这不是理论问题：
+         src/components/admin/user/UserEditModal.vue:18   -translate-y-1/2 做垂直居中
+         src/components/auth/LoginAgreementPrompt.vue:111 hover:-translate-y-0.5
+       对这两处用 transform: none 会让按钮在按下瞬间跳离居中位置，等于用一个新的
+       位移去修位移。preflight 的 `*` 规则给每个元素都写了 --tw-scale-x: 1，因此
+       变量不会向下继承污染子元素。
+
+       !important 是必需的：本规则在 components 层，工具类在其后的 utilities 层，
+       特异性同为 (0,2,0) 时源码顺序会让工具类胜出。
+
+       .switch-thumb 不受影响：模板一律写 class="switch-thumb pointer-events-none"，
+       不含 active:scale；且本规则只动 scale 变量、不动 translate —— ON 态的
+       translate-x-5 完整保留，上面那条注释的结论仍然成立。同理不碰下拉定位、
+       图表内部与任何布局用 translate。 */
+    [class*='active:scale']:active {
+      --tw-scale-x: 1 !important;
+      --tw-scale-y: 1 !important;
+
+      /* 减弱动效不等于没有反馈。319 处裸工具类里缩放是唯一的按压反馈，去掉后必须
+         补一个不引发前庭反应的通道。
+
+         为什么用 brightness 而不是 opacity：本文件已经用 filter: brightness(0.94)
+         表达按压/悬停变暗（见 .btn-danger / .btn-success / .btn-warning:hover），
+         是既有写法而非新造。元素级 opacity 会连文字一起淡掉：--label-secondary
+         在浅色下本就只有 5.02:1，乘 0.94 后降到约 4.4:1，跌破 1.4.3 —— 用一个
+         可访问性修复去破坏另一项，不可接受。brightness 同时压暗底色与文字，
+         副文字实测仍在 4.86:1 以上，且不新造任何颜色值。 */
+      filter: brightness(0.94);
+    }
+
     .btn:active,
     .card-hover:hover,
     .card-hover:active,

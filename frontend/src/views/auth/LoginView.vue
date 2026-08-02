@@ -136,7 +136,16 @@
         <div v-if="showPasskeyLogin || showOAuthLogin" class="space-y-3 pt-1">
           <div class="flex items-center gap-3">
             <div class="h-[0.5px] flex-1" style="background-color: var(--separator)"></div>
-            <span class="text-[11px] font-medium tracking-[0.01em] text-gray-400 dark:text-dark-500">
+            <!--
+              --label-secondary, not text-gray-400. Measured: gray-400 resolves to
+              rgb(174,174,178) on the near-white login card = 2.19:1, failing WCAG
+              1.4.3 for normal text. The token is 0.74 alpha in light and measures
+              ~5.02:1 on --surface, and it flips per theme so dark stays correct.
+            -->
+            <span
+              class="text-[11px] font-medium tracking-[0.01em]"
+              style="color: var(--label-secondary)"
+            >
               {{ t('auth.oauthOrContinue') }}
             </span>
             <div class="h-[0.5px] flex-1" style="background-color: var(--separator)"></div>

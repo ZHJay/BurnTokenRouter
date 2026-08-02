@@ -14,8 +14,14 @@
     "
   >
     <div class="flex h-16 items-center justify-between gap-2 px-2 sm:px-4 md:px-6">
-      <!-- Left: Mobile Menu Toggle + Page Title -->
-      <div class="flex shrink-0 items-center gap-2 sm:gap-4">
+      <!--
+        Left: Mobile Menu Toggle + Page Title.
+        `min-w-0 flex-1` is load-bearing: this side must be the one that yields.
+        It previously carried `shrink-0`, so a long page subtitle (e.g. on
+        /admin/settings) could not truncate and pushed the action row instead,
+        wrapping "Model Plaza" onto a second line and detaching its icon.
+      -->
+      <div class="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
         <button
           @click="toggleMobileSidebar"
           class="btn-ghost btn-icon lg:hidden"
@@ -24,7 +30,8 @@
           <Icon name="menu" size="md" />
         </button>
 
-        <div class="hidden lg:block">
+        <!-- min-w-0 lets the truncate on the children actually take effect -->
+        <div class="hidden min-w-0 lg:block">
           <!-- Vibrancy: text over glass gets heavier weight, never flat grey -->
           <h1
             class="on-glass truncate text-[17px] font-semibold leading-tight tracking-[-0.014em] text-gray-900 dark:text-white"
@@ -38,7 +45,9 @@
       </div>
 
       <!-- Right: Announcements + Docs + Language + Subscriptions + Balance + User Dropdown -->
-      <div class="flex min-w-0 items-center gap-1 sm:gap-3">
+      <!-- shrink-0: the action row is fixed-content and must never wrap; the
+           title block on the left absorbs any width pressure instead. -->
+      <div class="flex shrink-0 items-center gap-1 sm:gap-3">
         <!-- Announcement Bell -->
         <AnnouncementBell v-if="user" />
 
