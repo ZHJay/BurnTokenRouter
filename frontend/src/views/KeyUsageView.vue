@@ -546,6 +546,31 @@ const RING_GRADIENTS = computed(() =>
 const ringAnimated = ref(false)
 const displayPcts = ref<number[]>([])
 
+/**
+ * 环动画的取消状态。
+ *
+ * 这条链是 nextTick → rAF → setTimeout(50) → rAF(tick…) 四段异步，任何一段在
+ * 组件卸载后继续跑都是泄漏：延时器会在 jsdom 拆掉 window 之后触发，回调里裸引用
+ * requestAnimationFrame 就抛 ReferenceError（真实应用里则是往已卸载组件写 ref）。
+ * 句柄能取消的就取消；nextTick 的微任务取消不了，用 runId 世代号在每个异步边界
+ * 比对，世代变了就直接退出。
+ */
+let ringRunId = 0
+let ringDelayTimer: ReturnType<typeof setTimeout> | null = null
+let ringFrame: number | null = null
+
+function cancelRingAnimation() {
+  ringRunId++
+  if (ringDelayTimer !== null) {
+    clearTimeout(ringDelayTimer)
+    ringDelayTimer = null
+  }
+  if (ringFrame !== null) {
+    cancelAnimationFrame(ringFrame)
+    ringFrame = null
+  }
+}
+
 const ringTrackColor = computed(() => isDark.value ? '#2c2c2e' : '#e5e5ea')
 
 interface RingItem {
@@ -564,12 +589,21 @@ function getRingOffset(ring: RingItem): number {
 }
 
 function triggerRingAnimation(items: RingItem[]) {
+  // 重新触发时先掐掉上一轮，避免两个 tick 循环争抢 displayPcts。
+  cancelRingAnimation()
+  const runId = ringRunId
+
   ringAnimated.value = false
   displayPcts.value = items.map(() => 0)
 
   nextTick(() => {
-    requestAnimationFrame(() => {
-      setTimeout(() => {
+    if (runId !== ringRunId) return
+    ringFrame = requestAnimationFrame(() => {
+      ringFrame = null
+      if (runId !== ringRunId) return
+      ringDelayTimer = setTimeout(() => {
+        ringDelayTimer = null
+        if (runId !== ringRunId) return
         ringAnimated.value = true
 
         // Animate percentage numbers
@@ -578,13 +612,15 @@ function triggerRingAnimation(items: RingItem[]) {
         const targets = items.map(item => item.isBalance ? 0 : item.pct)
 
         function tick() {
+          ringFrame = null
+          if (runId !== ringRunId) return
           const elapsed = performance.now() - startTime
           const p = Math.min(elapsed / duration, 1)
           const ease = 1 - Math.pow(1 - p, 3)
           displayPcts.value = targets.map(target => Math.round(ease * target))
-          if (p < 1) requestAnimationFrame(tick)
+          if (p < 1) ringFrame = requestAnimationFrame(tick)
         }
-        requestAnimationFrame(tick)
+        ringFrame = requestAnimationFrame(tick)
       }, 50)
     })
   })
@@ -946,6 +982,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (resetTimer) clearInterval(resetTimer)
+  cancelRingAnimation()
 })
 </script>
 

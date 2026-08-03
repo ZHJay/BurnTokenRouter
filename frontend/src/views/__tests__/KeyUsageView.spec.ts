@@ -398,3 +398,152 @@ describe('KeyUsageView segmented value pickers', () => {
     wrapper.unmount()
   })
 })
+
+/**
+ * 环动画链是 nextTick → rAF → setTimeout(50) → rAF(tick…)。卸载时若不取消，
+ * 那个 50ms 延时器会在测试环境（jsdom window）拆掉之后才触发，回调里裸引用
+ * requestAnimationFrame 直接抛 ReferenceError，落到没有归属测试的 Node 定时器
+ * 队列里 —— 这就是整套跑的时候间歇出现的 "Unhandled Errors"。
+ */
+describe('KeyUsageView ring animation cleanup', () => {
+  let originalRaf: typeof globalThis.requestAnimationFrame
+  let originalCancelRaf: typeof globalThis.cancelAnimationFrame
+  let rafCallbackRuns: number
+
+  beforeEach(() => {
+    showInfo.mockReset()
+    showSuccess.mockReset()
+    showError.mockReset()
+    fetchPublicSettings.mockReset()
+    localStorage.clear()
+
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: vi.fn().mockReturnValue({ matches: false }),
+    })
+
+    // 只假造 setTimeout/clearTimeout：flushPromises 走 setImmediate，而 60s 的
+    // resetTimer 是 setInterval，都留给真实计时器，于是 getTimerCount() 数到的
+    // 就是环动画自己排的那些延时器。
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+
+    originalRaf = globalThis.requestAnimationFrame
+    originalCancelRaf = globalThis.cancelAnimationFrame
+    rafCallbackRuns = 0
+    // 成对 stub，使 cancelAnimationFrame 真的能取消（jsdom 的 rAF 不受假计时器控制）。
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) =>
+      setTimeout(() => {
+        rafCallbackRuns++
+        cb(0)
+      }, 0) as unknown as number
+    )
+    vi.stubGlobal('cancelAnimationFrame', (handle: number) => {
+      clearTimeout(handle as unknown as ReturnType<typeof setTimeout>)
+    })
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        mode: 'quota_limited',
+        isValid: true,
+        status: 'active',
+        quota: { limit: 10, used: 4, remaining: 6, unit: 'USD' },
+        usage: {
+          today: {
+            requests: 1,
+            input_tokens: 10,
+            output_tokens: 20,
+            cache_creation_tokens: 0,
+            cache_read_tokens: 0,
+            total_tokens: 30,
+            actual_cost: 0.01,
+          },
+          total: {
+            requests: 12,
+            input_tokens: 100,
+            output_tokens: 200,
+            cache_creation_tokens: 10,
+            cache_read_tokens: 30,
+            total_tokens: 340,
+            actual_cost: 0.12,
+          },
+          rpm: 0,
+          tpm: 0,
+        },
+        daily_usage: [],
+      }),
+    }))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+    // unstubAllGlobals 恢复的是 stub 时刻的值；这里显式写回，防止测试内部
+    // 故意删掉的 requestAnimationFrame 漏到后续测试。
+    Object.defineProperty(globalThis, 'requestAnimationFrame', {
+      configurable: true,
+      writable: true,
+      value: originalRaf,
+    })
+    Object.defineProperty(globalThis, 'cancelAnimationFrame', {
+      configurable: true,
+      writable: true,
+      value: originalCancelRaf,
+    })
+  })
+
+  async function mountAndQuery() {
+    const wrapper = mount(KeyUsageView, {
+      global: {
+        stubs: {
+          RouterLink: { template: '<a><slot /></a>' },
+          LocaleSwitcher: true,
+          Icon: true,
+        },
+      },
+    })
+
+    await wrapper.find('input').setValue('sk-test-key')
+    await wrapper.find('input').trigger('keydown.enter')
+    await flushPromises()
+    await nextTick()
+    return wrapper
+  }
+
+  it('cancels the pending ring-animation timer on unmount', async () => {
+    const wrapper = await mountAndQuery()
+
+    // 先让外层 rAF 回调跑掉，它排出那个 50ms 延时器。
+    vi.advanceTimersByTime(1)
+    expect(vi.getTimerCount()).toBe(1)
+    const runsBeforeUnmount = rafCallbackRuns
+
+    // 在 50ms 到点之前卸载，模拟测试环境（或路由离开）先一步拆掉。
+    wrapper.unmount()
+    expect(vi.getTimerCount()).toBe(0)
+
+    // 模拟 jsdom 拆环境后全局上不再有 requestAnimationFrame：任何漏下来的回调
+    // 都会以 ReferenceError 炸出来，而不是静默通过。
+    Reflect.deleteProperty(globalThis, 'requestAnimationFrame')
+
+    expect(() => vi.advanceTimersByTime(200)).not.toThrow()
+    expect(rafCallbackRuns).toBe(runsBeforeUnmount)
+  })
+
+  it('keeps a single ring-animation chain in flight when the query is retriggered', async () => {
+    const wrapper = await mountAndQuery()
+
+    vi.advanceTimersByTime(1)
+    expect(vi.getTimerCount()).toBe(1)
+
+    // 再查一次：新链启动前必须先掐掉上一条，否则两个 tick 循环会争抢 displayPcts。
+    await wrapper.find('input').trigger('keydown.enter')
+    await flushPromises()
+    await nextTick()
+    vi.advanceTimersByTime(1)
+    expect(vi.getTimerCount()).toBe(1)
+
+    wrapper.unmount()
+    expect(vi.getTimerCount()).toBe(0)
+  })
+})
