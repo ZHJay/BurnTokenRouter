@@ -1,18 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { onUnmounted } from 'vue'
 import { useTableLoader } from '@/composables/useTableLoader'
-
-// Mock @vueuse/core 的 useDebounceFn
-vi.mock('@vueuse/core', () => ({
-  useDebounceFn: (fn: Function, ms: number) => {
-    let timer: ReturnType<typeof setTimeout> | null = null
-    const debounced = (...args: any[]) => {
-      if (timer) clearTimeout(timer)
-      timer = setTimeout(() => fn(...args), ms)
-    }
-    debounced.cancel = () => { if (timer) clearTimeout(timer) }
-    return debounced
-  },
-}))
 
 // Mock Vue 的 onUnmounted（composable 外使用时会报错）
 vi.mock('vue', async () => {
@@ -246,6 +234,94 @@ describe('useTableLoader', () => {
 
       // 不应抛出
       await load()
+    })
+  })
+
+  // --- 卸载清理 ---
+
+  /**
+   * debouncedReload 排的那个延时器原来由 useDebounceFn 持有，句柄封在闭包里、
+   * 也不暴露 cancel，卸载时取消不掉。它随后触发会重新走一遍 reload，而那条 Promise
+   * 没有任何 handler：mock 在用例之间被 reset 后 fetchFn 返回 undefined，
+   * `response.items` 抛 TypeError，就成了整套跑里间歇出现、且没有归属用例的
+   * "Unhandled Rejection"。
+   *
+   * 本文件把 onUnmounted mock 成了 vi.fn()，所以这里直接取出注册的清理回调来模拟卸载。
+   */
+  describe('卸载清理', () => {
+    const triggerUnmount = () => {
+      const calls = vi.mocked(onUnmounted).mock.calls
+      const handler = calls.at(-1)?.[0]
+      expect(handler).toBeTypeOf('function')
+      ;(handler as () => void)()
+    }
+
+    it('卸载时取消待触发的 debouncedReload 延时器', async () => {
+      const fetchFn = createMockFetchFn([{ id: 1 }], 1, 1)
+      const { debouncedReload } = useTableLoader({ fetchFn })
+
+      debouncedReload()
+      expect(vi.getTimerCount()).toBe(1)
+
+      triggerUnmount()
+      expect(vi.getTimerCount()).toBe(0)
+
+      // 延时器已经掐掉：推进时间不得再发请求，也不得抛错。
+      await vi.runAllTimersAsync()
+      expect(fetchFn).not.toHaveBeenCalled()
+    })
+
+    it('卸载后新排的 debouncedReload 不会再排延时器', async () => {
+      const fetchFn = createMockFetchFn()
+      const { debouncedReload } = useTableLoader({ fetchFn })
+
+      triggerUnmount()
+      debouncedReload()
+
+      expect(vi.getTimerCount()).toBe(0)
+      await vi.runAllTimersAsync()
+      expect(fetchFn).not.toHaveBeenCalled()
+    })
+
+    it('卸载后 load 直接返回，不再发请求', async () => {
+      // undefined 就是 mock 被 reset 之后的返回形状：原来会在 response.items 上抛。
+      const fetchFn = vi.fn().mockResolvedValue(undefined)
+      const { load, items } = useTableLoader({ fetchFn })
+
+      triggerUnmount()
+
+      await expect(load()).resolves.toBeUndefined()
+      expect(fetchFn).not.toHaveBeenCalled()
+      expect(items.value).toEqual([])
+    })
+
+    it('飞行中的请求在卸载后 resolve：不写 ref、不抛错', async () => {
+      // Promise 的 continuation 取消不掉，只能用世代号在异步边界比对后直接退出。
+      let resolveFetch!: (value: unknown) => void
+      const fetchFn = vi.fn(() => new Promise((resolve) => { resolveFetch = resolve }))
+      const { load, items, loading } = useTableLoader({ fetchFn })
+
+      const pending = load()
+      expect(loading.value).toBe(true)
+
+      triggerUnmount()
+      resolveFetch(undefined)
+
+      await expect(pending).resolves.toBeUndefined()
+      expect(items.value).toEqual([])
+    })
+
+    it('飞行中的请求在卸载后失败：错误不再抛给无人接管的调用方', async () => {
+      let rejectFetch!: (reason: unknown) => void
+      const fetchFn = vi.fn(() => new Promise((_resolve, reject) => { rejectFetch = reject }))
+      const { load } = useTableLoader({ fetchFn })
+
+      const pending = load()
+
+      triggerUnmount()
+      rejectFetch(new Error('Server error'))
+
+      await expect(pending).resolves.toBeUndefined()
     })
   })
 })
