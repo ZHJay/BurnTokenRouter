@@ -3,7 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      `viewport-fit=cover` is load-bearing, not cosmetic. Without it the layout
+      viewport stops at the safe area and every `env(safe-area-inset-*)` resolves
+      to 0px unconditionally, so the inset padding in AppHeader/AppLayout would
+      compute to nothing on a notched device. Opting into the full display also
+      makes the fixed glass header run edge to edge and under the status bar,
+      which is the point: the inset padding then keeps its content clear of the
+      notch instead of the bar stopping short of it.
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <!-- Let form controls, scrollbars and browser chrome follow the active theme. -->
     <meta name="color-scheme" content="light dark" />
     <title>Sub2API - AI API Gateway</title>

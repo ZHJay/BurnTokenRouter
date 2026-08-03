@@ -1,20 +1,55 @@
 <template>
+  <!--
+    Mobile scrim. Ordered BEFORE the drawer on purpose: it shares the drawer's
+    z-40 so it can cover the z-30 header (at z-30 the header won the tie and
+    stayed tappable through what is meant to be a modal barrier), and within a
+    tie the later sibling paints on top — so the aside has to come second or the
+    scrim would dim the drawer itself.
+  -->
+  <transition name="fade">
+    <div
+      v-if="mobileOpen"
+      class="sidebar-scrim fixed inset-0 z-40 lg:hidden"
+      @click="closeMobile"
+    ></div>
+  </transition>
+
   <aside
+    id="app-sidebar"
+    ref="sidebarRef"
     class="sidebar"
     :class="[
       sidebarCollapsed ? 'w-[72px]' : 'w-64',
       { '-translate-x-full lg:translate-x-0': !mobileOpen }
     ]"
+    tabindex="-1"
+    :inert="drawerClosed || undefined"
+    :aria-hidden="drawerClosed ? 'true' : undefined"
+    :role="drawerOpen ? 'dialog' : undefined"
+    :aria-modal="drawerOpen ? 'true' : undefined"
+    :aria-label="drawerOpen ? navLabel : undefined"
   >
     <!-- Logo/Brand -->
     <div class="sidebar-header" :class="{ 'sidebar-header-collapsed': sidebarCollapsed }">
       <!-- Custom Logo or Default Logo -->
       <router-link
         :to="homePath"
-        class="sidebar-logo flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl shadow-glow transition-[opacity,transform] duration-fast ease-apple-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] hover:opacity-80"
+        class="sidebar-logo flex h-9 w-9 items-center justify-center rounded-xl shadow-glow transition-[opacity,transform] duration-fast ease-apple-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] hover:opacity-80"
         @click="handleMenuItemClick(homePath)"
       >
-        <img v-if="settingsLoaded" :src="siteLogo || '/logo.svg'" alt="Logo" class="h-full w-full object-contain" />
+        <!--
+          The rounding moved from the link (`overflow-hidden`) to the image
+          (`rounded-xl`, which clips a replaced element's content the same way)
+          so the link can carry a larger touch target as a pseudo-element
+          without it being clipped away. `object-contain` means the image never
+          exceeds the box, so nothing else relied on the clip.
+        -->
+        <img
+          v-if="settingsLoaded"
+          :src="siteLogo || '/logo.svg'"
+          alt="Logo"
+          class="h-full w-full rounded-xl object-contain"
+        />
       </router-link>
       <div class="sidebar-brand" :class="{ 'sidebar-brand-collapsed': sidebarCollapsed }" :aria-hidden="sidebarCollapsed ? 'true' : 'false'">
         <router-link
@@ -30,7 +65,7 @@
     </div>
 
     <!-- Navigation -->
-    <nav ref="sidebarNavRef" class="sidebar-nav scrollbar-hide">
+    <nav ref="sidebarNavRef" class="sidebar-nav scrollbar-hide" :aria-label="navLabel">
       <!-- Admin View: Admin menu first, then personal menu -->
       <template v-if="isAdmin">
         <!-- Admin Section -->
@@ -46,6 +81,8 @@
                   'sidebar-link-collapsed': sidebarCollapsed
                 }"
                 :title="sidebarCollapsed ? item.label : undefined"
+                :aria-expanded="isGroupExpanded(item) ? 'true' : 'false'"
+                :aria-controls="groupPanelId(item)"
                 @click="handleGroupClick(item)"
               >
                 <component :is="item.icon" class="h-5 w-5 flex-shrink-0" />
@@ -65,6 +102,7 @@
               <SpringCollapse>
                 <div
                   v-if="!sidebarCollapsed && isGroupExpanded(item)"
+                  :id="groupPanelId(item)"
                   class="mb-1 ml-4 border-l border-gray-200 pl-2 dark:border-dark-600"
                 >
                   <router-link
@@ -204,15 +242,6 @@
       </button>
     </div>
   </aside>
-
-  <!-- Mobile Overlay -->
-  <transition name="fade">
-    <div
-      v-if="mobileOpen"
-      class="sidebar-scrim fixed inset-0 z-30 lg:hidden"
-      @click="closeMobile"
-    ></div>
-  </transition>
 </template>
 
 <script setup lang="ts">
@@ -264,7 +293,7 @@ function applyFeatureFlags(items: NavItem[]): NavItem[] {
   return out
 }
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -278,7 +307,48 @@ const sidebarCollapsed = computed(() => appStore.sidebarCollapsed)
 const mobileOpen = computed(() => appStore.mobileOpen)
 const isAdmin = computed(() => authStore.isAdmin)
 const sidebarNavRef = ref<HTMLElement | null>(null)
+const sidebarRef = ref<HTMLElement | null>(null)
 const isDark = ref(document.documentElement.classList.contains('dark'))
+
+/*
+ * Below `lg` the sidebar is an off-canvas drawer; at `lg` and up it is a
+ * permanent rail. The query matches the Tailwind `lg:` breakpoint the template
+ * uses, and 1024px is the boundary the rest of the app already agrees on
+ * (DataTable.vue, TablePageLayout.vue).
+ */
+const desktopViewportQuery = '(min-width: 1024px)'
+const isDesktopViewport = ref(
+  typeof window === 'undefined' || typeof window.matchMedia !== 'function'
+    ? true
+    : window.matchMedia(desktopViewportQuery).matches
+)
+let desktopViewportMediaQuery: MediaQueryList | null = null
+let desktopViewportListener: ((event: MediaQueryListEvent) => void) | null = null
+
+/** Drawer is on screen as a modal surface: mobile width and open. */
+const drawerOpen = computed(() => mobileOpen.value && !isDesktopViewport.value)
+/**
+ * Drawer is parked off-canvas. `-translate-x-full` moves it out of sight but
+ * leaves it visible, hit-testable and fully tab-navigable: 28-33 focusable
+ * elements sat in the tab order at 420px, and the first Tab on the page landed
+ * on one of them at x = -232 — focus invisible off-screen (WCAG 2.4.3, 2.4.7).
+ * `inert` + `aria-hidden` are what actually take it out of the tab order and
+ * the a11y tree. Never true at desktop widths, where the rail is real UI.
+ */
+const drawerClosed = computed(() => !mobileOpen.value && !isDesktopViewport.value)
+
+/**
+ * Accessible name for the nav landmark (measured `navLabels: ["(none)", …]`)
+ * and, while modal, for the drawer dialog. `nav.mainNavigation` does not exist
+ * in the locale files yet and those live outside this component's scope, so the
+ * English string is a fallback until the key lands.
+ */
+const navLabel = computed(() => (te('nav.mainNavigation') ? t('nav.mainNavigation') : 'Main navigation'))
+
+/** Stable DOM id for a collapsible group's panel, for `aria-controls`. */
+function groupPanelId(item: NavItem): string {
+  return `sidebar-group-${item.path.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '')}`
+}
 
 const homePath = computed(() => (isAdmin.value ? '/admin/dashboard' : '/dashboard'))
 
@@ -923,6 +993,154 @@ function closeMobile() {
   appStore.setMobileOpen(false)
 }
 
+// ---------------------------------------------------------------------------
+// Modal drawer behaviour: scroll lock, focus, Escape, navigation
+// ---------------------------------------------------------------------------
+
+/**
+ * Same `body.modal-open` class BaseDialog uses, because two competing lock
+ * mechanisms on one body is how you get a page that never unlocks.
+ *
+ * BaseDialog reference-counts its own locks, but that registry is module-local
+ * to BaseDialog.vue — there is nothing to import — so this side of the
+ * handshake is built to be safe on its own:
+ *
+ *   - Release is conditional. We only drop the class if we added it AND no
+ *     dialog overlay is mounted (BaseDialog teleports `.modal-overlay` /
+ *     `.dialog-overlay` to <body>), so a closing drawer can never unlock the
+ *     page out from under a dialog.
+ *   - The lock is re-asserted if something else clears it. The remaining hole
+ *     is a dialog that opens *over* the open drawer and then closes: its
+ *     ref-count hits zero and it removes the class while this drawer still
+ *     needs it. Watching for that is not a fight — the dialog is gone by then,
+ *     and the drawer is still a modal surface that must not scroll behind.
+ *
+ * The real fix is one shared reference-counted helper both components import;
+ * that needs a new file, which is outside this component's scope.
+ */
+const BODY_SCROLL_LOCK_CLASS = 'modal-open'
+const DIALOG_OVERLAY_SELECTOR = '.modal-overlay, .dialog-overlay'
+let ownsBodyScrollLock = false
+let bodyClassObserver: MutationObserver | null = null
+
+function lockBodyScroll(): void {
+  if (ownsBodyScrollLock) return
+  ownsBodyScrollLock = true
+  document.body.classList.add(BODY_SCROLL_LOCK_CLASS)
+
+  if (typeof MutationObserver !== 'function' || bodyClassObserver) return
+  bodyClassObserver = new MutationObserver(() => {
+    if (!ownsBodyScrollLock || !drawerOpen.value) return
+    if (document.body.classList.contains(BODY_SCROLL_LOCK_CLASS)) return
+    document.body.classList.add(BODY_SCROLL_LOCK_CLASS)
+  })
+  bodyClassObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] })
+}
+
+function releaseBodyScroll(): void {
+  bodyClassObserver?.disconnect()
+  bodyClassObserver = null
+  if (!ownsBodyScrollLock) return
+  ownsBodyScrollLock = false
+  // A dialog opened over the drawer still needs the page locked.
+  if (document.querySelector(DIALOG_OVERLAY_SELECTOR)) return
+  document.body.classList.remove(BODY_SCROLL_LOCK_CLASS)
+}
+
+/** The control that opened the drawer (the header burger), to hand focus back. */
+let drawerTrigger: HTMLElement | null = null
+
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
+function drawerFocusables(): HTMLElement[] {
+  const root = sidebarRef.value
+  if (!root) return []
+  return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
+}
+
+function restoreTriggerFocus(): void {
+  const trigger = drawerTrigger
+  drawerTrigger = null
+  // A route change unmounts the old header; focusing a detached node is a no-op
+  // that silently drops focus to <body>, so only restore a live element.
+  if (trigger && trigger.isConnected && typeof trigger.focus === 'function') {
+    trigger.focus()
+  }
+}
+
+/**
+ * Escape closes, Tab cycles inside. The drawer claims `aria-modal`, and the
+ * scrim is a modal barrier for the pointer; without a trap, Tab walked straight
+ * out into the header and page behind it.
+ */
+function handleDrawerKeydown(event: KeyboardEvent): void {
+  if (!drawerOpen.value) return
+
+  if (event.key === 'Escape') {
+    event.stopPropagation()
+    closeMobile()
+    return
+  }
+
+  if (event.key !== 'Tab') return
+  const focusables = drawerFocusables()
+  if (focusables.length === 0) {
+    event.preventDefault()
+    sidebarRef.value?.focus()
+    return
+  }
+  const first = focusables[0]
+  const last = focusables[focusables.length - 1]
+  const active = document.activeElement as HTMLElement | null
+  const insideDrawer = active !== null && sidebarRef.value?.contains(active) === true
+
+  if (!insideDrawer) {
+    event.preventDefault()
+    ;(event.shiftKey ? last : first).focus()
+    return
+  }
+  if (event.shiftKey && active === first) {
+    event.preventDefault()
+    last.focus()
+  } else if (!event.shiftKey && active === last) {
+    event.preventDefault()
+    first.focus()
+  }
+}
+
+watch(drawerOpen, async (open) => {
+  if (open) {
+    drawerTrigger = document.activeElement as HTMLElement | null
+    lockBodyScroll()
+    // Wait for the render that drops `inert`; focusing an inert subtree is a
+    // no-op in browsers that implement it.
+    await nextTick()
+    const target = drawerFocusables()[0] ?? sidebarRef.value
+    target?.focus()
+  } else {
+    releaseBodyScroll()
+    restoreTriggerFocus()
+  }
+})
+
+/**
+ * Browser Back and any programmatic navigation left the drawer open with its
+ * scrim over the new page: closing was wired only to the nav-item click
+ * handler. This covers every path change, however it was triggered.
+ */
+watch(() => route.path, closeMobile)
+
+/*
+ * AppLayout is per-view, so a route change remounts this component while
+ * `mobileOpen` lives in the store — a fresh instance would render the drawer
+ * already open over the new page, and the watcher above cannot see a change
+ * that happened before it existed. Reset during setup, before first paint.
+ */
+if (mobileOpen.value) {
+  appStore.setMobileOpen(false)
+}
+
 function handleMenuItemClick(itemPath: string) {
   if (mobileOpen.value) {
     setTimeout(() => {
@@ -1012,6 +1230,24 @@ onMounted(() => {
   if (isAdmin.value) {
     adminSettingsStore.fetch()
   }
+
+  // Viewport tracking: a resize across 1024px has to flip the drawer between
+  // "inert off-canvas panel" and "permanent rail", or a rail ends up inert.
+  if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+    desktopViewportMediaQuery = window.matchMedia(desktopViewportQuery)
+    isDesktopViewport.value = desktopViewportMediaQuery.matches
+    desktopViewportListener = (event: MediaQueryListEvent) => {
+      isDesktopViewport.value = event.matches
+    }
+    if (typeof desktopViewportMediaQuery.addEventListener === 'function') {
+      desktopViewportMediaQuery.addEventListener('change', desktopViewportListener)
+    } else {
+      desktopViewportMediaQuery.addListener(desktopViewportListener)
+    }
+  }
+
+  document.addEventListener('keydown', handleDrawerKeydown)
+
   // Restore sidebar scroll position after route change re-mounts the component
   if (appStore.sidebarScrollTop > 0 && sidebarNavRef.value) {
     void nextTick(() => {
@@ -1026,6 +1262,22 @@ onBeforeUnmount(() => {
   if (sidebarNavRef.value) {
     appStore.sidebarScrollTop = sidebarNavRef.value.scrollTop
   }
+
+  document.removeEventListener('keydown', handleDrawerKeydown)
+
+  if (desktopViewportMediaQuery && desktopViewportListener) {
+    if (typeof desktopViewportMediaQuery.removeEventListener === 'function') {
+      desktopViewportMediaQuery.removeEventListener('change', desktopViewportListener)
+    } else {
+      desktopViewportMediaQuery.removeListener(desktopViewportListener)
+    }
+  }
+  desktopViewportMediaQuery = null
+  desktopViewportListener = null
+
+  // Unmounting while open (a route change does exactly that) must not leave the
+  // page permanently unscrollable.
+  releaseBodyScroll()
 })
 </script>
 
@@ -1033,6 +1285,31 @@ onBeforeUnmount(() => {
 .sidebar-logo {
   flex: 0 0 2.25rem;
   min-width: 2.25rem;
+  position: relative;
+}
+
+/*
+ * The logo link is the one icon-only control in this component that is neither
+ * a `.btn` nor a `.sidebar-link`, so the global coarse-pointer rule for those
+ * does not reach it. Measured 36x36 on a touch device.
+ *
+ * The hit area is grown with a pseudo-element rather than by resizing the box:
+ * the box is a flex item in a 64px header next to the brand text, so growing it
+ * to 44px would move both. This keeps the 36px visual and the layout untouched
+ * and only enlarges what the finger can hit. This is why the template's
+ * `overflow-hidden` moved onto the <img> as `rounded-xl`: on the link it would
+ * clip the expander away.
+ */
+@media (pointer: coarse) {
+  .sidebar-logo::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
 }
 
 .sidebar-header-collapsed {

@@ -5,8 +5,40 @@ import type {
   PromptAuditUpdateRequest,
   PromptEventFilters,
 } from './types'
+import type { SelectOption } from '@/components/common/Select.vue'
 
 export const DEFAULT_GUARD_MODEL = 'sileader/qwen3guard:0.6b'
+
+// Decision / risk enums, single-sourced. EventWorkspace already needed the bare
+// id sets to decide whether a stored value is translatable; the filter dropdowns
+// need the same ids as {value,label} pairs. Deriving both from one list keeps a
+// new enum member from landing in one place and not the other.
+export const DECISION_IDS = ['pass', 'flag', 'critical'] as const
+export const RISK_LEVEL_IDS = ['low', 'medium', 'high', 'critical'] as const
+
+type Translate = (key: string) => string
+
+/* Both option builders take `t` rather than calling useI18n() themselves: this
+   module is plain TS shared by components and specs, and must stay callable
+   outside a component instance. Call sites wrap them in computed() so the labels
+   re-resolve on a locale switch.
+
+   The leading blank-value entry is the "no filter" state and must stay first —
+   PromptEventFilters models "unset" as '' (see emptyEventFilters), and
+   eventQueryParams drops empty strings before they reach the query. */
+export function decisionOptions(t: Translate): SelectOption[] {
+  return [
+    { value: '', label: t('common.all') },
+    ...DECISION_IDS.map((id) => ({ value: id, label: t(`admin.promptAudit.decisions.${id}`) })),
+  ]
+}
+
+export function riskOptions(t: Translate): SelectOption[] {
+  return [
+    { value: '', label: t('common.all') },
+    ...RISK_LEVEL_IDS.map((id) => ({ value: id, label: t(`admin.promptAudit.riskLevels.${id}`) })),
+  ]
+}
 
 export const SCANNER_CATALOG = [
   { id: 'violent', label: 'Violent' },

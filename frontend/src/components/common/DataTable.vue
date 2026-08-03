@@ -33,7 +33,9 @@
 
     <template v-else>
       <div v-if="selectable" class="flex items-center justify-end gap-2 px-1">
-        <label class="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300">
+        <label
+          class="row-checkbox-hit flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300"
+        >
           <input
             type="checkbox"
             class="row-checkbox"
@@ -57,15 +59,17 @@
       >
         <div class="space-y-3">
           <div v-if="selectable" class="flex justify-end">
-            <input
-              type="checkbox"
-              class="row-checkbox"
-              :checked="isRowSelected(row, index)"
-              :aria-label="getRowSelectionLabel(row, index)"
-              data-test="select-row"
-              @click.stop
-              @change="toggleRowSelection(row, index, ($event.target as HTMLInputElement).checked)"
-            />
+            <label class="row-checkbox-hit">
+              <input
+                type="checkbox"
+                class="row-checkbox"
+                :checked="isRowSelected(row, index)"
+                :aria-label="getRowSelectionLabel(row, index)"
+                data-test="select-row"
+                @click.stop
+                @change="toggleRowSelection(row, index, ($event.target as HTMLInputElement).checked)"
+              />
+            </label>
           </div>
           <div
             v-for="column in dataColumns"
@@ -107,15 +111,17 @@
             scope="col"
             class="sticky-header-cell w-11 min-w-11 px-3 py-3 text-center"
           >
-            <input
-              type="checkbox"
-              class="row-checkbox"
-              :checked="allVisibleSelected"
-              :indeterminate="someVisibleSelected"
-              :aria-label="t('common.selectAll')"
-              data-test="select-all"
-              @change="toggleAllVisible(($event.target as HTMLInputElement).checked)"
-            />
+            <label class="row-checkbox-hit">
+              <input
+                type="checkbox"
+                class="row-checkbox"
+                :checked="allVisibleSelected"
+                :indeterminate="someVisibleSelected"
+                :aria-label="t('common.selectAll')"
+                data-test="select-all"
+                @change="toggleAllVisible(($event.target as HTMLInputElement).checked)"
+              />
+            </label>
           </th>
           <th
             v-for="(column, index) in columns"
@@ -125,13 +131,28 @@
             :class="[
               'sticky-header-cell py-3 text-left text-xs uppercase',
               getAdaptivePaddingClass(),
-              { 'is-sortable cursor-pointer': column.sortable },
+              { 'is-sortable': column.sortable },
               getStickyColumnClass(column, index),
               column.class
             ]"
-            @click="column.sortable && handleSort(column.key)"
           >
-            <div :class="['flex items-center space-x-1', getHeaderContentAlignmentClass(column)]">
+            <!--
+              可排序表头必须是真正的 <button>。此前 @click 挂在裸 <th> 上，而
+              aria-sort 已对外宣告该列可排序 —— 读屏用户被告知能排序，却没有任何
+              操作入口（实测 5 个可排序表头 tabIndex 全为 -1，无可聚焦子元素）。
+              这比不声明更糟。aria-sort 留在 <th>（规范要求），交互移到内层 button，
+              Enter/Space 由原生按钮语义提供。
+            -->
+            <component
+              :is="column.sortable ? 'button' : 'div'"
+              :type="column.sortable ? 'button' : undefined"
+              :class="[
+                'flex w-full items-center space-x-1',
+                getHeaderContentAlignmentClass(column),
+                column.sortable ? 'sort-trigger' : ''
+              ]"
+              @click="column.sortable && handleSort(column.key)"
+            >
               <slot
                 :name="`header-${column.key}`"
                 :column="column"
@@ -162,7 +183,7 @@
                   <path d="M5 8L1.5 3.5h7L5 8z" />
                 </svg>
               </span>
-            </div>
+            </component>
           </th>
         </tr>
       </thead>
@@ -219,15 +240,17 @@
             @click="clickableRows && emit('rowClick', item.row)"
           >
             <td v-if="selectable" class="w-11 min-w-11 px-3 py-4 text-center">
-              <input
-                type="checkbox"
-                class="row-checkbox"
-                :checked="isRowSelected(item.row, item.index)"
-                :aria-label="getRowSelectionLabel(item.row, item.index)"
-                data-test="select-row"
-                @click.stop
-                @change="toggleRowSelection(item.row, item.index, ($event.target as HTMLInputElement).checked)"
-              />
+              <label class="row-checkbox-hit">
+                <input
+                  type="checkbox"
+                  class="row-checkbox"
+                  :checked="isRowSelected(item.row, item.index)"
+                  :aria-label="getRowSelectionLabel(item.row, item.index)"
+                  data-test="select-row"
+                  @click.stop
+                  @change="toggleRowSelection(item.row, item.index, ($event.target as HTMLInputElement).checked)"
+                />
+              </label>
             </td>
             <td
               v-for="(column, colIndex) in columns"
@@ -993,6 +1016,40 @@ defineExpose({
     0 0 0 1px var(--accent);
 }
 
+/* 复选框命中区。视觉尺寸留在 16px（表格密度所需），但在触屏上把可点区域
+   扩到 44px —— WCAG 2.5.5 与 Apple HIG 约束的是 target size，不是视觉尺寸，
+   这也是 Apple 自己在密集列表里的做法。
+
+   为什么用包裹 label 而不是给 input 加 ::before：被替换元素（replaced element）
+   上的伪元素在各浏览器行为不一致，不能依赖。label 包裹则天然把点击转发给
+   input，且不需要 for/id 配对。
+
+   实测背景：卡片模式下行选择框为 16×16，一页 21 个；桌面模式表头/行内同样
+   16×16。 */
+.row-checkbox-hit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .row-checkbox-hit {
+    position: relative;
+  }
+
+  /* 命中区通过伪元素外扩，不占布局空间，因此行高与列宽不变。 */
+  .row-checkbox-hit::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
+}
+
 /* 表格横向滚动 */
 .table-wrapper {
   --select-col-width: 52px; /* 勾选列宽度：px-6 (24px*2) + checkbox (16px) */
@@ -1053,6 +1110,30 @@ defineExpose({
 
 .sticky-header-cell.is-sortable:hover {
   color: var(--label);
+}
+
+/* 排序触发器：内层真按钮。视觉全部由 .sticky-header-cell 承担，按钮本身透明，
+   只负责可聚焦与键盘激活。焦点环用设计系统的 accent 环，而非 UA 默认蓝框。 */
+.sort-trigger {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.sort-trigger:focus-visible {
+  outline: none;
+  border-radius: 6px;
+  box-shadow:
+    0 0 0 3.5px var(--accent-tint-strong),
+    0 0 0 1px var(--accent);
 }
 
 /* 数据行：分隔靠发丝线阴影，不用 1px 边框盒 */

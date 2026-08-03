@@ -104,21 +104,6 @@ describe('EndpointDistributionChart accessibility semantics', () => {
     wrapper.unmount()
   })
 
-  it('keeps the segmented styling classes on the radiogroups', () => {
-    const wrapper = mountChart({ showSourceToggle: true, showMetricToggle: true, source: 'inbound' })
-
-    const groups = wrapper.findAll('[role="radiogroup"]')
-    expect(groups[0].classes()).toContain('tabs')
-    expect(groups[1].classes()).toContain('tabs')
-
-    const radios = wrapper.findAll('[role="radiogroup"] [role="radio"]')
-    expect(radios[0].classes()).toContain('tab')
-    expect(radios[0].classes()).toContain('tab-active')
-    expect(radios[1].classes()).not.toContain('tab-active')
-
-    wrapper.unmount()
-  })
-
   it('emits update:source through the same handler for click and arrow keys', async () => {
     const wrapper = mountChart({ showSourceToggle: true, source: 'inbound' })
     const radios = wrapper.findAll('[role="radiogroup"] [role="radio"]')

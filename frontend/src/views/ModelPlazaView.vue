@@ -5,9 +5,19 @@
   </AppLayout>
 
   <!-- 独立形态:自带导航条(logo/站名 + 登录/回后台) -->
-  <div v-else class="min-h-screen bg-gray-50 dark:bg-dark-950">
+  <div v-else class="relative min-h-screen bg-gray-50 dark:bg-dark-950">
+    <!--
+      Ambient light layer. Not decoration, and not optional: PlazaNavBar is
+      `.glass` (--mat-regular + backdrop-filter), and backdrop-filter is a no-op
+      when there is nothing behind it to refract. On the flat bg-gray-50 /
+      dark-950 page the material was rendering as a plain white bar — the CSS
+      existed and was invisible. AppLayout carries this same layer; this
+      standalone shell is the only one that was missing it.
+    -->
+    <div class="ambient-layer"></div>
     <PlazaNavBar />
-    <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+    <!-- Above the fixed z-0 wash, so content is never dimmed by it. -->
+    <main class="relative z-10 mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <ModelPlazaContent :response="data" :loading="loading" :error="loadFailed" />
     </main>
   </div>

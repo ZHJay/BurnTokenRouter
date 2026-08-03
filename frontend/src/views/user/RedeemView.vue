@@ -1,28 +1,31 @@
 <template>
   <AppLayout>
-    <div class="mx-auto max-w-2xl space-y-6">
+    <div class="mx-auto max-w-2xl space-y-4">
       <!-- Current Balance Card -->
-      <div class="card overflow-hidden">
-        <!-- Apple 控件是实色：hero 用单一系统蓝，不用渐变 -->
-        <div class="bg-primary-600 px-6 py-8 text-center dark:bg-primary-500">
-          <div
-            class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-400"
-          >
-            <Icon name="creditCard" size="xl" class="text-white" />
+      <!-- 余额是内容，不是 chrome：走不透明 .card + 绿色数值 + 13% 染色磁贴，
+           与 UserDashboardStats 的 Balance 卡同构。强调来自字号层级和磁贴，
+           不来自灌满一块饱和蓝 —— 那既重新引入 #007aff 上白字 4.02:1 的失败，
+           又让 #007aff→#0a84ff 的深浅两态几乎同貌。 -->
+      <div class="card p-4" data-testid="redeem-balance-card">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0 flex-1 space-y-1">
+            <p class="stat-label">{{ t('redeem.currentBalance') }}</p>
+            <p class="stat-value text-green-600 dark:text-green-400">
+              ${{ user?.balance?.toFixed(2) || '0.00' }}
+            </p>
+            <p class="text-xs tabular text-gray-500 dark:text-gray-400">
+              {{ t('redeem.concurrency') }}: {{ user?.concurrency || 0 }} {{ t('redeem.requests') }}
+            </p>
           </div>
-          <p class="text-sm font-medium text-primary-100">{{ t('redeem.currentBalance') }}</p>
-          <p class="mt-2 text-4xl font-semibold tabular tracking-[-0.026em] text-white">
-            ${{ user?.balance?.toFixed(2) || '0.00' }}
-          </p>
-          <p class="mt-2 text-sm tabular text-primary-100">
-            {{ t('redeem.concurrency') }}: {{ user?.concurrency || 0 }} {{ t('redeem.requests') }}
-          </p>
+          <div class="stat-icon stat-icon-success h-8 w-8 shrink-0 text-base">
+            <Icon name="creditCard" size="sm" class="h-4 w-4" />
+          </div>
         </div>
       </div>
 
       <!-- Redeem Form -->
       <div class="card">
-        <div class="p-6">
+        <div class="card-body">
           <form @submit.prevent="handleRedeem" class="space-y-5">
             <div>
               <label for="code" class="input-label">
@@ -39,7 +42,7 @@
                   required
                   :placeholder="t('redeem.redeemCodePlaceholder')"
                   :disabled="submitting"
-                  class="input py-3 pl-12 text-lg"
+                  class="input pl-12"
                 />
               </div>
               <p class="input-hint">
@@ -47,14 +50,17 @@
               </p>
             </div>
 
+            <!-- 禁用态显式指定：.btn 基类的 disabled:opacity-40 会把蓝底白字压到
+                 1.26:1。换成不透明的次级面 + 三级标签色，读作"待输入"而非"淡蓝"。
+                 py-3 的覆盖去掉 —— .btn-lg 本身就是 44px。 -->
             <button
               type="submit"
               :disabled="!redeemCode || submitting"
-              class="btn btn-primary w-full py-3"
+              class="btn btn-primary btn-lg w-full disabled:bg-[var(--surface-secondary)] disabled:text-[var(--label-tertiary)] disabled:opacity-100 disabled:shadow-none"
             >
               <svg
                 v-if="submitting"
-                class="-ml-1 mr-2 h-5 w-5 animate-spin"
+                class="h-5 w-5 animate-spin"
                 fill="none"
                 viewBox="0 0 24 24"
               >
@@ -72,7 +78,7 @@
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 ></path>
               </svg>
-              <Icon v-else name="checkCircle" size="md" class="mr-2" />
+              <Icon v-else name="checkCircle" size="md" />
               {{ submitting ? t('redeem.redeeming') : t('redeem.redeemButton') }}
             </button>
           </form>
@@ -164,37 +170,34 @@
       </transition>
 
       <!-- Information Card -->
-      <div
-        class="card border-primary-200 bg-primary-50 dark:border-primary-800/50 dark:bg-primary-900/20"
-      >
-        <div class="p-6">
-          <div class="flex items-start gap-4">
-            <div
-              class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30"
+      <!-- 信息面板不是语义状态：primary-700 on primary-50 只有 4.23:1，蓝底蓝字两头不讨好。
+           .card-inset 给它不透明的 --surface-secondary，文字回到中性层级，
+           蓝只留在图标磁贴里当强调。上面的成功/失败卡保留绿红染色 —— 那是语义状态，且达标。 -->
+      <div class="card-inset p-4" data-testid="redeem-info-card">
+        <div class="flex items-start gap-4">
+          <div class="stat-icon stat-icon-primary h-10 w-10 shrink-0">
+            <Icon name="infoCircle" size="md" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+              {{ t('redeem.aboutCodes') }}
+            </h3>
+            <ul
+              class="mt-2 list-inside list-disc space-y-1 text-sm text-gray-600 dark:text-gray-300"
             >
-              <Icon name="infoCircle" size="md" class="text-primary-600 dark:text-primary-400" />
-            </div>
-            <div class="flex-1">
-              <h3 class="text-sm font-semibold text-primary-800 dark:text-primary-300">
-                {{ t('redeem.aboutCodes') }}
-              </h3>
-              <ul
-                class="mt-2 list-inside list-disc space-y-1 text-sm text-primary-700 dark:text-primary-400"
-              >
-                <li>{{ t('redeem.codeRule1') }}</li>
-                <li>{{ t('redeem.codeRule2') }}</li>
-                <li>
-                  {{ t('redeem.codeRule3') }}
-                  <span
-                    v-if="contactInfo"
-                    class="ml-1.5 inline-flex items-center rounded-md bg-primary-200/50 px-2 py-0.5 text-xs font-medium text-primary-800 dark:bg-primary-800/40 dark:text-primary-200"
-                  >
-                    {{ contactInfo }}
-                  </span>
-                </li>
-                <li>{{ t('redeem.codeRule4') }}</li>
-              </ul>
-            </div>
+              <li>{{ t('redeem.codeRule1') }}</li>
+              <li>{{ t('redeem.codeRule2') }}</li>
+              <li>
+                {{ t('redeem.codeRule3') }}
+                <span
+                  v-if="contactInfo"
+                  class="ml-1.5 inline-flex items-center rounded-md bg-gray-200/70 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-dark-700 dark:text-gray-200"
+                >
+                  {{ contactInfo }}
+                </span>
+              </li>
+              <li>{{ t('redeem.codeRule4') }}</li>
+            </ul>
           </div>
         </div>
       </div>

@@ -9,31 +9,38 @@
         <button type="button" class="btn btn-secondary btn-sm" :disabled="selectedIds.length === 0" @click="$emit('batch-delete')">
           {{ t('admin.promptAudit.events.deleteSelected', { count: selectedIds.length }) }}
         </button>
-        <button type="button" class="btn btn-danger btn-sm" data-test="filter-delete" @click="$emit('preview-delete')">
+        <!-- 描边红而不是实心红：这颗按钮只打开 FilterDeleteDialog 的预览，
+             真正不可逆的提交是那个对话框里的实心 .btn-danger。style.css 的
+             .btn-outline-danger 注释写明了这条升级链的分工。 -->
+        <button type="button" class="btn btn-outline-danger btn-sm" data-test="filter-delete" @click="$emit('preview-delete')">
           {{ t('admin.promptAudit.events.deleteByFilter') }}
         </button>
       </div>
     </div>
 
-    <form class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5" @submit.prevent="applyFilters">
-      <label class="text-xs text-gray-600 dark:text-dark-200">
-        <span>{{ t('admin.promptAudit.events.decision') }}</span>
-        <select v-model="localFilters.decision" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.decision')" @change="filtersChanged">
-          <option value="">{{ t('common.all') }}</option>
-          <option value="pass">{{ t('admin.promptAudit.decisions.pass') }}</option>
-          <option value="flag">{{ t('admin.promptAudit.decisions.flag') }}</option>
-          <option value="critical">{{ t('admin.promptAudit.decisions.critical') }}</option>
-        </select>
+    <!-- 12 格：11 个字段 + 1 格动作，在 2 / 3 / 6 列下分别是 6 / 4 / 2 整行，
+         没有半行残留。原先 lg:grid-cols-4 xl:grid-cols-5 会把"结束时间"挤到
+         单独一行（11 % 4 = 3，动作块的 sm:col-span-2 又放不进剩下的 1 格）。 -->
+    <form class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" @submit.prevent="applyFilters">
+      <label class="block">
+        <span class="input-label">{{ t('admin.promptAudit.events.decision') }}</span>
+        <Select
+          :model-value="localFilters.decision"
+          :options="decisionSelectOptions"
+          :aria-label="t('admin.promptAudit.events.decision')"
+          data-test="filter-decision"
+          @update:model-value="setFilter('decision', $event)"
+        />
       </label>
-      <label class="text-xs text-gray-600 dark:text-dark-200">
-        <span>{{ t('admin.promptAudit.events.risk') }}</span>
-        <select v-model="localFilters.risk_level" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.risk')" @change="filtersChanged">
-          <option value="">{{ t('common.all') }}</option>
-          <option value="low">{{ t('admin.promptAudit.riskLevels.low') }}</option>
-          <option value="medium">{{ t('admin.promptAudit.riskLevels.medium') }}</option>
-          <option value="high">{{ t('admin.promptAudit.riskLevels.high') }}</option>
-          <option value="critical">{{ t('admin.promptAudit.riskLevels.critical') }}</option>
-        </select>
+      <label class="block">
+        <span class="input-label">{{ t('admin.promptAudit.events.risk') }}</span>
+        <Select
+          :model-value="localFilters.risk_level"
+          :options="riskSelectOptions"
+          :aria-label="t('admin.promptAudit.events.risk')"
+          data-test="filter-risk"
+          @update:model-value="setFilter('risk_level', $event)"
+        />
       </label>
       <FilterInput v-model="localFilters.endpoint" :label="t('admin.promptAudit.events.endpoint')" @change="filtersChanged" />
       <FilterInput v-model="localFilters.group_id" :label="t('admin.promptAudit.events.groupId')" type="number" @change="filtersChanged" />
@@ -42,17 +49,31 @@
       <FilterInput v-model="localFilters.request_id" :label="t('admin.promptAudit.events.requestId')" @change="filtersChanged" />
       <FilterInput v-model="localFilters.prompt_hash" :label="t('admin.promptAudit.events.promptHash')" @change="filtersChanged" />
       <FilterInput v-model="localFilters.keyword" :label="t('admin.promptAudit.events.keyword')" @change="filtersChanged" />
-      <label class="text-xs text-gray-600 dark:text-dark-200">
-        <span>{{ t('admin.promptAudit.events.startAt') }}</span>
-        <input v-model="localFilters.start_at" type="datetime-local" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.startAt')" @change="filtersChanged" />
+      <!-- 这两个字段保持原生 datetime-local，没有换成 DateRangePicker。
+           DateRangePicker 只产出日期（YYYY-MM-DD），而这条筛选链是分钟级的：
+             · viewModel.toISO() 把值交给 new Date() 再 toISOString()，
+               'YYYY-MM-DD' 按 UTC 解析、'YYYY-MM-DDTHH:mm' 按本地时区解析，
+               同一天在 Asia/Shanghai 会差 8 小时（实测 -8h）；
+             · 后端 parseTimeQuery 只认 RFC3339，SQL 是
+               created_at >= start AND created_at <= end 的闭区间，不做任何
+               "补到当天 23:59:59" 的展开。日期粒度的 end_at 因此等于当天
+               00:00:00Z，会把用户选中的最后一天整天排除在外；
+             · 表格本身以秒显示 created_at（timeStyle: 'medium'），同一秒内可以
+               有多条事件 —— 事故复盘要框的是"某分钟前后"，不是"某天"。
+           把精度降到日只会静默改变查询语义，所以两处都留原生控件。 -->
+      <label class="block">
+        <span class="input-label">{{ t('admin.promptAudit.events.startAt') }}</span>
+        <input v-model="localFilters.start_at" type="datetime-local" class="input h-9 w-full" :aria-label="t('admin.promptAudit.events.startAt')" @change="filtersChanged" />
       </label>
-      <label class="text-xs text-gray-600 dark:text-dark-200">
-        <span>{{ t('admin.promptAudit.events.endAt') }}</span>
-        <input v-model="localFilters.end_at" type="datetime-local" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.endAt')" @change="filtersChanged" />
+      <label class="block">
+        <span class="input-label">{{ t('admin.promptAudit.events.endAt') }}</span>
+        <input v-model="localFilters.end_at" type="datetime-local" class="input h-9 w-full" :aria-label="t('admin.promptAudit.events.endAt')" @change="filtersChanged" />
       </label>
-      <div class="flex items-end gap-2 sm:col-span-2">
-        <button type="submit" class="btn btn-primary btn-sm">{{ t('common.search') }}</button>
-        <button type="button" class="btn btn-ghost btn-sm" @click="resetFilters">{{ t('common.reset') }}</button>
+      <!-- 搜索/重置是这个筛选块的提交动作，不是表格行内控件，用整档 .btn。
+           items-end 让它们与同行字段的输入框底边对齐（label 占了上面一行）。 -->
+      <div class="flex items-end gap-2">
+        <button type="submit" class="btn btn-primary">{{ t('common.search') }}</button>
+        <button type="button" class="btn btn-ghost" @click="resetFilters">{{ t('common.reset') }}</button>
       </div>
     </form>
     <div
@@ -112,8 +133,17 @@
 import { computed, defineComponent, h, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Pagination from '@/components/common/Pagination.vue'
+import Select from '@/components/common/Select.vue'
 import type { PromptAuditEvent, PromptEventFilters } from '../types'
-import { cloneData, emptyEventFilters, SCANNER_CATALOG } from '../viewModel'
+import {
+  cloneData,
+  decisionOptions,
+  DECISION_IDS,
+  emptyEventFilters,
+  riskOptions,
+  RISK_LEVEL_IDS,
+  SCANNER_CATALOG,
+} from '../viewModel'
 
 const props = defineProps<{
   events: PromptAuditEvent[]; total: number; page: number; pageSize: number
@@ -134,15 +164,26 @@ const { t, locale } = useI18n()
 const localFilters = reactive<PromptEventFilters>(cloneData(props.filters))
 watch(() => props.filters, (value) => Object.assign(localFilters, cloneData(value)), { deep: true })
 const allSelected = computed(() => props.events.length > 0 && props.events.every((event) => props.selectedIds.includes(event.id)))
+const decisionSelectOptions = computed(() => decisionOptions(t))
+const riskSelectOptions = computed(() => riskOptions(t))
+
+/* Select emits string | number | boolean | null; PromptEventFilters is all
+   strings. Normalising here (rather than v-model straight onto the field) keeps
+   the filter object's type honest and preserves the old <select> behaviour of
+   firing the change handler on every pick. */
+function setFilter(key: 'decision' | 'risk_level', value: string | number | boolean | null) {
+  localFilters[key] = value == null ? '' : String(value)
+  filtersChanged()
+}
 
 const FilterInput = defineComponent({
   props: { modelValue: { type: String, required: true }, label: { type: String, required: true }, type: { type: String, default: 'text' } },
   emits: ['update:modelValue', 'change'],
   setup(componentProps, { emit: componentEmit }) {
-    return () => h('label', { class: 'text-xs text-gray-600 dark:text-dark-200' }, [
-      h('span', componentProps.label),
+    return () => h('label', { class: 'block' }, [
+      h('span', { class: 'input-label' }, componentProps.label),
       h('input', {
-        value: componentProps.modelValue, type: componentProps.type, class: 'input mt-1 w-full', 'aria-label': componentProps.label,
+        value: componentProps.modelValue, type: componentProps.type, class: 'input w-full', 'aria-label': componentProps.label,
         onInput: (event: Event) => componentEmit('update:modelValue', (event.target as HTMLInputElement).value),
         onChange: () => componentEmit('change'),
       }),
@@ -195,8 +236,8 @@ function decisionClass(decision: string): string {
   if (decision === 'flag') return 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
   return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
 }
-const DECISIONS = new Set(['pass', 'flag', 'critical'])
-const RISK_LEVELS = new Set(['low', 'medium', 'high', 'critical'])
+const DECISIONS = new Set<string>(DECISION_IDS)
+const RISK_LEVELS = new Set<string>(RISK_LEVEL_IDS)
 
 function translateDecision(decision: string): string {
   return DECISIONS.has(decision) ? t(`admin.promptAudit.decisions.${decision}`) : decision

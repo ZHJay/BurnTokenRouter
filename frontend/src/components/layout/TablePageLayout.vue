@@ -90,33 +90,22 @@ onUnmounted(() => {
   display: table; /* 使用标准 table 布局以支持 sticky 列 */
 }
 
-.table-scroll-container :deep(thead) {
-  background: var(--mat-regular);
-  backdrop-filter: blur(var(--mat-blur-regular)) var(--mat-diffuse);
-  -webkit-backdrop-filter: blur(var(--mat-blur-regular)) var(--mat-diffuse);
-}
+/* thead 的材质已删除。实测：这个 thead 跑着 blur(34px) 而 background 是
+   rgba(0,0,0,0)，其上每一个 th 都是不透明 --surface —— 21 个 th 里 0 个透明。
+   也就是一个完全透明元素上的 34px 模糊，被自己的子元素整块遮住，永远不可见。
+   它同时不在两个无障碍选择器清单里，只靠 --mat-blur-* 的变量钉死才没出事。
+   表头材质归 DataTable 的 .sticky-header-cell 所有（不透明 + iOS 27 边缘处理）。 */
 
 .table-scroll-container :deep(tbody) {
   /* 保持默认 table-row-group 显示，不使用 block */
 }
 
-.table-scroll-container :deep(th) {
-  @apply px-5 py-3 text-left text-xs uppercase;
-  font-weight: 590;
-  letter-spacing: 0.03em;
-  color: var(--label-secondary);
-  border: 0;
-  box-shadow:
-    inset 0 -0.5px 0 var(--glass-edge),
-    inset 0 1px 0 var(--glass-specular);
-}
-
-.table-scroll-container :deep(td) {
-  @apply px-5 py-3.5 text-sm;
-  color: var(--label);
-  border: 0;
-  box-shadow: inset 0 -0.5px 0 var(--separator);
-}
+/* :deep(th) / :deep(td) 已删除 —— 单元格度量此前有三个所有者：这里
+   （20px/14px）、style.css 的 .table td（16px/12px）、以及 DataTable 自己的
+   py-4。本文件被 17 个视图引入，所以这里的值实际上赢下几乎所有表格，
+   .table td 形同虚设。现在单元格度量只归 DataTable / .table 所有。
+   为保持现有观感不变，DataTable 的 .sticky-header-cell 与 .table-body td
+   已承载等效的 padding 与发丝线阴影。 */
 
 /* 移动端：恢复正常滚动 */
 .table-page-layout.mobile-mode .table-scroll-container {

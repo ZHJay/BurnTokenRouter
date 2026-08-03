@@ -10,12 +10,18 @@ const mocks = vi.hoisted(() => ({
   getEvent: vi.fn(), deleteEvent: vi.fn(), batchDeleteEvents: vi.fn(), previewDelete: vi.fn(), deleteEventsByFilter: vi.fn(), listGroups: vi.fn(),
   showSuccess: vi.fn(), showError: vi.fn(),
 }))
+// Separate from `mocks` so the beforeEach mockReset loop over the API mocks
+// does not also wipe the translate spy's implementation.
+const i18nSpy = vi.hoisted(() => ({
+  translate: vi.fn((key: string, params?: Record<string, unknown>) =>
+    key.replace(/\{(\w+)\}/g, (_, token) => String(params?.[token] ?? `{${token}}`))),
+}))
 
 vi.mock('../api', () => ({ default: mocks }))
 vi.mock('@/stores/app', () => ({ useAppStore: () => ({ showSuccess: mocks.showSuccess, showError: mocks.showError }) }))
 vi.mock('vue-i18n', async () => {
   const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')
-  return { ...actual, useI18n: () => ({ locale: { value: 'en' }, t: (key: string, params?: Record<string, unknown>) => key.replace(/\{(\w+)\}/g, (_, token) => String(params?.[token] ?? `{${token}}`)) }) }
+  return { ...actual, useI18n: () => ({ locale: { value: 'en' }, t: i18nSpy.translate }) }
 })
 
 const baseConfig = (): PromptAuditConfig => ({
@@ -90,38 +96,106 @@ describe('PromptAuditView', () => {
     const wrapper = mountView()
     await flushPromises()
 
-    expect(wrapper.get('[data-test="tab-events"]').attributes('aria-selected')).toBe('true')
-    expect(wrapper.get('[data-test="tab-config"]').attributes('aria-selected')).toBe('false')
+    expect(wrapper.get('#tab-events').attributes('aria-selected')).toBe('true')
+    expect(wrapper.get('#tab-config').attributes('aria-selected')).toBe('false')
     expect(wrapper.get('[data-test="tab-panel-events"]').attributes('style') || '').not.toContain('display: none')
     expect(wrapper.get('[data-test="tab-panel-config"]').attributes('style') || '').toContain('display: none')
     expect(wrapper.find('[data-test="save-config"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="events"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="pass-events-disabled-notice"]').exists()).toBe(true)
-    expect(wrapper.get('[data-test="tab-events"]').text()).toContain('admin.promptAudit.tabs.events')
-    expect(wrapper.get('[data-test="tab-config"]').text()).toContain('admin.promptAudit.tabs.config')
+    expect(wrapper.get('#tab-events').text()).toContain('admin.promptAudit.tabs.events')
+    expect(wrapper.get('#tab-config').text()).toContain('admin.promptAudit.tabs.config')
 
-    await wrapper.get('[data-test="tab-config"]').trigger('click')
+    await wrapper.get('#tab-config').trigger('click')
     await flushPromises()
-    expect(wrapper.get('[data-test="tab-config"]').attributes('aria-selected')).toBe('true')
+    expect(wrapper.get('#tab-config').attributes('aria-selected')).toBe('true')
     expect(wrapper.get('[data-test="tab-panel-config"]').attributes('style') || '').not.toContain('display: none')
     expect(wrapper.get('[data-test="tab-panel-events"]').attributes('style') || '').toContain('display: none')
     expect(wrapper.find('[data-test="save-config"]').exists()).toBe(true)
 
-    await wrapper.get('[data-test="tab-events"]').trigger('click')
+    await wrapper.get('#tab-events').trigger('click')
     await flushPromises()
-    expect(wrapper.get('[data-test="tab-events"]').attributes('aria-selected')).toBe('true')
+    expect(wrapper.get('#tab-events').attributes('aria-selected')).toBe('true')
     expect(wrapper.find('[data-test="save-config"]').exists()).toBe(false)
 
     await wrapper.get('[data-test="pass-events-disabled-notice"] button').trigger('click')
-    expect(wrapper.get('[data-test="tab-config"]').attributes('aria-selected')).toBe('true')
+    expect(wrapper.get('#tab-config').attributes('aria-selected')).toBe('true')
     expect(wrapper.find('[data-test="save-config"]').exists()).toBe(true)
     expect(wrapper.get('[data-test="tab-panel-config"]').attributes('style') || '').not.toContain('display: none')
+  })
+
+  it('leaves page identity to AppHeader and keeps only the config-version line', async () => {
+    const wrapper = mountView()
+    await flushPromises()
+
+    /* AppHeader already renders route.meta.titleKey + descriptionKey for this
+       route (router/index.ts), so an in-page <h1> with the same strings plus an
+       uppercase eyebrow was a third copy of one identity. */
+    expect(wrapper.find('h1').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('nav.securityAudit')
+    expect(wrapper.text()).not.toContain('admin.promptAudit.description')
+    expect(wrapper.html()).not.toContain('tracking-[0.16em]')
+
+    /* The version block survives, above the tab bar. The `version` param is
+       asserted rather than the rendered string: this suite mocks `t` (the whole
+       app is aliased to vue-i18n's runtime-only build, and JIT compilation is a
+       compile-time define that vitest does not set, so a real `t` cannot compile
+       'Config version v{version}' here at all). Passing version=7 is the part
+       this component owns; the message itself is verified in the browser. */
+    expect(wrapper.text()).toContain('admin.promptAudit.configVersion')
+    expect(i18nSpy.translate).toHaveBeenCalledWith('admin.promptAudit.configVersion', { version: 7 })
+  })
+
+  it('floats the save bar on the regular glass tier with a bottom safe-area inset', async () => {
+    const wrapper = mountView()
+    await flushPromises()
+    await wrapper.get('#tab-config').trigger('click')
+    await flushPromises()
+
+    const bar = wrapper.get('[data-test="save-config"]').element.closest('.fixed') as HTMLElement
+    expect(bar).toBeTruthy()
+    /* glass (regular) is the floating-chrome tier; glass-thick is the 48px
+       structural tier reserved for the sidebar. */
+    expect(bar.classList.contains('glass')).toBe(true)
+    expect(bar.classList.contains('glass-thick')).toBe(false)
+    /* fixed bottom-0 sits under the home indicator on a notched device.
+       env() resolves to 0px where there is no inset, so this is unconditional.
+       Headless Chromium always reports 0 here, so this asserts the declaration
+       is present rather than the rendered gap. */
+    expect(bar.className).toContain('pb-[calc(0.75rem+env(safe-area-inset-bottom))]')
+  })
+
+  it('announces the save-bar toggles as switches', async () => {
+    const wrapper = mountView()
+    await flushPromises()
+    await wrapper.get('#tab-config').trigger('click')
+    await flushPromises()
+
+    for (const test of ['enabled-toggle', 'blocking-toggle', 'store-pass-toggle']) {
+      const toggle = wrapper.get(`[data-test="${test}"]`)
+      expect(toggle.attributes('role')).toBe('switch')
+      expect(toggle.attributes('aria-checked')).toBeDefined()
+      expect(toggle.attributes('aria-label')).toBeTruthy()
+    }
+    // aria-checked tracks state, it is not a static attribute.
+    expect(wrapper.get('[data-test="enabled-toggle"]').attributes('aria-checked')).toBe('true')
+    expect(wrapper.get('[data-test="blocking-toggle"]').attributes('aria-checked')).toBe('false')
+  })
+
+  it('does not wrap the page shell in a card', async () => {
+    const wrapper = mountView()
+    await flushPromises()
+    // Every child section (runtime / pool / policy / events) is already a .card;
+    // a .card on the page shell was card-on-card.
+    const panel = wrapper.get('[data-test="tab-panel-config"]').element.parentElement as HTMLElement
+    expect(panel.classList.contains('card')).toBe(false)
+    expect(wrapper.findAll('main')).toHaveLength(0)
   })
 
   it('requires confirmation for blocking and disables it when audit is turned off', async () => {
     const wrapper = mountView()
     await flushPromises()
-    await wrapper.get('[data-test="tab-config"]').trigger('click')
+    await wrapper.get('#tab-config').trigger('click')
     await wrapper.get('[data-test="blocking-toggle"]').trigger('click')
     expect(wrapper.find('[data-test="confirm"]').exists()).toBe(true)
     await wrapper.get('[data-test="confirm-action"]').trigger('click')
@@ -135,7 +209,7 @@ describe('PromptAuditView', () => {
   it('clears plaintext token state after a successful save', async () => {
     const wrapper = mountView()
     await flushPromises()
-    await wrapper.get('[data-test="tab-config"]').trigger('click')
+    await wrapper.get('#tab-config').trigger('click')
     await wrapper.get('[data-test="inject-secret"]').trigger('click')
     expect(wrapper.text()).toContain('admin.promptAudit.saveBar.dirty')
     await wrapper.get('[data-test="save-config"]').trigger('click')
@@ -149,13 +223,13 @@ describe('PromptAuditView', () => {
   it('reports real probe progress/results and invalidates filter confirmation when filters change', async () => {
     const wrapper = mountView()
     await flushPromises()
-    await wrapper.get('[data-test="tab-config"]').trigger('click')
+    await wrapper.get('#tab-config').trigger('click')
     await wrapper.get('[data-test="probe"]').trigger('click')
     await flushPromises()
     expect(mocks.probeEndpoint).toHaveBeenCalledOnce()
     expect((wrapper.getComponent(EndpointStub).props('probeResults') as Record<string, unknown>)).toHaveProperty('guard-1')
 
-    await wrapper.get('[data-test="tab-events"]').trigger('click')
+    await wrapper.get('#tab-events').trigger('click')
     await wrapper.get('[data-test="preview"]').trigger('click')
     await flushPromises()
     expect(wrapper.find('[data-test="filter-delete-dialog"]').exists()).toBe(true)
@@ -173,7 +247,7 @@ describe('PromptAuditView', () => {
   it('uses native labeled switches and a responsive fixed save surface', async () => {
     const wrapper = mountView()
     await flushPromises()
-    await wrapper.get('[data-test="tab-config"]').trigger('click')
+    await wrapper.get('#tab-config').trigger('click')
     const switches = wrapper.findAll('[role="switch"]')
     expect(switches).toHaveLength(3)
     expect(switches.every((item) => Boolean(item.attributes('aria-label')))).toBe(true)

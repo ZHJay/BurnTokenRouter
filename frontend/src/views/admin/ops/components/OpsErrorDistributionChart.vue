@@ -5,7 +5,7 @@ import { Chart as ChartJS, ArcElement, Legend, Tooltip } from 'chart.js'
 import { Doughnut } from 'vue-chartjs'
 import type { OpsErrorDistributionResponse } from '@/api/admin/ops'
 import type { ChartState } from '../types'
-import { opsChartChrome, opsHue, opsScheme, opsTooltipStyle } from '../utils/chartTheme'
+import { chartHue, chartTooltipStyle, useChartScheme } from '@/lib/chart'
 import HelpTooltip from '@/components/common/HelpTooltip.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 
@@ -22,15 +22,19 @@ const emit = defineEmits<{
 }>()
 const { t } = useI18n()
 
-const isDarkMode = computed(() => document.documentElement.classList.contains('dark'))
-const scheme = computed(() => opsScheme(isDarkMode.value))
+/**
+ * canvas 读不到 CSS 变量，配色只能由 JS 侧驱动 —— `useChartScheme()` 用
+ * MutationObserver 盯 `<html class="dark">`，主题切换时让下面的 computed 重新求值。
+ * （此前 `isDarkMode` 直接在 computed 里读 DOM：`classList.contains()` 不是响应式源，
+ * computed 永不失效，切主题后图表会停在旧配色直到整页刷新。）
+ */
+const scheme = useChartScheme()
 // 四类错误各占一个色相，语义不变：上游=橙、客户端=蓝、系统=红、其他=中性
 const colors = computed(() => ({
-  blue: opsHue('blue', scheme.value),
-  red: opsHue('red', scheme.value),
-  orange: opsHue('orange', scheme.value),
-  gray: opsHue('gray', scheme.value),
-  text: opsChartChrome(scheme.value).axis
+  blue: chartHue('blue', scheme.value),
+  red: chartHue('red', scheme.value),
+  orange: chartHue('orange', scheme.value),
+  gray: chartHue('gray', scheme.value)
 }))
 
 const totalSlaErrors = computed(() =>
@@ -105,7 +109,7 @@ const options = computed(() => ({
   maintainAspectRatio: false,
   plugins: {
     legend: { display: false },
-    tooltip: opsTooltipStyle(scheme.value)
+    tooltip: chartTooltipStyle(scheme.value)
   }
 }))
 </script>
@@ -140,16 +144,23 @@ const options = computed(() => ({
     <div class="relative min-h-0 flex-1">
       <div v-if="state === 'ready' && chartData" class="flex h-full flex-col">
         <div class="flex-1">
-          <Doughnut :data="chartData" :options="{ ...options, cutout: '65%' }" />
+          <Doughnut
+            :data="chartData"
+            :options="{ ...options, cutout: '65%' }"
+            :aria-label="t('admin.ops.errorDistribution')"
+          />
         </div>
         <div class="mt-4 flex flex-col items-center gap-2">
           <div v-if="topReason" class="text-xs font-semibold text-gray-900 dark:text-white">
             {{ t('admin.ops.top') }}: <span :style="{ color: topReason.color }">{{ topReason.label }}</span>
           </div>
           <div class="flex flex-wrap justify-center gap-3">
+            <!-- 图例必须带类别名：只画色点 + 计数时，「哪个数字是 upstream」纯靠颜色传达，
+                 而颜色不是可访问的信息通道（也过不了 SC 1.4.1）。 -->
             <div v-for="item in categories" :key="item.label" class="flex items-center gap-1.5 text-xs">
-              <span class="h-2 w-2 rounded-full" :style="{ backgroundColor: item.color }"></span>
-              <span class="tabular text-gray-500 dark:text-gray-400">{{ item.count }}</span>
+              <span class="h-2 w-2 shrink-0 rounded-full" :style="{ backgroundColor: item.color }"></span>
+              <span class="text-gray-500 dark:text-gray-400">{{ item.label }}</span>
+              <span class="tabular font-semibold text-gray-900 dark:text-white">{{ item.count }}</span>
             </div>
           </div>
         </div>

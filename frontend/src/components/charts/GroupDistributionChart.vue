@@ -4,42 +4,28 @@
       <h3 :id="titleId" class="text-sm font-semibold text-gray-900 dark:text-white">
         {{ t('admin.dashboard.groupDistribution') }}
       </h3>
-      <div
+      <Segmented
         v-if="showMetricToggle"
-        class="tabs"
-        role="radiogroup"
+        :model-value="metric"
+        :options="metricOptions"
+        mode="radiogroup"
         :aria-labelledby="titleId"
-      >
-        <button
-          type="button"
-          role="radio"
-          :aria-checked="metric === 'tokens'"
-          class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
-          :class="metric === 'tokens' && 'tab-active'"
-          @click="emit('update:metric', 'tokens')"
-          @keydown="handleRadioGroupKeydown"
-        >
-          {{ t('admin.dashboard.metricTokens') }}
-        </button>
-        <button
-          type="button"
-          role="radio"
-          :aria-checked="metric === 'actual_cost'"
-          class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
-          :class="metric === 'actual_cost' && 'tab-active'"
-          @click="emit('update:metric', 'actual_cost')"
-          @keydown="handleRadioGroupKeydown"
-        >
-          {{ t('admin.dashboard.metricActualCost') }}
-        </button>
-      </div>
+        item-class="px-2.5 py-1 text-xs"
+        @update:model-value="emit('update:metric', $event)"
+      />
     </div>
     <div v-if="loading" class="flex h-48 items-center justify-center">
       <LoadingSpinner />
     </div>
     <div v-else-if="displayGroupStats.length > 0 && chartData" class="flex flex-col items-center gap-4 sm:flex-row sm:gap-6">
       <div class="h-48 w-48 shrink-0">
-        <Doughnut :data="chartData" :options="doughnutOptions" />
+        <!-- vue-chartjs 渲染的是裸 <canvas>（已带 role="img"），不给 aria-label 就是一个无名图形。
+             右侧表格是同一份数据的等价替代，因此这里只需要一个名字。 -->
+        <Doughnut
+          :data="chartData"
+          :options="doughnutOptions"
+          :aria-label="t('admin.dashboard.groupDistribution')"
+        />
       </div>
       <div class="max-h-48 w-full min-w-0 flex-1 overflow-auto">
         <table class="w-full text-xs">
@@ -117,17 +103,18 @@ import { useI18n } from 'vue-i18n'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Doughnut } from 'vue-chartjs'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import Segmented from '@/components/common/Segmented.vue'
 import UserBreakdownSubTable from './UserBreakdownSubTable.vue'
 import type { GroupStat, UserBreakdownItem } from '@/types'
 import { getUserBreakdown } from '@/api/admin/dashboard'
-import { chartTooltipStyle, distributionColor, useChartScheme } from './chartPalette'
-import { handleRadioGroupKeydown } from '@/utils/radioGroupKeyboard'
+import { chartTooltipStyle, distributionColor, useChartScheme } from '@/lib/chart'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
 const { t } = useI18n()
 
-// 指标分段控件是「选值」而非切面板，用 radiogroup 语义并从可见标题取无障碍名称。
+// 指标分段控件是「选值」而非切面板，用 Segmented 的 radiogroup 模式，
+// 并从可见标题取无障碍名称。
 const titleId = useId()
 
 type DistributionMetric = 'tokens' | 'actual_cost'
@@ -153,6 +140,11 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   'update:metric': [value: DistributionMetric]
 }>()
+
+const metricOptions = computed(() => [
+  { value: 'tokens' as const, label: t('admin.dashboard.metricTokens') },
+  { value: 'actual_cost' as const, label: t('admin.dashboard.metricActualCost') },
+])
 
 const expandedKey = ref<string | null>(null)
 const breakdownItems = ref<UserBreakdownItem[]>([])

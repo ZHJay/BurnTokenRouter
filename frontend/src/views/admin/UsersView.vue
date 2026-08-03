@@ -139,17 +139,30 @@
               <!-- Filter Settings Dropdown -->
               <div class="relative" ref="filterDropdownRef">
                 <button
+                  ref="filterTriggerRef"
                   @click="showFilterDropdown = !showFilterDropdown"
                   class="btn btn-secondary px-2 md:px-3"
                   :title="t('admin.users.filterSettings')"
+                  aria-haspopup="menu"
+                  :aria-expanded="showFilterDropdown"
                 >
                   <Icon name="filter" size="sm" class="md:mr-1.5" />
                   <span class="hidden md:inline">{{ t('admin.users.filterSettings') }}</span>
                 </button>
                 <!-- Dropdown menu -->
+                <!--
+                  animate-none + <transition>: `.dropdown` carries an intrinsic
+                  `animate-scale-in` that grows the panel on open and does nothing
+                  on close, so every one of these menus used to vanish on the frame
+                  it closed. One owner for the motion — the transition — in both
+                  directions. Reference: AccountGroupsCell.vue:39.
+                -->
+                <transition name="dropdown">
                 <div
                   v-if="showFilterDropdown"
-                  class="dropdown right-0 top-full mt-1 w-48"
+                  class="dropdown right-0 top-full mt-1 w-48 animate-none"
+                  role="menu"
+                  :aria-label="t('admin.users.filterSettings')"
                 >
                   <!-- Built-in filters -->
                   <button
@@ -157,6 +170,7 @@
                     :key="filter.key"
                     @click="toggleBuiltInFilter(filter.key)"
                     class="dropdown-item group w-full justify-between text-left"
+                    role="menuitem"
                   >
                     <span>{{ filter.name }}</span>
                     <Icon
@@ -171,6 +185,7 @@
                   <div
                     v-if="filterableAttributes.length > 0"
                     class="divider my-1"
+                    role="separator"
                   ></div>
                   <!-- Custom attribute filters -->
                   <button
@@ -178,6 +193,7 @@
                     :key="attr.id"
                     @click="toggleAttributeFilter(attr)"
                     class="dropdown-item group w-full justify-between text-left"
+                    role="menuitem"
                   >
                     <span>{{ attr.name }}</span>
                     <Icon
@@ -189,13 +205,17 @@
                     />
                   </button>
                 </div>
+                </transition>
               </div>
               <!-- Column Settings Dropdown -->
               <div class="relative" ref="columnDropdownRef">
                 <button
+                  ref="columnTriggerRef"
                   @click="showColumnDropdown = !showColumnDropdown"
                   class="btn btn-secondary px-2 md:px-3"
                   :title="t('admin.users.columnSettings')"
+                  aria-haspopup="menu"
+                  :aria-expanded="showColumnDropdown"
                 >
                   <svg class="h-4 w-4 md:mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125z" />
@@ -203,15 +223,19 @@
                   <span class="hidden md:inline">{{ t('admin.users.columnSettings') }}</span>
                 </button>
                 <!-- Dropdown menu -->
+                <transition name="dropdown">
                 <div
                   v-if="showColumnDropdown"
-                  class="dropdown right-0 top-full mt-1 max-h-80 w-48 overflow-y-auto"
+                  class="dropdown right-0 top-full mt-1 max-h-80 w-48 animate-none overflow-y-auto"
+                  role="menu"
+                  :aria-label="t('admin.users.columnSettings')"
                 >
                   <button
                     v-for="col in toggleableColumns"
                     :key="col.key"
                     :disabled="isForcedVisibleColumn(col.key)"
                     @click="toggleColumn(col.key)"
+                    role="menuitem"
                     :class="[
                       'dropdown-item group w-full justify-between text-left',
                       isForcedVisibleColumn(col.key)
@@ -230,6 +254,7 @@
                     />
                   </button>
                 </div>
+                </transition>
               </div>
               <!-- Attributes Config Button -->
               <button
@@ -354,9 +379,10 @@
                   </div>
                 </div>
                 <!-- 点击展开分组操作菜单 -->
+                <transition name="dropdown">
                 <div
                   v-if="expandedGroupUserId === row.id"
-                  class="dropdown left-0 top-full mt-1.5 min-w-[160px] origin-top-left overflow-hidden text-xs"
+                  class="dropdown left-0 top-full mt-1.5 min-w-[160px] origin-top-left animate-none overflow-hidden text-xs"
                 >
                   <div class="px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-dark-400">
                     {{ t('admin.users.clickToReplace') }}
@@ -371,6 +397,7 @@
                     <span class="flex-1">{{ g.name }}</span>
                   </div>
                 </div>
+                </transition>
               </span>
               <!-- 公开分组行 -->
               <span
@@ -477,6 +504,8 @@
                     : 'text-gray-400 dark:text-dark-500'"
                   :title="t('admin.users.sortBy')"
                   :data-test="`usage-sort-trigger-${usageKey}`"
+                  aria-haspopup="menu"
+                  :aria-expanded="openUsageSortMenu === usageKey"
                   @click.stop="toggleUsageSortMenu(usageKey)"
                 >
                   <span
@@ -501,14 +530,18 @@
                   </svg>
                 </button>
                 <!-- 弹出菜单：今日 / 近30天，点击进行三态循环切换。 -->
+                <transition name="dropdown">
                 <div
                   v-if="openUsageSortMenu === usageKey"
-                  class="dropdown right-0 top-full mt-1 min-w-[120px]"
+                  class="dropdown right-0 top-full mt-1 min-w-[120px] animate-none"
+                  role="menu"
+                  :aria-label="t('admin.users.sortBy')"
                 >
                   <button
                     v-for="metric in (['today', 'total'] as const)"
                     :key="metric"
                     type="button"
+                    role="menuitem"
                     class="dropdown-item w-full justify-between gap-3 text-left text-xs normal-case tracking-normal"
                     :class="isUsageSortActive(usageKey, metric)
                       ? 'font-medium text-primary-600 dark:text-primary-400'
@@ -535,6 +568,7 @@
                     {{ t('admin.users.sortCurrentPageOnly') }}
                   </div>
                 </div>
+                </transition>
               </div>
             </div>
           </template>
@@ -632,6 +666,8 @@
                 @click="openActionMenu(row, $event)"
                 class="action-menu-trigger flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-transform duration-instant ease-apple-out hover:bg-gray-100 hover:text-gray-900 active:scale-[0.96] dark:hover:bg-dark-700 dark:hover:text-white"
                 :class="{ 'bg-gray-100 text-gray-900 dark:bg-dark-700 dark:text-white': activeMenuId === row.id }"
+                aria-haspopup="menu"
+                :aria-expanded="activeMenuId === row.id"
               >
                 <Icon name="more" size="sm" />
                 <span class="text-xs">{{ t('common.more') }}</span>
@@ -665,18 +701,24 @@
 
     <!-- Action Menu (Teleported) -->
     <Teleport to="body">
-      <div
-        v-if="activeMenuId !== null && menuPosition"
-        class="action-menu-content dropdown fixed z-[9999] w-48 origin-top"
-        :style="{ top: menuPosition.top + 'px', left: menuPosition.left + 'px' }"
-      >
-        <div>
+      <transition name="dropdown">
+        <div
+          v-if="activeMenuId !== null && menuPosition"
+          ref="actionMenuRef"
+          class="action-menu-content dropdown fixed z-[9999] w-48 origin-top animate-none"
+          :style="{ top: menuPosition.top + 'px', left: menuPosition.left + 'px' }"
+          role="menu"
+          :aria-label="t('common.more')"
+          @keydown="onActionMenuKeydown"
+        >
+          <div role="none">
           <template v-for="user in users" :key="user.id">
             <template v-if="user.id === activeMenuId">
               <!-- View API Keys -->
               <button
                 @click="handleViewApiKeys(user); closeActionMenu()"
                 class="dropdown-item group w-full"
+                role="menuitem"
               >
                 <Icon name="key" size="sm" class="text-gray-400 group-hover:text-white" :stroke-width="2" />
                 {{ t('admin.users.apiKeys') }}
@@ -686,17 +728,19 @@
               <button
                 @click="handleAllowedGroups(user); closeActionMenu()"
                 class="dropdown-item group w-full"
+                role="menuitem"
               >
                 <Icon name="users" size="sm" class="text-gray-400 group-hover:text-white" :stroke-width="2" />
                 {{ t('admin.users.groups') }}
               </button>
 
-              <div class="divider my-1"></div>
+              <div class="divider my-1" role="separator"></div>
 
               <!-- Deposit -->
               <button
                 @click="handleDeposit(user); closeActionMenu()"
                 class="dropdown-item group w-full"
+                role="menuitem"
               >
                 <Icon name="plus" size="sm" class="text-emerald-500 group-hover:text-white" :stroke-width="2" />
                 {{ t('admin.users.deposit') }}
@@ -706,6 +750,7 @@
               <button
                 @click="handleWithdraw(user); closeActionMenu()"
                 class="dropdown-item group w-full"
+                role="menuitem"
               >
                 <svg class="h-4 w-4 text-amber-500 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
@@ -717,6 +762,7 @@
               <button
                 @click="handlePlatformQuota(user); closeActionMenu()"
                 class="dropdown-item group w-full"
+                role="menuitem"
               >
                 <Icon name="chartBar" size="sm" class="text-gray-400 group-hover:text-white" :stroke-width="2" />
                 {{ t('admin.users.platformQuota.menuItem') }}
@@ -726,26 +772,29 @@
               <button
                 @click="handleBalanceHistory(user); closeActionMenu()"
                 class="dropdown-item group w-full"
+                role="menuitem"
               >
                 <Icon name="dollar" size="sm" class="text-gray-400 group-hover:text-white" :stroke-width="2" />
                 {{ t('admin.users.balanceHistory') }}
               </button>
 
-              <div class="divider my-1"></div>
+              <div class="divider my-1" role="separator"></div>
 
               <!-- Delete (not for admin) -->
               <button
                 v-if="user.role !== 'admin'"
                 @click="handleDelete(user); closeActionMenu()"
                 class="dropdown-item w-full text-red-600 hover:bg-red-500 dark:text-red-400"
+                role="menuitem"
               >
                 <Icon name="trash" size="sm" :stroke-width="2" />
                 {{ t('common.delete') }}
               </button>
             </template>
           </template>
+          </div>
         </div>
-      </div>
+      </transition>
     </Teleport>
 
     <ConfirmDialog :show="showDeleteDialog" :title="t('admin.users.deleteUser')" :message="t('admin.users.deleteConfirm', { email: deletingUser?.email })" :danger="true" @confirm="confirmDelete" @cancel="showDeleteDialog = false" />
@@ -773,7 +822,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { getPersistedPageSize } from '@/composables/usePersistedPageSize'
@@ -1126,6 +1175,8 @@ const showColumnDropdown = ref(false)
 // Dropdown refs for click outside detection
 const filterDropdownRef = ref<HTMLElement | null>(null)
 const columnDropdownRef = ref<HTMLElement | null>(null)
+const filterTriggerRef = ref<HTMLElement | null>(null)
+const columnTriggerRef = ref<HTMLElement | null>(null)
 
 // localStorage keys
 const FILTER_VALUES_KEY = 'user-filter-values'
@@ -1261,6 +1312,8 @@ const toggleUsageSort = (key: string, metric: UsageMetric) => {
 
 // 点击图标本身不触发排序，仅开关菜单；首次排序由用户在菜单内选择 metric 触发（默认 desc，详见 toggleUsageSort）。
 const toggleUsageSortMenu = (key: string) => {
+  // Recorded on open so Escape can return focus to this column's sort button.
+  if (openUsageSortMenu.value !== key) rememberTrigger()
   openUsageSortMenu.value = openUsageSortMenu.value === key ? null : key
 }
 
@@ -1430,6 +1483,142 @@ const refreshCurrentPageSecondaryData = () => {
 // Action Menu State
 const activeMenuId = ref<number | null>(null)
 const menuPosition = ref<{ top: number; left: number } | null>(null)
+const actionMenuRef = ref<HTMLElement | null>(null)
+
+/**
+ * The element focus came from, per menu, so Escape can put it back.
+ *
+ * Read off `document.activeElement` at open time rather than passed around:
+ * these triggers live inside `v-for` cells and per-column header slots, so there
+ * is no single ref to hold, and the element the pointer or keyboard just
+ * activated is exactly the one to return to.
+ */
+let menuReturnFocus: HTMLElement | null = null
+
+function rememberTrigger(): void {
+  menuReturnFocus = document.activeElement as HTMLElement | null
+}
+
+/**
+ * Returns focus to the trigger, if focus is still loose inside the menu that is
+ * closing. Skipped when something else has already claimed focus — every action
+ * item also opens a modal, and stealing focus back out of it would be worse than
+ * not restoring at all.
+ */
+function returnFocusToTrigger(): void {
+  const target = menuReturnFocus
+  menuReturnFocus = null
+  if (!target || typeof target.focus !== 'function' || !target.isConnected) return
+
+  const active = document.activeElement
+  const focusIsLoose =
+    active === null || active === document.body || actionMenuRef.value?.contains(active) === true
+  if (!focusIsLoose) return
+
+  // Same reason as focusActionMenuItemAt: a scroll here reads as a user scroll.
+  target.focus({ preventScroll: true })
+}
+
+/** Enabled items of the teleported action menu, in DOM order. */
+function actionMenuItems(): HTMLElement[] {
+  const menu = actionMenuRef.value
+  if (!menu) return []
+  return Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitem"]')).filter(
+    (el) => !(el as HTMLButtonElement).disabled && !el.hasAttribute('disabled')
+  )
+}
+
+function focusActionMenuItemAt(index: number): void {
+  const items = actionMenuItems()
+  if (items.length === 0) return
+  const wrapped = ((index % items.length) + items.length) % items.length
+  /*
+   * preventScroll is required. The menu is `position: fixed` and teleported to
+   * <body>, but its trigger lives inside `.table-wrapper`, a scroll container.
+   * A plain focus() makes the browser scroll that ancestor to reveal the focused
+   * node, and handleScroll() closes the action menu — so moving focus in closed
+   * the menu on the next frame. Measured, not theorised.
+   */
+  items[wrapped].focus({ preventScroll: true })
+}
+
+/**
+ * Keyboard model for the teleported action menu.
+ *
+ * Tab is trapped on purpose: the menu is rendered into <body> while its trigger
+ * stays in the table row, so an untrapped Tab walks out of the menu and lands at
+ * the very end of the document instead of at the next item.
+ */
+function onActionMenuKeydown(event: KeyboardEvent): void {
+  const items = actionMenuItems()
+  if (items.length === 0) return
+  const current = items.indexOf(document.activeElement as HTMLElement)
+
+  switch (event.key) {
+    case 'ArrowDown':
+      event.preventDefault()
+      focusActionMenuItemAt(current + 1)
+      break
+    case 'ArrowUp':
+      event.preventDefault()
+      focusActionMenuItemAt(current - 1)
+      break
+    case 'Home':
+      event.preventDefault()
+      focusActionMenuItemAt(0)
+      break
+    case 'End':
+      event.preventDefault()
+      focusActionMenuItemAt(items.length - 1)
+      break
+    case 'Tab': {
+      event.preventDefault()
+      focusActionMenuItemAt(current === -1 ? 0 : current + (event.shiftKey ? -1 : 1))
+      break
+    }
+    default:
+      break
+  }
+}
+
+/**
+ * Escape closes the topmost open menu and returns focus to its trigger.
+ *
+ * This view had 17 dropdown call sites and no Escape handler at all, so the only
+ * way to dismiss any of them was a mouse click elsewhere — and the teleported
+ * action menu additionally left focus on an element that had just been
+ * unmounted, sending the next Tab back to the top of the document.
+ *
+ * Ordering matters: the action menu is checked first because it is the only one
+ * that can be open on top of another.
+ */
+const handleEscape = (event: KeyboardEvent) => {
+  if (event.key !== 'Escape') return
+
+  if (activeMenuId.value !== null) {
+    closeActionMenu()
+    return
+  }
+  if (showFilterDropdown.value) {
+    showFilterDropdown.value = false
+    filterTriggerRef.value?.focus({ preventScroll: true })
+    return
+  }
+  if (showColumnDropdown.value) {
+    showColumnDropdown.value = false
+    columnTriggerRef.value?.focus({ preventScroll: true })
+    return
+  }
+  if (openUsageSortMenu.value !== null) {
+    openUsageSortMenu.value = null
+    returnFocusToTrigger()
+    return
+  }
+  if (expandedGroupUserId.value !== null) {
+    expandedGroupUserId.value = null
+    returnFocusToTrigger()
+  }
+}
 
 const openActionMenu = (user: AdminUser, e: MouseEvent) => {
   if (activeMenuId.value === user.id) {
@@ -1440,6 +1629,7 @@ const openActionMenu = (user: AdminUser, e: MouseEvent) => {
       closeActionMenu()
       return
     }
+    rememberTrigger()
 
     const rect = target.getBoundingClientRect()
     const menuWidth = 200
@@ -1481,12 +1671,15 @@ const openActionMenu = (user: AdminUser, e: MouseEvent) => {
 
     menuPosition.value = { top, left }
     activeMenuId.value = user.id
+    // The menu is teleported, so it does not exist until Vue has flushed.
+    void nextTick(() => focusActionMenuItemAt(0))
   }
 }
 
 const closeActionMenu = () => {
   activeMenuId.value = null
   menuPosition.value = null
+  returnFocusToTrigger()
 }
 
 // Close menu when clicking outside
@@ -1520,6 +1713,7 @@ const allowedGroupsUser = ref<AdminUser | null>(null)
 // Expanded group dropdown state (click to show exclusive groups list)
 const expandedGroupUserId = ref<number | null>(null)
 const toggleExpandedGroup = (userId: number) => {
+  if (expandedGroupUserId.value !== userId) rememberTrigger()
   expandedGroupUserId.value = expandedGroupUserId.value === userId ? null : userId
 }
 
@@ -1868,13 +2062,61 @@ onMounted(async () => {
     loadAllGroupsForApiKeyFilter()
   }
   document.addEventListener('click', handleClickOutside)
+  document.addEventListener('keydown', handleEscape)
   window.addEventListener('scroll', handleScroll, true)
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('keydown', handleEscape)
   window.removeEventListener('scroll', handleScroll, true)
   clearTimeout(searchTimeout)
   abortController?.abort()
 })
 </script>
+
+<style scoped>
+/*
+  Teleported to <body>, so this menu is not inside the modal backdrop root: its
+  `backdrop-filter` samples what is actually painted underneath and re-blurs the
+  page behind it. Same call already made for Select.vue's portal and Toast. Only
+  the fill and the blur change; `.dropdown`'s four glass edges and --shadow-3 stay.
+*/
+.action-menu-content {
+  background: var(--surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/*
+  Symmetric enter/leave for all five dropdowns in this view. `.dropdown` carries
+  an intrinsic `animate-scale-in`, which is suppressed with `animate-none` at
+  every call site so this transition is the single owner of the motion in both
+  directions. transform-origin comes from `.dropdown` (origin-top-right) or from
+  the call site's own origin-* utility.
+*/
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition:
+    opacity 240ms var(--ease-out),
+    transform 240ms var(--spring);
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: scale(0.94) translateY(-4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropdown-enter-active,
+  .dropdown-leave-active {
+    transition-duration: 1ms;
+  }
+
+  .dropdown-enter-from,
+  .dropdown-leave-to {
+    transform: none;
+  }
+}
+</style>

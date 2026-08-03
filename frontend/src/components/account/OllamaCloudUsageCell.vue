@@ -21,7 +21,10 @@
       data-testid="ollama-cloud-seven-day"
     />
   </div>
-  <span v-else class="text-sm text-gray-400 dark:text-dark-500">-</span>
+  <!-- 空值占位符与同列的 AccountUsageCell 对齐：那里 5 处「-」占位都是裸
+       text-gray-400。gray 阶已走 --c-gray-* 主题翻转变量，裸类在两个主题下
+       各自取到正确的值，所以这里的 dark: 分支可以直接删掉而不是改写。 -->
+  <span v-else class="text-sm text-gray-400">-</span>
 </template>
 
 <script setup lang="ts">

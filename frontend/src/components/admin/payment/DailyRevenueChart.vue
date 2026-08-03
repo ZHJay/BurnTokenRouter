@@ -7,7 +7,13 @@
       <div v-if="loading" class="flex h-full items-center justify-center">
         <LoadingSpinner size="md" />
       </div>
-      <Line v-else-if="chartData" :data="chartData" :options="chartOptions" />
+      <!-- vue-chartjs 渲染的是裸 <canvas>（已带 role="img"），不给 aria-label 就是一个无名图形 -->
+      <Line
+        v-else-if="chartData"
+        :data="chartData"
+        :options="chartOptions"
+        :aria-label="t('payment.admin.dailyRevenue')"
+      />
       <div
         v-else
         class="flex h-full items-center justify-center text-sm text-gray-500 dark:text-gray-400"
@@ -19,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   Chart as ChartJS,
@@ -34,6 +40,18 @@ import {
 import { Line } from 'vue-chartjs'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import type { DailyPaymentStats } from '@/types/payment'
+import {
+  chartAxisChrome,
+  chartAxisFont,
+  chartAxisNoGrid,
+  chartChrome,
+  chartHue,
+  chartLegendStyle,
+  chartTooltipStyle,
+  useChartScheme,
+  withAlpha,
+  type ChartHue
+} from '@/lib/chart'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler)
 
@@ -45,66 +63,54 @@ const props = defineProps<{
 }>()
 
 /**
- * 货币色板 —— Apple 系统色。
+ * 货币色板 —— 取自 `lib/chart` 的共享色相。
  *
  * 多色语义刻意保留：每种货币必须能相互区分。
- * Chart.js 画在 canvas 上拿不到 CSS 变量，所以这里是 style.css 里
- * `--sys-*` 的字面镜像，light / dark 各一档（系统色在深色下会提亮）。
+ * 这里原先自带一份 hex + 四个手写 rgba 填充值（同一批 token 的又一份副本）；
+ * 现在只保留「用哪几个色相」这一决定，色值与填充都由共享模块派生。
  */
-const CURRENCY_HUES = [
-  { light: '#007aff', dark: '#0a84ff', fillLight: 'rgba(0, 122, 255, 0.1)', fillDark: 'rgba(10, 132, 255, 0.16)' }, // --sys-blue
-  { light: '#af52de', dark: '#bf5af2', fillLight: 'rgba(175, 82, 222, 0.1)', fillDark: 'rgba(191, 90, 242, 0.16)' }, // --sys-purple
-  { light: '#ff9500', dark: '#ff9f0a', fillLight: 'rgba(255, 149, 0, 0.1)', fillDark: 'rgba(255, 159, 10, 0.16)' }, // --sys-orange
-  { light: '#ff3b30', dark: '#ff453a', fillLight: 'rgba(255, 59, 48, 0.1)', fillDark: 'rgba(255, 69, 58, 0.16)' } // --sys-red
-] as const
+const CURRENCY_HUES: readonly ChartHue[] = ['blue', 'purple', 'orange', 'red']
 
-// 订单数走绿色，与金额系列区分
-const COUNT_HUE = { light: '#34c759', dark: '#30d158' } as const
+/** 订单数走绿色，与金额系列区分 */
+const COUNT_HUE: ChartHue = 'green'
 
-const isDark = ref(document.documentElement.classList.contains('dark'))
-let themeObserver: MutationObserver | null = null
+/** 面积填充的浓度：深色下要重一点才看得出体量 */
+const fillOpacity = (scheme: 'light' | 'dark') => (scheme === 'dark' ? 0.16 : 0.1)
 
-onMounted(() => {
-  if (typeof MutationObserver === 'undefined') return
-  themeObserver = new MutationObserver(() => {
-    isDark.value = document.documentElement.classList.contains('dark')
-  })
-  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-})
-
-onBeforeUnmount(() => {
-  themeObserver?.disconnect()
-  themeObserver = null
-})
+const scheme = useChartScheme()
 
 const chartData = computed(() => {
   if (!props.data || props.data.length === 0) return null
   const currencies = [...new Set(props.data.flatMap(day => Object.keys(day.amount)))].sort()
+  const alpha = fillOpacity(scheme.value)
   return {
     labels: props.data.map(d => d.date),
     datasets: [
       ...currencies.map((currency, index) => {
-        const hue = CURRENCY_HUES[index % CURRENCY_HUES.length]
+        const color = chartHue(CURRENCY_HUES[index % CURRENCY_HUES.length], scheme.value)
         return {
           label: `${currency} ${t('payment.admin.revenue')}`,
           data: props.data.map(day => day.amount[currency] || 0),
-          borderColor: isDark.value ? hue.dark : hue.light,
-          backgroundColor: isDark.value ? hue.fillDark : hue.fillLight,
+          borderColor: color,
+          backgroundColor: withAlpha(color, alpha),
           fill: true,
           tension: 0.3,
-          pointRadius: 3,
-          pointHoverRadius: 5,
+          // 与所有同类折线一致：常态无点，hover 才冒出来，命中半径放大到 10
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointHitRadius: 10,
         }
       }),
       {
         label: t('payment.admin.orderCount'),
         data: props.data.map(d => d.count),
-        borderColor: isDark.value ? COUNT_HUE.dark : COUNT_HUE.light,
-        backgroundColor: isDark.value ? 'rgba(48, 209, 88, 0.16)' : 'rgba(52, 199, 89, 0.1)',
+        borderColor: chartHue(COUNT_HUE, scheme.value),
+        backgroundColor: withAlpha(chartHue(COUNT_HUE, scheme.value), alpha),
         fill: false,
         tension: 0.3,
-        pointRadius: 3,
-        pointHoverRadius: 5,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        pointHitRadius: 10,
         yAxisID: 'y1',
       }
     ]
@@ -113,46 +119,36 @@ const chartData = computed(() => {
 
 // 轴/网格/图例也要跟随主题：Chart.js 默认灰在深色下几乎不可见
 const chartOptions = computed(() => {
-  const label = isDark.value ? 'rgba(235, 235, 245, 0.6)' : 'rgba(60, 60, 67, 0.6)'
-  const grid = isDark.value ? 'rgba(84, 84, 88, 0.5)' : 'rgba(60, 60, 67, 0.12)'
+  const chrome = chartChrome(scheme.value)
   return {
     responsive: true,
     maintainAspectRatio: false,
     interaction: { mode: 'index' as const, intersect: false },
     scales: {
       x: {
-        ticks: { color: label },
-        grid: { color: grid }
+        ...chartAxisChrome(scheme.value),
+        ticks: { color: chrome.axis, font: chartAxisFont() }
       },
       y: {
         type: 'linear' as const,
         display: true,
         position: 'left' as const,
-        title: { display: true, text: t('payment.admin.revenue'), color: label },
-        ticks: { color: label },
-        grid: { color: grid }
+        ...chartAxisChrome(scheme.value, true),
+        title: { display: true, text: t('payment.admin.revenue'), color: chrome.legend },
+        ticks: { color: chrome.axis, font: chartAxisFont() }
       },
       y1: {
         type: 'linear' as const,
         display: true,
         position: 'right' as const,
-        title: { display: true, text: t('payment.admin.orderCount'), color: label },
-        ticks: { color: label },
-        grid: { drawOnChartArea: false },
+        ...chartAxisNoGrid('chartArea'),
+        title: { display: true, text: t('payment.admin.orderCount'), color: chrome.legend },
+        ticks: { color: chrome.axis, font: chartAxisFont() },
       }
     },
     plugins: {
-      legend: { position: 'top' as const, labels: { color: label, usePointStyle: true } },
-      tooltip: {
-        backgroundColor: isDark.value ? '#2c2c2e' : '#ffffff',
-        titleColor: isDark.value ? 'rgba(255, 255, 255, 0.94)' : 'rgba(0, 0, 0, 0.88)',
-        bodyColor: label,
-        borderColor: grid,
-        borderWidth: 1,
-        cornerRadius: 12,
-        padding: 10,
-        usePointStyle: true
-      }
+      legend: { position: 'top' as const, labels: chartLegendStyle(scheme.value) },
+      tooltip: chartTooltipStyle(scheme.value)
     }
   }
 })

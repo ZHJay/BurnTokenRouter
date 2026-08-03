@@ -184,10 +184,24 @@
 
             <div v-if="ev.message" class="mt-3 break-words text-sm font-medium text-gray-900 dark:text-white">{{ ev.message }}</div>
 
-            <pre
-              v-if="expandedUpstreamDetailIds.has(ev.id)"
-              class="code-block mt-3 max-h-[240px] overflow-auto p-3 text-xs"
-            ><code>{{ prettyJSON(getUpstreamResponsePreview(ev)) }}</code></pre>
+            <!--
+              Spring-driven height, so the disclosure animates in both directions
+              instead of appearing on the frame it mounts.
+
+              The wrapper is required rather than tidy: SpringCollapse measures
+              scrollHeight, and on a <pre> that is `max-h-[240px] overflow-auto`
+              that is the full JSON height — often several thousand pixels. The
+              spring would then travel its visible 240px in the first few percent
+              of the animation and appear to hang. The wrapper reports the clamped
+              height; the <pre> keeps its own scrolling.
+            -->
+            <SpringCollapse>
+              <div v-if="expandedUpstreamDetailIds.has(ev.id)">
+                <pre
+                  class="code-block mt-3 max-h-[240px] overflow-auto p-3 text-xs"
+                ><code>{{ prettyJSON(getUpstreamResponsePreview(ev)) }}</code></pre>
+              </div>
+            </SpringCollapse>
           </div>
         </div>
       </div>
@@ -200,6 +214,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/components/common/BaseDialog.vue'
 import Icon from '@/components/icons/Icon.vue'
+import SpringCollapse from '@/components/common/SpringCollapse.vue'
 import { useAppStore } from '@/stores'
 import { opsAPI, type OpsErrorDetail } from '@/api/admin/ops'
 import { formatDateTime } from '@/utils/format'

@@ -13,21 +13,14 @@
         <div class="ml-auto flex items-center gap-2">
           <span :id="granularityLabelId" class="text-xs font-medium tracking-[0.01em] text-gray-500 dark:text-gray-400">{{ t('dashboard.granularity') }}:</span>
           <!-- Apple 分段控件：两个互斥选项用 segmented 比下拉更快也更好读 -->
-          <!-- 选粒度是「选值」，不切换面板：radiogroup 语义 + 方向键遍历，补回原 Select 的键盘行为 -->
-          <div class="tabs" role="radiogroup" :aria-labelledby="granularityLabelId">
-            <button
-              v-for="opt in granularityOptions"
-              :key="opt.value"
-              type="button"
-              role="radio"
-              :aria-checked="granularity === opt.value"
-              :class="['tab active:scale-[0.96]', granularity === opt.value && 'tab-active']"
-              @click="selectGranularity(opt.value)"
-              @keydown="handleRadioGroupKeydown"
-            >
-              {{ opt.label }}
-            </button>
-          </div>
+          <!-- 选粒度是「选值」，不切换面板：radiogroup 模式，方向键遍历由 Segmented 提供 -->
+          <Segmented
+            :model-value="granularity"
+            :options="granularityOptions"
+            mode="radiogroup"
+            :aria-labelledby="granularityLabelId"
+            @update:model-value="selectGranularity"
+          />
         </div>
       </div>
     </div>
@@ -43,7 +36,14 @@
         <div class="flex flex-col items-center gap-4 sm:flex-row sm:gap-6">
           <!-- 中心留白放总量：环形图的空心本来就该承载合计值 -->
           <div class="relative h-48 w-48 shrink-0">
-            <Doughnut v-if="modelData" :data="modelData" :options="doughnutOptions" />
+            <!-- vue-chartjs 渲染的是裸 <canvas>（已带 role="img"），不给 aria-label 就是一个无名图形。
+                 右侧表格是同一份数据的等价替代，因此这里只需要一个名字。 -->
+            <Doughnut
+              v-if="modelData"
+              :data="modelData"
+              :options="doughnutOptions"
+              :aria-label="t('dashboard.modelDistribution')"
+            />
             <div v-else class="flex h-full items-center justify-center text-sm text-gray-500 dark:text-gray-400">{{ t('dashboard.noDataAvailable') }}</div>
             <div v-if="modelData" class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
               <span class="text-[19px] font-semibold tabular leading-tight tracking-[-0.02em] text-gray-900 dark:text-white">{{ formatTokens(totalModelTokens) }}</span>
@@ -88,15 +88,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, useId } from 'vue'
+import { computed, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import DateRangePicker from '@/components/common/DateRangePicker.vue'
+import Segmented from '@/components/common/Segmented.vue'
 import { Doughnut } from 'vue-chartjs'
 import TokenUsageTrend from '@/components/charts/TokenUsageTrend.vue'
 import type { TrendDataPoint, ModelStat } from '@/types'
 import { formatCostFixed as formatCost, formatNumberLocaleString as formatNumber, formatTokensK as formatTokens } from '@/utils/format'
-import { handleRadioGroupKeydown } from '@/utils/radioGroupKeyboard'
+import { chartTooltipStyle, distributionColor, useChartScheme } from '@/lib/chart'
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, Filler } from 'chart.js'
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, Filler)
 
@@ -119,43 +120,17 @@ const selectGranularity = (value: string) => {
 }
 
 /**
- * 环形图色板 —— Apple 系统色。
+ * 配色跟随 `<html class="dark">`。
  *
- * 多色语义刻意保留：每个模型必须能相互区分，图表可读性优先于色彩克制。
- * Chart.js 画在 canvas 上拿不到 CSS 变量，所以这里是 style.css 里
- * `--sys-*` 的字面镜像，light / dark 各一档（系统色在深色下会提亮）。
+ * 色板与浮层都取自 `lib/chart` —— 这里原先自带一份 8 色 `MODEL_HUES` 与一整套
+ * 手写的浮层色值，是同一批 token 的第三份副本。`distributionColor` 的前 8 位与
+ * 那份色板同序，因此前 8 个模型颜色不变，第 9 个之后从「回卷重复」变成继续取新色相，
+ * 并与管理端分布图完全一致（那也是原注释想达到的效果）。
  */
-const MODEL_HUES = [
-  { light: '#007aff', dark: '#0a84ff' }, // --sys-blue
-  { light: '#af52de', dark: '#bf5af2' }, // --sys-purple
-  { light: '#30b0c7', dark: '#40c8e0' }, // --sys-teal
-  { light: '#ff9500', dark: '#ff9f0a' }, // --sys-orange
-  { light: '#34c759', dark: '#30d158' }, // --sys-green
-  { light: '#5856d6', dark: '#5e5ce6' }, // --sys-indigo
-  { light: '#ff2d55', dark: '#ff375f' }, // --sys-pink
-  { light: '#00c7be', dark: '#63e6e2' }  // --sys-mint
-] as const
+const scheme = useChartScheme()
 
-const isDark = ref(document.documentElement.classList.contains('dark'))
-let themeObserver: MutationObserver | null = null
-
-onMounted(() => {
-  if (typeof MutationObserver === 'undefined') return
-  themeObserver = new MutationObserver(() => {
-    isDark.value = document.documentElement.classList.contains('dark')
-  })
-  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-})
-
-onBeforeUnmount(() => {
-  themeObserver?.disconnect()
-  themeObserver = null
-})
-
-const seriesColor = (index: number) => {
-  const hue = MODEL_HUES[index % MODEL_HUES.length]
-  return isDark.value ? hue.dark : hue.light
-}
+/** 表格行的色点必须与扇区同色，才能把两边对应起来。 */
+const seriesColor = (index: number) => distributionColor(index, scheme.value)
 
 const totalModelTokens = computed(() =>
   (props.models ?? []).reduce((sum: number, m: ModelStat) => sum + (m.total_tokens || 0), 0)
@@ -181,14 +156,7 @@ const doughnutOptions = computed(() => ({
   plugins: {
     legend: { display: false },
     tooltip: {
-      backgroundColor: isDark.value ? '#2c2c2e' : '#ffffff',
-      titleColor: isDark.value ? 'rgba(255, 255, 255, 0.94)' : 'rgba(0, 0, 0, 0.88)',
-      bodyColor: isDark.value ? 'rgba(235, 235, 245, 0.6)' : 'rgba(60, 60, 67, 0.6)',
-      borderColor: isDark.value ? 'rgba(84, 84, 88, 0.5)' : 'rgba(60, 60, 67, 0.12)',
-      borderWidth: 1,
-      cornerRadius: 12,
-      padding: 10,
-      usePointStyle: true,
+      ...chartTooltipStyle(scheme.value),
       callbacks: {
         label: (context: any) => `${context.label}: ${formatTokens(context.parsed)} tokens`
       }

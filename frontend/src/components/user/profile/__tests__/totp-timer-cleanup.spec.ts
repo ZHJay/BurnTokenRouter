@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, type VueWrapper } from '@vue/test-utils'
 import TotpSetupModal from '@/components/user/profile/TotpSetupModal.vue'
 import TotpDisableDialog from '@/components/user/profile/TotpDisableDialog.vue'
 
@@ -41,10 +41,31 @@ const flushPromises = async () => {
   await Promise.resolve()
 }
 
+/**
+ * Both dialogs now render through BaseDialog, which teleports to <body>, so the
+ * panel is outside the wrapper's element tree and `wrapper.find` cannot see it.
+ * These helpers query where the markup actually lands.
+ */
+const panel = () => {
+  const el = document.body.querySelector<HTMLElement>('[role="dialog"]')
+  if (!el) throw new Error('dialog panel not found in document.body')
+  return el
+}
+
+const panelButton = (text: string) =>
+  Array.from(panel().querySelectorAll('button')).find((b) => (b.textContent || '').includes(text))
+
+const setValue = async (el: HTMLInputElement, value: string) => {
+  el.value = value
+  el.dispatchEvent(new Event('input'))
+  await flushPromises()
+}
+
 describe('TOTP 弹窗定时器清理', () => {
   let intervalSeed = 1000
   let setIntervalSpy: ReturnType<typeof vi.spyOn>
   let clearIntervalSpy: ReturnType<typeof vi.spyOn>
+  let mounted: VueWrapper<any> | null = null
 
   beforeEach(() => {
     intervalSeed = 1000
@@ -77,44 +98,50 @@ describe('TOTP 弹窗定时器清理', () => {
   afterEach(() => {
     setIntervalSpy.mockRestore()
     clearIntervalSpy.mockRestore()
+    // Teleported panels outlive the wrapper's own element, so unmount explicitly
+    // and clear anything left behind before the next test queries <body>.
+    mounted?.unmount()
+    mounted = null
+    document.body.innerHTML = ''
+    document.body.className = ''
   })
 
   it('TotpSetupModal 卸载时清理倒计时定时器', async () => {
     const wrapper = mount(TotpSetupModal)
+    mounted = wrapper
     await flushPromises()
 
-    const sendButton = wrapper
-      .findAll('button')
-      .find((button) => button.text().includes('profile.totp.sendCode'))
+    const sendButton = panelButton('profile.totp.sendCode')
 
     expect(sendButton).toBeTruthy()
-    await sendButton!.trigger('click')
+    sendButton!.click()
     await flushPromises()
 
     expect(setIntervalSpy).toHaveBeenCalledTimes(1)
     const timerId = setIntervalSpy.mock.results[0]?.value
 
     wrapper.unmount()
+    mounted = null
 
     expect(clearIntervalSpy).toHaveBeenCalledWith(timerId)
   })
 
   it('TotpDisableDialog 卸载时清理倒计时定时器', async () => {
     const wrapper = mount(TotpDisableDialog)
+    mounted = wrapper
     await flushPromises()
 
-    const sendButton = wrapper
-      .findAll('button')
-      .find((button) => button.text().includes('profile.totp.sendCode'))
+    const sendButton = panelButton('profile.totp.sendCode')
 
     expect(sendButton).toBeTruthy()
-    await sendButton!.trigger('click')
+    sendButton!.click()
     await flushPromises()
 
     expect(setIntervalSpy).toHaveBeenCalledTimes(1)
     const timerId = setIntervalSpy.mock.results[0]?.value
 
     wrapper.unmount()
+    mounted = null
 
     expect(clearIntervalSpy).toHaveBeenCalledWith(timerId)
   })
@@ -126,15 +153,19 @@ describe('TOTP 弹窗定时器清理', () => {
     })
 
     const wrapper = mount(TotpSetupModal)
+    mounted = wrapper
     await flushPromises()
 
-    await wrapper.get('input[type="password"]').setValue('correct horse battery staple')
-    await wrapper.get('button[type="button"].btn-primary').trigger('click')
+    await setValue(
+      panel().querySelector<HTMLInputElement>('input[type="password"]')!,
+      'correct horse battery staple'
+    )
+    panel().querySelector<HTMLButtonElement>('button[type="button"].btn-primary')!.click()
     await flushPromises()
 
     expect(mocks.showError).toHaveBeenCalledWith('setup failed')
-    expect(wrapper.text()).not.toContain('setup failed')
-    expect(wrapper.find('.bg-red-50').exists()).toBe(false)
+    expect(panel().textContent).not.toContain('setup failed')
+    expect(panel().querySelector('.bg-red-50')).toBeNull()
   })
 
   it('TotpDisableDialog 失败时改用 toast 并不渲染内联错误', async () => {
@@ -144,14 +175,20 @@ describe('TOTP 弹窗定时器清理', () => {
     })
 
     const wrapper = mount(TotpDisableDialog)
+    mounted = wrapper
     await flushPromises()
 
-    await wrapper.get('input[type="password"]').setValue('correct horse battery staple')
-    await wrapper.get('form').trigger('submit.prevent')
+    await setValue(
+      panel().querySelector<HTMLInputElement>('input[type="password"]')!,
+      'correct horse battery staple'
+    )
+    panel().querySelector<HTMLFormElement>('form')!.dispatchEvent(
+      new Event('submit', { cancelable: true })
+    )
     await flushPromises()
 
     expect(mocks.showError).toHaveBeenCalledWith('disable failed')
-    expect(wrapper.text()).not.toContain('disable failed')
-    expect(wrapper.find('.bg-red-50').exists()).toBe(false)
+    expect(panel().textContent).not.toContain('disable failed')
+    expect(panel().querySelector('.bg-red-50')).toBeNull()
   })
 })

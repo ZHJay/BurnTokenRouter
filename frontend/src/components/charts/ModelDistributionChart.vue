@@ -8,106 +8,36 @@
       </h3>
       <div class="flex flex-wrap items-center justify-end gap-2">
         <span v-if="showSourceToggle" :id="sourceLabelId" class="sr-only">{{ t('usage.chartDataSource') }}</span>
-        <div
+        <Segmented
           v-if="showSourceToggle"
-          class="tabs"
-          role="radiogroup"
+          :model-value="source"
+          :options="sourceOptions"
+          mode="radiogroup"
           :aria-labelledby="sourceGroupLabelledBy"
-        >
-          <button
-            type="button"
-            role="radio"
-            :aria-checked="source === 'requested'"
-            class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
-            :class="source === 'requested' && 'tab-active'"
-            @click="emit('update:source', 'requested')"
-            @keydown="handleRadioGroupKeydown"
-          >
-            {{ t('usage.requestedModel') }}
-          </button>
-          <button
-            type="button"
-            role="radio"
-            :aria-checked="source === 'upstream'"
-            class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
-            :class="source === 'upstream' && 'tab-active'"
-            @click="emit('update:source', 'upstream')"
-            @keydown="handleRadioGroupKeydown"
-          >
-            {{ t('usage.upstreamModel') }}
-          </button>
-          <button
-            type="button"
-            role="radio"
-            :aria-checked="source === 'mapping'"
-            class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
-            :class="source === 'mapping' && 'tab-active'"
-            @click="emit('update:source', 'mapping')"
-            @keydown="handleRadioGroupKeydown"
-          >
-            {{ t('usage.mapping') }}
-          </button>
-        </div>
+          item-class="px-2.5 py-1 text-xs"
+          @update:model-value="emit('update:source', $event)"
+        />
         <span v-if="showMetricToggle" :id="metricLabelId" class="sr-only">{{ t('usage.chartMetric') }}</span>
-        <div
+        <Segmented
           v-if="showMetricToggle"
-          class="tabs"
-          role="radiogroup"
+          :model-value="metric"
+          :options="metricOptions"
+          mode="radiogroup"
           :aria-labelledby="metricGroupLabelledBy"
-        >
-          <button
-            type="button"
-            role="radio"
-            :aria-checked="metric === 'tokens'"
-            class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
-            :class="metric === 'tokens' && 'tab-active'"
-            @click="emit('update:metric', 'tokens')"
-            @keydown="handleRadioGroupKeydown"
-          >
-            {{ t('admin.dashboard.metricTokens') }}
-          </button>
-          <button
-            type="button"
-            role="radio"
-            :aria-checked="metric === 'actual_cost'"
-            class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
-            :class="metric === 'actual_cost' && 'tab-active'"
-            @click="emit('update:metric', 'actual_cost')"
-            @keydown="handleRadioGroupKeydown"
-          >
-            {{ t('admin.dashboard.metricActualCost') }}
-          </button>
-        </div>
+          item-class="px-2.5 py-1 text-xs"
+          @update:model-value="emit('update:metric', $event)"
+        />
         <!-- 这一组是真正的面板切换（分布表 ↔ 消费榜），保留 tablist/tab 语义并补齐
              无障碍名称与 tab ↔ tabpanel 的双向关联。 -->
         <template v-if="enableRankingView">
           <span :id="viewLabelId" class="sr-only">{{ t('admin.dashboard.viewSelector') }}</span>
-          <div class="tabs" role="tablist" :aria-labelledby="viewLabelId">
-            <button
-              :id="distributionTabId"
-              type="button"
-              role="tab"
-              :aria-selected="activeView === 'model_distribution'"
-              :aria-controls="activeView === 'model_distribution' ? distributionPanelId : undefined"
-              class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
-              :class="activeView === 'model_distribution' && 'tab-active'"
-              @click="activeView = 'model_distribution'"
-            >
-              {{ t('admin.dashboard.viewModelDistribution') }}
-            </button>
-            <button
-              :id="rankingTabId"
-              type="button"
-              role="tab"
-              :aria-selected="activeView === 'spending_ranking'"
-              :aria-controls="activeView === 'spending_ranking' ? rankingPanelId : undefined"
-              class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
-              :class="activeView === 'spending_ranking' && 'tab-active'"
-              @click="activeView = 'spending_ranking'"
-            >
-              {{ t('admin.dashboard.viewSpendingRanking') }}
-            </button>
-          </div>
+          <Segmented
+            v-model="activeView"
+            :options="viewOptions"
+            mode="tablist"
+            :aria-labelledby="viewLabelId"
+            item-class="px-2.5 py-1 text-xs"
+          />
         </template>
       </div>
     </div>
@@ -121,7 +51,13 @@
       class="flex flex-col items-center gap-4 sm:flex-row sm:gap-6"
     >
       <div class="h-48 w-48 shrink-0">
-        <Doughnut :data="chartData" :options="doughnutOptions" />
+        <!-- vue-chartjs 渲染的是裸 <canvas>（已带 role="img"），不给 aria-label 就是一个无名图形。
+             右侧表格是同一份数据的等价替代，因此这里只需要一个名字。 -->
+        <Doughnut
+          :data="chartData"
+          :options="doughnutOptions"
+          :aria-label="t('admin.dashboard.modelDistribution')"
+        />
       </div>
       <div class="max-h-48 w-full min-w-0 flex-1 overflow-auto">
         <table class="w-full text-xs">
@@ -207,7 +143,11 @@
       class="flex flex-col items-center gap-4 sm:flex-row sm:gap-6"
     >
       <div class="h-48 w-48 shrink-0">
-        <Doughnut :data="rankingChartData" :options="rankingDoughnutOptions" />
+        <Doughnut
+          :data="rankingChartData"
+          :options="rankingDoughnutOptions"
+          :aria-label="t('admin.dashboard.spendingRankingTitle')"
+        />
       </div>
       <div class="max-h-48 w-full min-w-0 flex-1 overflow-auto">
         <table class="w-full text-xs">
@@ -270,6 +210,7 @@ import { useI18n } from 'vue-i18n'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Doughnut } from 'vue-chartjs'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import Segmented from '@/components/common/Segmented.vue'
 import UserBreakdownSubTable from './UserBreakdownSubTable.vue'
 import type { ModelStat, UserSpendingRankingItem, UserBreakdownItem } from '@/types'
 import { getUserBreakdown } from '@/api/admin/dashboard'
@@ -278,17 +219,17 @@ import {
   distributionColor,
   neutralColor,
   useChartScheme
-} from './chartPalette'
-import { handleRadioGroupKeydown } from '@/utils/radioGroupKeyboard'
+} from '@/lib/chart'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
 const { t } = useI18n()
 
-// 数据源 / 指标分段控件是「选值」而非切面板，用 radiogroup 语义。
+// 数据源 / 指标分段控件是「选值」而非切面板，用 Segmented 的 radiogroup 模式。
 // 两组都只指向 <h3> 会得到同名的无障碍名称，读屏用户无法区分「选数据源」和「选指标」，
 // 因此各自再挂一个视觉隐藏标签：名称读作「模型分布 数据来源 / 模型分布 统计指标」。
-// activeView 那一组是真正的面板切换，保留 tablist/tab 语义。
+// activeView 那一组是真正的面板切换，用 tablist 模式，并把 tab ↔ tabpanel 的 id
+// 关联通过 option 的 id / panelId 交给组件。
 // 这些图表一页可能渲染多次（管理端 UsageView、AccountStatsModal），id 必须用 useId() 生成。
 const titleId = useId()
 const sourceLabelId = useId()
@@ -383,6 +324,34 @@ const enableRankingView = computed(() => props.enableRankingView)
 const showAccountCost = computed(() => props.showAccountCost)
 const distributionColspan = computed(() => showAccountCost.value ? 6 : 5)
 const activeView = ref<'model_distribution' | 'spending_ranking'>('model_distribution')
+
+const sourceOptions = computed(() => [
+  { value: 'requested' as const, label: t('usage.requestedModel') },
+  { value: 'upstream' as const, label: t('usage.upstreamModel') },
+  { value: 'mapping' as const, label: t('usage.mapping') },
+])
+
+const metricOptions = computed(() => [
+  { value: 'tokens' as const, label: t('admin.dashboard.metricTokens') },
+  { value: 'actual_cost' as const, label: t('admin.dashboard.metricActualCost') },
+])
+
+// tablist 模式：`id` 是面板 aria-labelledby 的目标，`panelId` 成为选中 tab 的
+// aria-controls，两边共用下面那两个 useId()，关联关系不变。
+const viewOptions = computed(() => [
+  {
+    value: 'model_distribution' as const,
+    label: t('admin.dashboard.viewModelDistribution'),
+    id: distributionTabId,
+    panelId: distributionPanelId,
+  },
+  {
+    value: 'spending_ranking' as const,
+    label: t('admin.dashboard.viewSpendingRanking'),
+    id: rankingTabId,
+    panelId: rankingPanelId,
+  },
+])
 
 /**
  * tabpanel 关联属性。面板内容用 v-if 链渲染，同一时刻只有一个分支在 DOM 里，

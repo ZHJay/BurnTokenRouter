@@ -23,26 +23,21 @@ const {
   showError: vi.fn()
 }))
 
-vi.mock('@/api/admin', () => ({
-  adminAPI: {
+// Derived from the real `@/api/admin` surface so endpoints this spec does not stub
+// (e.g. `groups.getLiveCapability`, called from `onMounted`) still exist as resolving
+// spies instead of throwing an unhandled `TypeError`.
+vi.mock('@/api/admin', async () => {
+  const { createAdminAPIMock } = await import('./helpers/adminApiMock')
+  return createAdminAPIMock({
     groups: {
       list: listGroups,
       duplicate: duplicateGroup,
       getModelsListCandidates,
       getUsageSummary,
-      getCapacitySummary,
-      getAll: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      updateSortOrder: vi.fn()
-    },
-    accounts: {
-      list: vi.fn(),
-      getById: vi.fn()
+      getCapacitySummary
     }
-  }
-}))
+  })
+})
 
 vi.mock('@/stores/app', () => ({
   useAppStore: () => ({ showSuccess, showError })

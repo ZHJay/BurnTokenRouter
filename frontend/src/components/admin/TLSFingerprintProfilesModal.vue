@@ -181,6 +181,9 @@
           <button
             type="button"
             @click="form.enable_grease = !form.enable_grease"
+            role="switch"
+            :aria-checked="form.enable_grease"
+            :aria-label="t('admin.tlsFingerprintProfiles.form.enableGrease')"
             :class="[
               'switch flex-shrink-0 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)]',
               form.enable_grease ? 'switch-active' : ''

@@ -64,6 +64,44 @@ export const useAppStore = defineStore('app', () => {
   // Auto-incrementing ID for toasts
   let toastIdCounter = 0
 
+  /**
+   * 自动消失倒计时的登记表。
+   *
+   * 之前是裸 setTimeout:句柄没人持有,所以既不能暂停(WCAG 2.2.1),也没法在
+   * toast 被手动关掉后清理 —— 那个 timer 会一直跑到点,再对一个已经不存在的
+   * id 调一次 hideToast。
+   *
+   * paused 态记 remaining 而不记绝对到点时间:恢复时直接用剩余毫秒重开 timer,
+   * 不需要再跟 Date.now() 对账。
+   */
+  type ToastTimer =
+    | { state: 'running'; handle: ReturnType<typeof setTimeout>; startedAt: number; remaining: number }
+    | { state: 'paused'; remaining: number }
+
+  const toastTimers = new Map<string, ToastTimer>()
+
+  /** 起一个倒计时并登记。remaining <= 0 时立即关闭。 */
+  function startToastTimer(id: string, remaining: number): void {
+    if (remaining <= 0) {
+      hideToast(id)
+      return
+    }
+    const handle = setTimeout(() => {
+      toastTimers.delete(id)
+      hideToast(id)
+    }, remaining)
+    toastTimers.set(id, { state: 'running', handle, startedAt: Date.now(), remaining })
+  }
+
+  /** 清掉并注销某条 toast 的倒计时。没有登记时是 no-op。 */
+  function clearToastTimer(id: string): void {
+    const timer = toastTimers.get(id)
+    if (timer?.state === 'running') {
+      clearTimeout(timer.handle)
+    }
+    toastTimers.delete(id)
+  }
+
   // ==================== Computed ====================
 
   const hasActiveToasts = computed(() => toasts.value.length > 0)
@@ -192,12 +230,42 @@ export const useAppStore = defineStore('app', () => {
 
     // Auto-dismiss if duration is specified
     if (duration !== undefined) {
-      setTimeout(() => {
-        hideToast(id)
-      }, duration)
+      startToastTimer(id, duration)
     }
 
     return id
+  }
+
+  /**
+   * 暂停某条 toast 的自动消失倒计时。
+   *
+   * WCAG 2.2.1:3s / 5s 的倒计时在屏幕阅读器读到一半时照样在跑。短的必要提示
+   * 本来在 2.2.1 的例外里,所以这是加分项而非硬性要求 —— 但悬停 / 聚焦暂停是
+   * 惯常的补偿手段,而且很便宜。由 Toast.vue 的 mouseenter / focusin 触发。
+   *
+   * @param id - Toast ID;未知 id 或无倒计时的 toast 为 no-op
+   */
+  function pauseToast(id: string): void {
+    const timer = toastTimers.get(id)
+    if (timer?.state !== 'running') return
+
+    clearTimeout(timer.handle)
+    const elapsed = Date.now() - timer.startedAt
+    toastTimers.set(id, {
+      state: 'paused',
+      remaining: Math.max(0, timer.remaining - elapsed)
+    })
+  }
+
+  /**
+   * 用剩余时间重启倒计时。由 Toast.vue 的 mouseleave / focusout 触发。
+   * @param id - Toast ID;未暂停的 toast 为 no-op
+   */
+  function resumeToast(id: string): void {
+    const timer = toastTimers.get(id)
+    if (timer?.state !== 'paused') return
+
+    startToastTimer(id, timer.remaining)
   }
 
   /**
@@ -241,6 +309,7 @@ export const useAppStore = defineStore('app', () => {
    * @param id - Toast ID to hide
    */
   function hideToast(id: string): void {
+    clearToastTimer(id)
     const index = toasts.value.findIndex((t) => t.id === id)
     if (index !== -1) {
       toasts.value.splice(index, 1)
@@ -251,6 +320,9 @@ export const useAppStore = defineStore('app', () => {
    * Clear all toasts
    */
   function clearAllToasts(): void {
+    for (const id of Array.from(toastTimers.keys())) {
+      clearToastTimer(id)
+    }
     toasts.value = []
   }
 
@@ -303,7 +375,7 @@ export const useAppStore = defineStore('app', () => {
     sidebarCollapsed.value = false
     loading.value = false
     loadingCount.value = 0
-    toasts.value = []
+    clearAllToasts()
   }
 
   // ==================== Version Management ====================
@@ -546,6 +618,8 @@ export const useAppStore = defineStore('app', () => {
     showInfo,
     showWarning,
     hideToast,
+    pauseToast,
+    resumeToast,
     clearAllToasts,
     withLoading,
     withLoadingAndError,

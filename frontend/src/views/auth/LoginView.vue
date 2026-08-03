@@ -58,11 +58,24 @@
               :class="{ 'input-error': errors.password }"
               :placeholder="t('auth.passwordPlaceholder')"
             />
+            <!--
+              inset-y-0 my-auto, not top-1/2 -translate-y-1/2. Both resolve to
+              (containing block - own height) / 2, so the rendered position is
+              identical — but this one survives `transform: none`. .btn is in the
+              reduced-motion kill list in src/style.css (that kill is correct: it
+              neutralises the active:scale-[0.96] press feedback), and it beats a
+              utility on layer order, so the transform spelling lost its pull-back
+              under that preference and the button dropped by half its own height:
+              +18px at 36px tall, +22px under (pointer: coarse) where min-height
+              becomes 44px. Auto margins need no transform, so the kill cannot
+              reach them. Same fix at RegisterView.vue and ResetPasswordView.vue
+              (x2); keep the four spellings identical so they stay greppable.
+            -->
             <button
               type="button"
               @click="showPassword = !showPassword"
               :disabled="authActionDisabled"
-              class="btn btn-ghost btn-icon absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-dark-300"
+              class="btn btn-ghost btn-icon absolute inset-y-0 right-2 my-auto text-gray-400 hover:text-gray-600 dark:hover:text-dark-300"
             >
               <Icon v-if="showPassword" name="eyeOff" size="md" />
               <Icon v-else name="eye" size="md" />

@@ -152,6 +152,9 @@ const dailyFixedHint = computed(() =>
         <button
           type="button"
           @click="localEnabled = !localEnabled"
+          role="switch"
+          :aria-checked="localEnabled"
+          :aria-label="t('admin.accounts.quotaLimitToggle')"
           :class="[
             'switch flex-shrink-0 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]',
             localEnabled && 'switch-active'

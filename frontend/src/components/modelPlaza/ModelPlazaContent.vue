@@ -1,9 +1,11 @@
 <template>
-  <div class="space-y-5">
+  <div class="space-y-4">
     <!-- 页头(独立形态下展示标题;后台形态 AppHeader 已有页面标题) -->
+    <!-- `.page-title` is the shipped 24px scale. The old sm:text-3xl bumped it
+         to 30px, which is not a step on that scale. -->
     <div v-if="!embedded">
-      <h1 class="page-title sm:text-3xl">{{ t('modelPlaza.title') }}</h1>
-      <p class="mt-1.5 text-sm text-gray-500 dark:text-dark-400">{{ t('modelPlaza.description') }}</p>
+      <h1 class="page-title">{{ t('modelPlaza.title') }}</h1>
+      <p class="page-description">{{ t('modelPlaza.description') }}</p>
     </div>
 
     <!-- 全局价格说明(管理员配置,Markdown) -->
@@ -26,10 +28,10 @@
     <div v-if="loading" class="flex min-h-[240px] items-center justify-center">
       <div class="spinner h-8 w-8 text-primary-600 dark:text-primary-400"></div>
     </div>
-    <div
-      v-else-if="error"
-      class="rounded-xl bg-red-50 px-5 py-8 text-center text-sm text-red-600 dark:bg-red-500/10 dark:text-red-300"
-    >
+    <!-- Error is content, so it gets the same opaque card as everything else.
+         `--sys-red-text` is the token for red-as-text; the old bg-red-50 tinted
+         panel exists nowhere else in the system. -->
+    <div v-else-if="error" class="card p-6 text-center text-sm text-[var(--sys-red-text)]">
       {{ t('modelPlaza.loadFailed') }}
     </div>
     <template v-else>
@@ -49,14 +51,13 @@
       />
 
       <!-- 分组分节的模型清单(默认按生效倍率升序) -->
-      <div v-if="filteredGroups.length > 0" class="space-y-5">
+      <div v-if="filteredGroups.length > 0" class="space-y-4">
         <PlazaGroupSection v-for="g in filteredGroups" :key="g.id" :group="g" />
       </div>
-      <div
-        v-else
-        class="rounded-xl border border-dashed border-gray-300 px-5 py-12 text-center text-sm text-gray-500 dark:border-dark-600 dark:text-dark-400"
-      >
-        {{ searchActive ? t('modelPlaza.noSearchResult') : t('modelPlaza.empty') }}
+      <!-- EmptyState in a card, matching every other empty case in the app. The
+           previous dashed rectangle appears nowhere in the design system. -->
+      <div v-else class="card">
+        <EmptyState :title="searchActive ? t('modelPlaza.noSearchResult') : t('modelPlaza.empty')" />
       </div>
     </template>
   </div>
@@ -68,6 +69,7 @@ import { useI18n } from 'vue-i18n'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import Icon from '@/components/icons/Icon.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 import PlazaFilterBar from './PlazaFilterBar.vue'
 import PlazaGroupSection from './PlazaGroupSection.vue'
 import type { ModelPlazaGroup, ModelPlazaResponse } from '@/api/modelPlaza'

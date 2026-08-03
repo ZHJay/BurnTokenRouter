@@ -161,13 +161,18 @@
         </div>
       </div>
 
-      <div v-if="errorViewEnabled" class="flex gap-2 border-b border-gray-200 dark:border-dark-700">
-        <button class="tab" :class="{ 'tab-active': activeTab === 'usage' }" @click="activeTab = 'usage'">
-          {{ t('usage.tabs.usage') }}
-        </button>
-        <button class="tab" :class="{ 'tab-active': activeTab === 'errors' }" @click="switchToErrors">
-          {{ t('usage.tabs.errors') }}
-        </button>
+      <!-- 外层 border-b 是明细区上方的结构分隔线，不是 tab 下划线；Segmented 自带
+           轨道与滑块，因此不再出现"白色药丸浮在下边框条上"的错配（此前 .tab-active
+           画的是药丸轨道的选中面，而这条 bar 根本没有轨道）。
+           选中态不能用 v-model：切到 errors 需要跑 switchToErrors 的懒加载。 -->
+      <div v-if="errorViewEnabled" class="flex border-b border-gray-200 dark:border-dark-700">
+        <Segmented
+          :model-value="activeTab"
+          :options="detailTabOptions"
+          mode="tablist"
+          :aria-label="t('usage.title')"
+          @update:model-value="switchTab"
+        />
       </div>
 
       <template v-if="activeTab === 'usage'">
@@ -229,6 +234,7 @@ import EndpointDistributionChart from '@/components/charts/EndpointDistributionC
 import TokenUsageTrend from '@/components/charts/TokenUsageTrend.vue'
 import Icon from '@/components/icons/Icon.vue'
 import UserErrorRequestsTable from '@/components/user/UserErrorRequestsTable.vue'
+import Segmented from '@/components/common/Segmented.vue'
 import { getPersistedPageSize } from '@/composables/usePersistedPageSize'
 import { formatReasoningEffort } from '@/utils/format'
 import { BILLING_MODE_IMAGE, getBillingModeLabel } from '@/utils/billingMode'
@@ -350,6 +356,14 @@ const endpointDistributionMetric = ref<DistributionMetric>('tokens')
 const endpointDistributionSource = ref<EndpointSource>('inbound')
 const activeTab = ref<'usage' | 'errors'>('usage')
 const errorViewEnabled = computed(() => appStore.cachedPublicSettings?.allow_user_view_error_requests ?? false)
+
+// Segmented 的段集。显式标注 value 的联合类型，否则泛型 T 会塌成 string，
+// 与 activeTab 的 'usage' | 'errors' 对不上（同 ChannelsView 的处理）。
+// 标签来自 t()，locale 切换时随之更新。
+const detailTabOptions = computed<{ value: 'usage' | 'errors'; label: string }[]>(() => [
+  { value: 'usage', label: t('usage.tabs.usage') },
+  { value: 'errors', label: t('usage.tabs.errors') },
+])
 
 const filters = ref<UsageQueryParams>({
   start_date: startDate.value,
@@ -871,6 +885,19 @@ const onErrorPageSize = (pageSize: number) => {
 const switchToErrors = () => {
   activeTab.value = 'errors'
   if (errorRows.value.length === 0) void loadErrors()
+}
+
+/**
+ * Segmented 只发 update:modelValue，不写值，所以选中 errors 必须继续走
+ * switchToErrors（它除了赋值还负责首次进入时懒加载错误列表）。
+ * 保留 switchToErrors 本体不改：它还是 errors 侧唯一的入口。
+ */
+const switchTab = (tab: 'usage' | 'errors') => {
+  if (tab === 'errors') {
+    switchToErrors()
+    return
+  }
+  activeTab.value = tab
 }
 
 onMounted(() => {

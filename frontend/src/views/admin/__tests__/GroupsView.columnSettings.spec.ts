@@ -43,24 +43,24 @@ const messages: Record<string, string> = {
   'admin.groups.columns.actions': 'Actions',
 }
 
-vi.mock('@/api/admin', () => ({
-  adminAPI: {
+// Derived from the real `@/api/admin` surface so endpoints this spec does not stub
+// (e.g. `groups.getLiveCapability`, called from `onMounted`) still exist as resolving
+// spies instead of throwing an unhandled `TypeError`.
+vi.mock('@/api/admin', async () => {
+  const { createAdminAPIMock } = await import('./helpers/adminApiMock')
+  return createAdminAPIMock({
     groups: {
       list: listGroups,
       getAll: getAllGroups,
       getModelsListCandidates,
       getUsageSummary,
       getCapacitySummary,
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      updateSortOrder: vi.fn(),
     },
     accounts: {
       list: listAccounts,
     },
-  },
-}))
+  })
+})
 
 vi.mock('@/stores/app', () => ({
   useAppStore: () => ({

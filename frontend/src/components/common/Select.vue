@@ -5,8 +5,11 @@
       type="button"
       @click="toggle"
       :disabled="disabled"
+      role="combobox"
       :aria-expanded="isOpen"
-      :aria-haspopup="true"
+      aria-haspopup="listbox"
+      :aria-controls="isOpen ? listboxId : undefined"
+      :aria-activedescendant="activeDescendantId"
       :id="id"
       :aria-label="ariaLabel ?? 'Select option'"
       :aria-describedby="ariaDescribedby"
@@ -16,8 +19,7 @@
         error && 'select-trigger-error',
         disabled && 'select-trigger-disabled'
       ]"
-      @keydown.down.prevent="onTriggerKeyDown"
-      @keydown.up.prevent="onTriggerKeyDown"
+      @keydown="onTriggerKeyDown"
     >
       <span class="select-value">
         <slot name="selected" :option="selectedOption">
@@ -54,7 +56,6 @@
           class="select-dropdown-portal"
           :class="[instanceId]"
           :style="dropdownStyle"
-          role="listbox"
           @click.stop
           @mousedown.stop
           @keydown="onDropdownKeyDown"
@@ -68,16 +69,29 @@
               type="text"
               :placeholder="searchPlaceholderText"
               :aria-label="searchPlaceholderText"
+              role="combobox"
+              :aria-expanded="isOpen"
+              aria-haspopup="listbox"
+              :aria-controls="listboxId"
+              :aria-activedescendant="activeDescendantId"
+              aria-autocomplete="list"
               class="select-search-input"
               @click.stop
             />
           </div>
 
           <!-- Options list -->
-          <div class="select-options" ref="optionsListRef">
+          <div
+            class="select-options"
+            ref="optionsListRef"
+            role="listbox"
+            :id="listboxId"
+            :aria-label="ariaLabel ?? 'Select option'"
+          >
             <div
               v-for="(option, index) in filteredOptions"
               :key="`${typeof getOptionValue(option)}:${String(getOptionValue(option) ?? '')}`"
+              :id="getOptionId(index)"
               role="option"
               :aria-selected="isSelected(option)"
               :aria-disabled="isOptionDisabled(option)"
@@ -110,7 +124,7 @@
             </div>
 
             <!-- Empty state -->
-            <div v-if="filteredOptions.length === 0" class="select-empty">
+            <div v-if="filteredOptions.length === 0" class="select-empty" role="presentation">
               {{ emptyTextDisplay }}
             </div>
           </div>
@@ -195,6 +209,20 @@ const emptyTextDisplay = computed(() => props.emptyText ?? t('common.noOptionsFo
 const isSearchable = computed(() => {
   if (props.searchable === 'auto') return props.options.length > 5
   return props.searchable
+})
+
+/* combobox 的三段引用：listbox 容器 id、每个 option 的 id、当前高亮的 option id。
+   instanceId 已经是每个实例唯一（见上方 select-${random}），所以直接派生即可。
+   id 按 index 派生而不是按 value：value 可能是 boolean / null / 带空格的字符串，
+   不能直接进 HTML id；index 在同一次渲染内天然唯一，而 aria-activedescendant
+   本来就只需要在当次渲染里成立。 */
+const listboxId = `${instanceId}-listbox`
+const getOptionId = (index: number) => `${instanceId}-option-${index}`
+
+const activeDescendantId = computed(() => {
+  if (!isOpen.value) return undefined
+  if (focusedIndex.value < 0 || focusedIndex.value >= filteredOptions.value.length) return undefined
+  return getOptionId(focusedIndex.value)
 })
 
 // Computed style for teleported dropdown
@@ -397,10 +425,34 @@ const clearSelection = () => {
 }
 
 // Keyboards
-const onTriggerKeyDown = () => {
+/* 焦点始终留在 trigger 上，不进弹层。
+
+   弹层是 v-if 挂载的，四条关闭路径里只有两条会把焦点还给 trigger
+   （selectOption 与 Escape）；Tab 与 click-outside 不会。若焦点在弹层内部，
+   那两条路径会把焦点掉给 <body>，把「弹层收不到键盘」换成「焦点丢失」，
+   是另一个 2.4.3 失败。焦点留在 trigger 则这两条路径无需任何新逻辑，
+   同时也正是本组件已经在靠近的 ARIA combobox 模式。
+
+   代价是 keydown 必须同时绑在 trigger 和弹层上：弹层 teleport 到 body，
+   不是 trigger 的 DOM 祖先，冒泡不会到它那儿 —— 这正是原先不可搜索变体
+   键盘全哑的原因（可搜索时是弹层内的搜索框拿到焦点，才「碰巧」能用）。
+
+   两处绑定不会双触发：teleport 后的弹层与 trigger 是 body 下的兄弟子树，
+   trigger 上的 keydown 冒泡路径里没有弹层。 */
+const onTriggerKeyDown = (e: KeyboardEvent) => {
   if (!isOpen.value) {
-    isOpen.value = true
+    /* 关闭态只认方向键开合，其余键（Enter / Space）继续走 button 原生
+       activation → click → toggle，与改动前一致。 */
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault()
+      isOpen.value = true
+    }
+    return
   }
+
+  /* 已展开：交给同一套弹层键盘逻辑。这里不能重复「打开」动作，否则一次
+     ArrowDown 会既开弹层又移高亮 —— 开合与移动必须互斥。 */
+  onDropdownKeyDown(e)
 }
 
 const onDropdownKeyDown = (e: KeyboardEvent) => {
@@ -474,7 +526,9 @@ onUnmounted(() => {
 /* 触发器读作 input：不透明表面 + 内嵌发丝线，聚焦时 accent 环 */
 .select-trigger {
   @apply flex w-full items-center justify-between gap-2;
-  @apply cursor-pointer rounded-lg px-4 py-2.5 text-sm;
+  /* py-2 → 36px，与 .input 对齐。py-2.5 是 40px，在共享筛选行里
+     （如 /admin/risk-control）与相邻 .input 差 4px，肉眼可见。 */
+  @apply cursor-pointer rounded-lg px-4 py-2 text-sm;
   background-color: var(--surface-secondary);
   color: var(--label);
   border: 0;
@@ -557,13 +611,21 @@ onUnmounted(() => {
 </style>
 
 <style>
-/* 弹层：短暂出现的浮层走 thin 材质 + 四层玻璃边缘 */
+/* 弹层：不透明表面 + 四层玻璃边缘。
+
+   这里刻意不用 thin 材质：弹层 teleport 到 body，逃出了 modal 的 backdrop
+   root，所以它会真的把下面那层 modal 材质再模糊一次。实测单层 thin 均值
+   218.5，thin 叠 thin 是 248.6 —— 比 0.91 的纯白填充还亮，因为 --mat-diffuse
+   里的 brightness(1.06) 生效了两次，表面不再读作材质。全仓 29 个文件、84 处
+   可达嵌套，其中 75 处是本组件。
+
+   每个调用点都叠在别的 chrome 上，答案永远相同，所以判断放在这一处，
+   与 6bc93a653 对 .btn-secondary 采用的同一论证。
+   保留四层玻璃边缘与 --shadow-3，只换填充与模糊。 */
 .select-dropdown-portal {
   @apply w-max min-w-[200px];
   @apply overflow-hidden rounded-xl;
-  background: var(--mat-thin);
-  backdrop-filter: blur(var(--mat-blur-thin)) var(--mat-diffuse);
-  -webkit-backdrop-filter: blur(var(--mat-blur-thin)) var(--mat-diffuse);
+  background: var(--surface);
   border: 0;
   box-shadow:
     0 0 0 0.5px var(--glass-edge-outer),

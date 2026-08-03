@@ -5,7 +5,15 @@ import { Chart as ChartJS, BarElement, CategoryScale, Legend, LinearScale, Toolt
 import { Bar } from 'vue-chartjs'
 import type { OpsLatencyHistogramResponse } from '@/api/admin/ops'
 import type { ChartState } from '../types'
-import { opsAxisFont, opsChartChrome, opsHue, opsScheme, opsTooltipStyle } from '../utils/chartTheme'
+import {
+  chartAxisChrome,
+  chartAxisFont,
+  chartAxisNoGrid,
+  chartChrome,
+  chartHue,
+  chartTooltipStyle,
+  useChartScheme
+} from '@/lib/chart'
 import HelpTooltip from '@/components/common/HelpTooltip.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 
@@ -19,14 +27,18 @@ interface Props {
 const props = defineProps<Props>()
 const { t } = useI18n()
 
-const isDarkMode = computed(() => document.documentElement.classList.contains('dark'))
-const scheme = computed(() => opsScheme(isDarkMode.value))
+/**
+ * canvas 读不到 CSS 变量，配色只能由 JS 侧驱动 —— `useChartScheme()` 用
+ * MutationObserver 盯 `<html class="dark">`，主题切换时让下面的 computed 重新求值。
+ * （此前 `isDarkMode` 直接在 computed 里读 DOM：`classList.contains()` 不是响应式源，
+ * computed 永不失效，切主题后图表会停在旧配色直到整页刷新。）
+ */
+const scheme = useChartScheme()
 // 延迟直方图用系统靛蓝，与吞吐（蓝）/ 错误（红）区分开
 const colors = computed(() => {
-  const chrome = opsChartChrome(scheme.value)
+  const chrome = chartChrome(scheme.value)
   return {
-    indigo: opsHue('indigo', scheme.value),
-    grid: chrome.grid,
+    indigo: chartHue('indigo', scheme.value),
     text: chrome.axis
   }
 })
@@ -63,17 +75,17 @@ const options = computed(() => {
     maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
-      tooltip: opsTooltipStyle(scheme.value)
+      tooltip: chartTooltipStyle(scheme.value)
     },
     scales: {
       x: {
-        grid: { display: false },
-        ticks: { color: c.text, font: opsAxisFont() }
+        ...chartAxisNoGrid(),
+        ticks: { color: c.text, font: chartAxisFont() }
       },
       y: {
         beginAtZero: true,
-        grid: { color: c.grid, borderDash: [4, 4] },
-        ticks: { color: c.text, font: opsAxisFont() }
+        ...chartAxisChrome(scheme.value, true),
+        ticks: { color: c.text, font: chartAxisFont() }
       }
     }
   }
@@ -99,7 +111,13 @@ const options = computed(() => {
     </div>
 
     <div class="min-h-0 flex-1">
-      <Bar v-if="state === 'ready' && chartData" :data="chartData" :options="options" />
+      <!-- vue-chartjs 渲染的是裸 <canvas>（已带 role="img"），不给 aria-label 就是一个无名图形 -->
+      <Bar
+        v-if="state === 'ready' && chartData"
+        :data="chartData"
+        :options="options"
+        :aria-label="t('admin.ops.latencyHistogram')"
+      />
       <div v-else class="flex h-full items-center justify-center">
         <div v-if="state === 'loading'" class="animate-pulse text-sm text-gray-400">{{ t('common.loading') }}</div>
         <EmptyState v-else :title="t('common.noData')" :description="t('admin.ops.charts.emptyRequest')" />

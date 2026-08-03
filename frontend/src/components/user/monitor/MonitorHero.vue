@@ -1,25 +1,40 @@
 <template>
-  <section class="py-3 md:py-4">
-    <div class="flex items-center justify-end gap-3 flex-wrap">
-      <div
-        role="radiogroup"
-        :aria-label="t('dashboard.timeRange')"
-        class="tabs"
-      >
-        <button
-          v-for="opt in windowOptions"
-          :key="opt.value"
-          type="button"
-          role="radio"
-          :aria-checked="window === opt.value"
-          class="tab text-xs active:scale-[0.96]"
-          :class="window === opt.value && 'tab-active'"
-          @click="emit('update:window', opt.value)"
-          @keydown="handleRadioGroupKeydown"
+  <!--
+    Opaque `.card`, not glass — even though this is a control row.
+    It scrolls with the content, and glass (`--mat-regular`) is reserved for the
+    chrome that content passes UNDER: the fixed top bar and the sticky thead.
+    A glass card mid-page would stack translucency over the ambient wash and
+    read as a second top bar. Same shape as /dashboard and /admin/usage:
+    subject on the left, controls on the right, inside one opaque surface.
+  -->
+  <section class="card p-4">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <!-- Left: the subject of the row. Without it the controls float against
+           a bare background with nothing to be attached to. -->
+      <div class="flex items-center gap-3">
+        <div
+          class="stat-icon h-8 w-8"
+          :class="statusTileClass"
+          aria-hidden="true"
         >
-          {{ opt.label }}
-        </button>
+          <Icon :name="statusIconName" size="sm" />
+        </div>
+        <div class="flex flex-col gap-0.5">
+          <span class="stat-label">{{ t('channelStatus.title') }}</span>
+          <span class="text-xs text-gray-500 dark:text-gray-400">{{ metaLine }}</span>
+        </div>
       </div>
+
+      <!-- Right: window / status / refresh / auto-refresh -->
+      <div class="flex items-center gap-2 flex-wrap">
+      <Segmented
+        :model-value="window"
+        :options="windowOptions"
+        mode="radiogroup"
+        :aria-label="t('dashboard.timeRange')"
+        item-class="text-xs"
+        @update:model-value="emit('update:window', $event)"
+      />
 
       <span
         class="badge uppercase tracking-[0.04em]"
@@ -32,9 +47,12 @@
         {{ overallLabel }}
       </span>
 
+      <!-- btn-secondary, not btn-ghost: a ghost icon button on an opaque card
+           has no affordance. btn-secondary carries the four-layer edge and
+           btn-icon lands at 36px, matching the tabs and the auto-refresh pill. -->
       <button
         type="button"
-        class="btn btn-ghost btn-icon h-8 w-8"
+        class="btn btn-secondary btn-icon"
         :disabled="loading"
         :title="t('common.refresh')"
         @click="emit('refresh')"
@@ -51,6 +69,7 @@
         @update:enabled="autoRefresh.setEnabled"
         @update:interval="autoRefresh.setInterval"
       />
+      </div>
     </div>
   </section>
 </template>
@@ -60,7 +79,8 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
 import AutoRefreshButton from '@/components/common/AutoRefreshButton.vue'
-import { handleRadioGroupKeydown } from '@/utils/radioGroupKeyboard'
+import Segmented from '@/components/common/Segmented.vue'
+import { formatTime } from '@/utils/format'
 export type MonitorWindow = '7d' | '15d' | '30d'
 export type OverallStatus = 'operational' | 'degraded'
 
@@ -69,6 +89,8 @@ const props = defineProps<{
   intervalSeconds: number
   window: MonitorWindow
   loading: boolean
+  /** Timestamp of the last completed load, for the meta line. */
+  lastUpdatedAt?: number | null
   autoRefresh?: {
     enabled: { value: boolean }
     intervalSeconds: { value: number }
@@ -93,6 +115,26 @@ const windowOptions = computed<{ value: MonitorWindow; label: string }[]>(() => 
 ])
 
 const overallLabel = computed(() => t(`channelStatus.overall.${props.overallStatus}`))
+
+/* The status tile tints by state, so the row carries its state visually as well
+   as in the badge text. Both tints have a per-theme value in style.css. */
+const statusTileClass = computed(() =>
+  props.overallStatus === 'operational' ? 'stat-icon-success' : 'stat-icon-warning',
+)
+
+const statusIconName = computed(() =>
+  props.overallStatus === 'operational' ? 'checkCircle' : 'exclamationTriangle',
+)
+
+/* Last-updated + the backend probe interval. `intervalSeconds` is the monitor's
+   own probe cadence, which is a different number from the auto-refresh pill's
+   client poll — the pill says how often this page refetches, this says how often
+   the data behind it is actually recollected. */
+const metaLine = computed(() => {
+  const poll = t('monitorCommon.pollEvery', { n: props.intervalSeconds })
+  if (!props.lastUpdatedAt) return poll
+  return `${t('monitorCommon.updatedAt', { time: formatTime(new Date(props.lastUpdatedAt)) })} · ${poll}`
+})
 
 const overallChipClass = computed(() => {
   switch (props.overallStatus) {

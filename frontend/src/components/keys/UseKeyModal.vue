@@ -31,27 +31,23 @@
         <!-- Client Tabs：Apple 分段控件。少量对等选项就地换内容面板，
              因此保留 tablist/tab/aria-selected 语义。 -->
         <div v-if="clientTabs.length" class="overflow-x-auto">
-          <nav class="tabs flex min-w-max" aria-label="Client" role="tablist">
-            <button
-              v-for="tab in clientTabs"
-              :key="tab.id"
-              type="button"
-              role="tab"
-              :aria-selected="activeClientTab === tab.id"
-              @click="activeClientTab = tab.id"
-              :class="[
-                'tab whitespace-nowrap transition-transform duration-instant ease-apple-out',
-                'focus-visible:outline-none focus-visible:ring-[3.5px]',
-                'focus-visible:ring-[color:var(--accent-tint-strong)] active:scale-[0.96]',
-                activeClientTab === tab.id && 'tab-active'
-              ]"
-            >
+          <!-- min-w-max keeps the track wider than the scroller so the segments
+               scroll horizontally instead of wrapping onto a second row. -->
+          <Segmented
+            v-model="activeClientTab"
+            :options="clientTabOptions"
+            mode="tablist"
+            aria-label="Client"
+            class="flex min-w-max"
+            item-class="whitespace-nowrap"
+          >
+            <template #option="{ option }">
               <span class="flex items-center gap-2">
-                <component :is="tab.icon" class="w-4 h-4" />
-                {{ tab.label }}
+                <component :is="tabIcon(clientTabs, option.value)" class="w-4 h-4" />
+                {{ option.label }}
               </span>
-            </button>
-          </nav>
+            </template>
+          </Segmented>
         </div>
 
         <!-- Codex Authentication Mode -->
@@ -67,40 +63,15 @@
               {{ t('keys.useKeyModal.openai.authModeDescription') }}
             </p>
           </div>
-          <div
-            class="tabs grid grid-cols-2 gap-1"
-            role="radiogroup"
+          <!-- The per-option test hook moved from data-testid onto `id`, which
+               Segmented renders on the segment itself. -->
+          <Segmented
+            v-model="codexAuthMode"
+            :options="codexAuthModeOptions"
+            mode="radiogroup"
             :aria-label="t('keys.useKeyModal.openai.authModeTitle')"
-          >
-            <button
-              type="button"
-              role="radio"
-              data-testid="codex-auth-mode-legacy"
-              :aria-checked="codexAuthMode === 'legacy'"
-              :class="[
-                'tab focus-visible:outline-none focus-visible:ring-[3.5px]',
-                'focus-visible:ring-[color:var(--accent-tint-strong)]',
-                codexAuthMode === 'legacy' && 'tab-active',
-              ]"
-              @click="codexAuthMode = 'legacy'"
-            >
-              {{ t('keys.useKeyModal.openai.authModeLegacy') }}
-            </button>
-            <button
-              type="button"
-              role="radio"
-              data-testid="codex-auth-mode-api-key"
-              :aria-checked="codexAuthMode === 'api-key'"
-              :class="[
-                'tab focus-visible:outline-none focus-visible:ring-[3.5px]',
-                'focus-visible:ring-[color:var(--accent-tint-strong)]',
-                codexAuthMode === 'api-key' && 'tab-active',
-              ]"
-              @click="codexAuthMode = 'api-key'"
-            >
-              {{ t('keys.useKeyModal.openai.authModeApiKey') }}
-            </button>
-          </div>
+            class="grid grid-cols-2 gap-1"
+          />
           <div
             v-if="codexAuthMode === 'api-key'"
             data-testid="codex-api-key-restart-notice"
@@ -113,27 +84,21 @@
 
         <!-- OS/Shell Tabs：同上，2–3 个对等选项就地换代码面板 -->
         <div v-if="showShellTabs" class="overflow-x-auto">
-          <nav class="tabs flex min-w-max" aria-label="Tabs" role="tablist">
-            <button
-              v-for="tab in currentTabs"
-              :key="tab.id"
-              type="button"
-              role="tab"
-              :aria-selected="activeTab === tab.id"
-              @click="activeTab = tab.id"
-              :class="[
-                'tab whitespace-nowrap transition-transform duration-instant ease-apple-out',
-                'focus-visible:outline-none focus-visible:ring-[3.5px]',
-                'focus-visible:ring-[color:var(--accent-tint-strong)] active:scale-[0.96]',
-                activeTab === tab.id && 'tab-active'
-              ]"
-            >
+          <Segmented
+            v-model="activeTab"
+            :options="shellTabOptions"
+            mode="tablist"
+            aria-label="Tabs"
+            class="flex min-w-max"
+            item-class="whitespace-nowrap"
+          >
+            <template #option="{ option }">
               <span class="flex items-center gap-2">
-                <component :is="tab.icon" class="w-4 h-4" />
-                {{ tab.label }}
+                <component :is="tabIcon(currentTabs, option.value)" class="w-4 h-4" />
+                {{ option.label }}
               </span>
-            </button>
-          </nav>
+            </template>
+          </Segmented>
         </div>
 
         <!-- Code Blocks (Stacked for multi-file platforms) -->
@@ -205,6 +170,7 @@ import { ref, computed, h, watch, type Component } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/components/common/BaseDialog.vue'
 import Icon from '@/components/icons/Icon.vue'
+import Segmented from '@/components/common/Segmented.vue'
 import { useClipboard } from '@/composables/useClipboard'
 import type { GroupPlatform } from '@/types'
 
@@ -408,6 +374,39 @@ const currentTabs = computed(() => {
   }
   return shellTabs
 })
+
+/* ------------------------------------------------- segmented control options */
+
+/**
+ * `SegmentedOption` carries no icon field, so the icon stays on `TabConfig` and
+ * is looked up by value from inside the `option` slot. Widening the shared
+ * option type for one call site's icons would be the wrong trade.
+ */
+function tabIcon(tabs: TabConfig[], value: string | number): Component | undefined {
+  return tabs.find((tab) => tab.id === value)?.icon
+}
+
+const clientTabOptions = computed(() =>
+  clientTabs.value.map((tab) => ({ value: tab.id, label: tab.label })),
+)
+
+const shellTabOptions = computed(() =>
+  currentTabs.value.map((tab) => ({ value: tab.id, label: tab.label })),
+)
+
+// `id` doubles as this control's test hook; it used to be a data-testid.
+const codexAuthModeOptions = computed(() => [
+  {
+    value: 'legacy' as const,
+    label: t('keys.useKeyModal.openai.authModeLegacy'),
+    id: 'codex-auth-mode-legacy',
+  },
+  {
+    value: 'api-key' as const,
+    label: t('keys.useKeyModal.openai.authModeApiKey'),
+    id: 'codex-auth-mode-api-key',
+  },
+])
 
 const platformDescription = computed(() => {
   switch (props.platform) {

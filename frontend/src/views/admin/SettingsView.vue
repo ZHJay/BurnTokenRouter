@@ -6217,34 +6217,19 @@
 	                  <label class="input-label">
 	                    {{ localText("展示形式", "Display mode") }}
 	                  </label>
-	                  <div class="tabs grid grid-cols-2 gap-0.5">
-                    <button
-                      type="button"
-                      class="tab inline-flex items-center justify-center gap-2"
-                      :class="
-                        form.login_agreement_mode === 'modal'
-                          ? 'tab-active'
-                          : ''
-                      "
-                      @click="form.login_agreement_mode = 'modal'"
-                    >
-                      <Icon name="shield" size="sm" />
-                      {{ localText("弹窗", "Modal") }}
-                    </button>
-                    <button
-                      type="button"
-                      class="tab inline-flex items-center justify-center gap-2"
-                      :class="
-                        form.login_agreement_mode === 'checkbox'
-                          ? 'tab-active'
-                          : ''
-                      "
-                      @click="form.login_agreement_mode = 'checkbox'"
-                    >
-                      <Icon name="checkCircle" size="sm" />
-                      {{ localText("复选框", "Checkbox") }}
-                    </button>
-                  </div>
+	                  <Segmented
+	                    v-model="form.login_agreement_mode"
+	                    :options="loginAgreementModeOptions"
+	                    mode="radiogroup"
+	                    :aria-label="localText('展示形式', 'Display mode')"
+	                    class="grid grid-cols-2 gap-0.5"
+	                    item-class="inline-flex items-center justify-center gap-2"
+	                  >
+	                    <template #option="{ option }">
+	                      <Icon :name="option.value === 'modal' ? 'shield' : 'checkCircle'" size="sm" />
+	                      {{ option.label }}
+	                    </template>
+	                  </Segmented>
                   <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                     {{
                       form.login_agreement_mode === "checkbox"
@@ -8034,6 +8019,7 @@ import PaymentProviderDialog from "@/components/payment/PaymentProviderDialog.vu
 import GroupBadge from "@/components/common/GroupBadge.vue";
 import GroupOptionItem from "@/components/common/GroupOptionItem.vue";
 import Toggle from "@/components/common/Toggle.vue";
+import Segmented from "@/components/common/Segmented.vue";
 import ProxySelector from "@/components/common/ProxySelector.vue";
 import ImageUpload from "@/components/common/ImageUpload.vue";
 import BackupSettings from "@/views/admin/BackupView.vue";
@@ -8075,6 +8061,13 @@ const isZhLocale = computed(() => locale.value.startsWith("zh"));
 function localText(zh: string, en: string): string {
   return isZhLocale.value ? zh : en;
 }
+
+// 登录协议展示形式：选值而非切面板，用 Segmented 的 radiogroup 模式。
+// 图标随 option 走，所以在 option 插槽里按 value 取。
+const loginAgreementModeOptions = computed(() => [
+  { value: "modal", label: localText("弹窗", "Modal") },
+  { value: "checkbox", label: localText("复选框", "Checkbox") },
+]);
 
 const paymentGuideHref = computed(() =>
   locale.value.startsWith("zh")

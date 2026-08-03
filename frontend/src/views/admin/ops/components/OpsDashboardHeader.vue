@@ -4,13 +4,13 @@ import { useI18n } from 'vue-i18n'
 import Select from '@/components/common/Select.vue'
 import HelpTooltip from '@/components/common/HelpTooltip.vue'
 import BaseDialog from '@/components/common/BaseDialog.vue'
+import Segmented from '@/components/common/Segmented.vue'
 import Icon from '@/components/icons/Icon.vue'
 import { adminAPI } from '@/api'
 import { opsAPI, type OpsDashboardOverview, type OpsMetricThresholds, type OpsRealtimeTrafficSummary } from '@/api/admin/ops'
 import type { OpsRequestDetailsPreset } from './OpsRequestDetailsModal.vue'
 import { useAdminSettingsStore } from '@/stores'
 import { formatNumber } from '@/utils/format'
-import { handleRadioGroupKeydown } from '@/utils/radioGroupKeyboard'
 
 type RealtimeWindow = '1min' | '5min' | '30min' | '1h'
 
@@ -78,6 +78,11 @@ const availableRealtimeWindows = computed(() => {
   const toolbarMinutes = TOOLBAR_RANGE_MINUTES[props.timeRange] ?? 60
   return (['1min', '5min', '30min', '1h'] as const).filter((w) => REALTIME_WINDOW_MINUTES[w] <= toolbarMinutes)
 })
+
+// The window strings are the labels, so value and label coincide here.
+const realtimeWindowOptions = computed(() =>
+  availableRealtimeWindows.value.map((w) => ({ value: w, label: w })),
+)
 
 watch(
   () => props.timeRange,
@@ -870,19 +875,9 @@ function handleToolbarRefresh() {
     <!-- Top Toolbar -->
     <div class="flex flex-wrap items-center justify-between gap-4 pb-4 shadow-[inset_0_-0.5px_0_var(--separator)]">
       <div>
-        <h1 class="flex items-center gap-2 text-xl font-semibold tracking-[-0.022em] text-gray-900 dark:text-white">
-          <svg class="h-6 w-6" :style="{ color: 'var(--accent)' }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-            />
-          </svg>
-          {{ t('admin.ops.title') }}
-        </h1>
-
-        <div v-if="!props.fullscreen" class="mt-1 flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+        <!-- 页面标题（admin.ops.title）与描述由 AppHeader 从 route.meta 渲染；
+             这里不再重复一份页面身份，只保留状态点与刷新时间。 -->
+        <div v-if="!props.fullscreen" class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
           <span class="flex items-center gap-1.5" :title="props.loading ? t('admin.ops.loadingText') : t('admin.ops.ready')">
             <span class="relative flex h-2 w-2">
               <span
@@ -940,7 +935,7 @@ function handleToolbarRefresh() {
         <button
           v-if="!props.fullscreen"
           type="button"
-          class="btn btn-secondary btn-icon h-8 w-8"
+          class="btn btn-secondary btn-icon"
           :disabled="loading"
           :title="t('common.refresh')"
           @click="handleToolbarRefresh"
@@ -961,8 +956,7 @@ function handleToolbarRefresh() {
         <button
           v-if="!props.fullscreen"
           type="button"
-          class="btn btn-sm h-8 gap-1.5"
-          :style="{ background: 'var(--accent-tint)', color: 'var(--accent)' }"
+          class="btn btn-secondary gap-1.5"
           :title="t('admin.ops.alertRules.title')"
           @click="emit('openAlertRules')"
         >
@@ -976,7 +970,7 @@ function handleToolbarRefresh() {
         <button
           v-if="!props.fullscreen"
           type="button"
-          class="btn btn-secondary btn-sm h-8 gap-1.5"
+          class="btn btn-secondary gap-1.5"
           :title="t('admin.ops.settings.title')"
           @click="emit('openSettings')"
         >
@@ -991,7 +985,7 @@ function handleToolbarRefresh() {
         <button
           v-if="!props.fullscreen"
           type="button"
-          class="btn btn-secondary btn-icon h-8 w-8"
+          class="btn btn-secondary btn-icon"
           :title="t('admin.ops.fullscreen.enter')"
           @click="emit('enterFullscreen')"
         >
@@ -1127,22 +1121,15 @@ function handleToolbarRefresh() {
 
               <!-- Time Window Selector -->
               <!-- Apple 分段控件：时间窗切换 -->
-              <!-- 选时间窗是「选值」，不切换面板：radiogroup 语义 + 方向键遍历 -->
-              <div class="tabs flex-wrap" role="radiogroup" :aria-labelledby="realtimeTitleId">
-                <button
-                  v-for="window in availableRealtimeWindows"
-                  :key="window"
-                  type="button"
-                  role="radio"
-                  class="tab px-2 py-0.5 text-[9px] sm:text-[10px]"
-                  :class="realtimeWindow === window ? 'tab-active' : ''"
-                  :aria-checked="realtimeWindow === window"
-                  @click="realtimeWindow = window"
-                  @keydown="handleRadioGroupKeydown"
-                >
-                  {{ window }}
-                </button>
-              </div>
+              <!-- 选时间窗是「选值」，不切换面板：radiogroup 模式，方向键遍历由 Segmented 提供 -->
+              <Segmented
+                v-model="realtimeWindow"
+                :options="realtimeWindowOptions"
+                mode="radiogroup"
+                :aria-labelledby="realtimeTitleId"
+                class="flex-wrap"
+                item-class="px-2 py-0.5 text-[9px] sm:text-[10px]"
+              />
             </div>
 
             <div :class="props.fullscreen ? 'space-y-4' : 'space-y-3'">

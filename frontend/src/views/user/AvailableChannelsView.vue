@@ -5,16 +5,18 @@
         <div class="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
           <div class="flex flex-1 flex-wrap items-center gap-3">
             <div class="relative w-full sm:w-80">
-              <Icon
-                name="search"
-                size="md"
-                class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
-              />
+              <!-- 前缀几何与配色对齐 Input.vue 的 #prefix 插槽与 SearchInput.vue
+                   （pl-3.5 + 输入框 pl-11），避免同一筛选行里图标缩进不一致。 -->
+              <div
+                class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400 dark:text-dark-400"
+              >
+                <Icon name="search" size="md" />
+              </div>
               <input
                 v-model="searchQuery"
                 type="text"
                 :placeholder="t('availableChannels.searchPlaceholder')"
-                class="input pl-10"
+                class="input pl-11"
               />
             </div>
           </div>

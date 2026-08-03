@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { defineComponent, ref } from 'vue'
 
 import UserDashboardCharts from '../UserDashboardCharts.vue'
 
@@ -54,6 +55,49 @@ function granularityRadios(wrapper: ReturnType<typeof mountCharts>) {
   return wrapper.findAll('[role="radiogroup"] [role="radio"]')
 }
 
+/**
+ * Host that binds `granularity` with `v-model`, the way DashboardView does.
+ *
+ * The picker is a controlled component: it renders the prop and never holds its
+ * own copy. `mountCharts` pins the prop, so any interaction that would move the
+ * selection leaves the rendered state where it was — fine for a single step, but
+ * it cannot express a round trip (pick B, then pick A again). This host lets the
+ * value actually change, which is the only way to test traversal the way a user
+ * experiences it.
+ */
+const GranularityHost = defineComponent({
+  components: { UserDashboardCharts },
+  setup() {
+    const granularity = ref('day')
+    const changes = ref(0)
+    return { granularity, changes }
+  },
+  template: `
+    <UserDashboardCharts
+      v-model:granularity="granularity"
+      :loading="false"
+      start-date="2026-05-01"
+      end-date="2026-05-08"
+      :trend="[]"
+      :models="[]"
+      @granularityChange="changes += 1"
+    />
+  `,
+})
+
+function mountHost() {
+  return mount(GranularityHost, {
+    global: {
+      stubs: {
+        LoadingSpinner: true,
+        DateRangePicker: true,
+        TokenUsageTrend: true,
+      },
+    },
+    attachTo: document.body,
+  })
+}
+
 describe('UserDashboardCharts granularity picker', () => {
   it('exposes the granularity segmented control as a named radiogroup', () => {
     const wrapper = mountCharts('day')
@@ -89,54 +133,53 @@ describe('UserDashboardCharts granularity picker', () => {
     wrapper.unmount()
   })
 
-  it('re-emits on a redundant click of the already-selected option', async () => {
+  it('does not re-emit on a redundant click of the already-selected option', async () => {
     const wrapper = mountCharts('day')
 
     await granularityRadios(wrapper)[0].trigger('click')
 
-    expect(wrapper.emitted('update:granularity')).toEqual([['day']])
-    expect(wrapper.emitted('granularityChange')).toEqual([[]])
+    // Picking the value that is already selected is not a change, and
+    // `granularityChange` re-runs `loadCharts()` in DashboardView — so emitting
+    // here would cost a duplicate request per redundant tap. This reverses the
+    // pre-Segmented behaviour, which fired unconditionally from the click
+    // handler; see Segmented.spec.ts 'does not emit when the already-selected
+    // segment is chosen again'.
+    expect(wrapper.emitted('update:granularity')).toBeUndefined()
+    expect(wrapper.emitted('granularityChange')).toBeUndefined()
 
     wrapper.unmount()
   })
 
-  it('arrow keys select through the same handler as a click', async () => {
-    const wrapper = mountCharts('day')
-    const radios = granularityRadios(wrapper)
+  it('arrow keys select through the same path as a click, in both directions', async () => {
+    const wrapper = mountHost()
+    const charts = wrapper.getComponent(UserDashboardCharts)
+    const radios = wrapper.findAll('[role="radiogroup"] [role="radio"]')
 
     await radios[0].trigger('keydown', { key: 'ArrowRight' })
-    expect(wrapper.emitted('update:granularity')).toEqual([['hour']])
-    expect(wrapper.emitted('granularityChange')).toEqual([[]])
+    expect(charts.emitted('update:granularity')).toEqual([['hour']])
+    expect(charts.emitted('granularityChange')).toEqual([[]])
+    // v-model round trip: the host owns the value, so the DOM follows.
+    expect(radios[1].attributes('aria-checked')).toBe('true')
 
     await radios[1].trigger('keydown', { key: 'ArrowLeft' })
-    expect(wrapper.emitted('update:granularity')).toEqual([['hour'], ['day']])
-    expect(wrapper.emitted('granularityChange')).toEqual([[], []])
+    expect(charts.emitted('update:granularity')).toEqual([['hour'], ['day']])
+    expect(charts.emitted('granularityChange')).toEqual([[], []])
+    expect(radios[0].attributes('aria-checked')).toBe('true')
 
     wrapper.unmount()
   })
 
   it('supports Up/Down as well as Left/Right and wraps around', async () => {
-    const wrapper = mountCharts('day')
-    const radios = granularityRadios(wrapper)
+    const wrapper = mountHost()
+    const charts = wrapper.getComponent(UserDashboardCharts)
+    const radios = wrapper.findAll('[role="radiogroup"] [role="radio"]')
 
     await radios[0].trigger('keydown', { key: 'ArrowDown' })
-    expect(wrapper.emitted('update:granularity')).toEqual([['hour']])
+    expect(charts.emitted('update:granularity')).toEqual([['hour']])
 
-    // Wrap: moving back past the first option lands on the last.
-    await radios[0].trigger('keydown', { key: 'ArrowUp' })
-    expect(wrapper.emitted('update:granularity')).toEqual([['hour'], ['hour']])
-
-    wrapper.unmount()
-  })
-
-  it('keeps the segmented styling classes untouched', () => {
-    const wrapper = mountCharts('day')
-
-    expect(wrapper.get('[role="radiogroup"]').classes()).toContain('tabs')
-    const radios = granularityRadios(wrapper)
-    expect(radios[0].classes()).toContain('tab')
-    expect(radios[0].classes()).toContain('tab-active')
-    expect(radios[1].classes()).not.toContain('tab-active')
+    // Wrap: with two options, moving past either end lands on the other one.
+    await radios[1].trigger('keydown', { key: 'ArrowUp' })
+    expect(charts.emitted('update:granularity')).toEqual([['hour'], ['day']])
 
     wrapper.unmount()
   })

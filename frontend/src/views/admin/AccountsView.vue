@@ -20,12 +20,15 @@
               <!-- Auto Refresh Dropdown -->
               <div class="relative" ref="autoRefreshDropdownRef">
                 <button
+                  ref="autoRefreshTriggerRef"
                   @click="
                     showAutoRefreshDropdown = !showAutoRefreshDropdown;
                     showAccountToolsDropdown = false
                   "
                   class="btn btn-secondary px-2 md:px-3"
                   :title="t('admin.accounts.autoRefresh')"
+                  aria-haspopup="menu"
+                  :aria-expanded="showAutoRefreshDropdown"
                 >
                   <Icon name="refresh" size="sm" :class="[autoRefreshEnabled ? 'animate-spin' : '']" />
                   <span class="hidden md:inline">
@@ -36,30 +39,42 @@
                     }}
                   </span>
                 </button>
-                <div
-                  v-if="showAutoRefreshDropdown"
-                  class="dropdown right-0 mt-2 w-56"
-                >
-                  <div>
+                <!--
+                  animate-none + <transition> so the panel has ONE owner for its
+                  motion: `.dropdown` carries an intrinsic `animate-scale-in`,
+                  which grows it on open and does nothing on close, so it used to
+                  disappear on the frame it closed. Reference: AccountGroupsCell.vue:39.
+                -->
+                <transition name="dropdown">
+                  <div
+                    v-if="showAutoRefreshDropdown"
+                    class="dropdown right-0 mt-2 w-56 animate-none"
+                    role="menu"
+                    :aria-label="t('admin.accounts.autoRefresh')"
+                  >
+                    <div role="none">
                     <button
                       @click="setAutoRefreshEnabled(!autoRefreshEnabled)"
                       class="dropdown-item group w-full justify-between active:scale-[0.98]"
+                      role="menuitem"
                     >
                       <span>{{ t('admin.accounts.enableAutoRefresh') }}</span>
                       <Icon v-if="autoRefreshEnabled" name="check" size="sm" class="text-primary-500 group-hover:text-white" />
                     </button>
-                    <div class="my-1 h-px" style="background-color: var(--separator)"></div>
+                    <div class="my-1 h-px" role="separator" style="background-color: var(--separator)"></div>
                     <button
                       v-for="sec in autoRefreshIntervals"
                       :key="sec"
                       @click="setAutoRefreshInterval(sec)"
                       class="dropdown-item group w-full justify-between tabular active:scale-[0.98]"
+                      role="menuitem"
                     >
                       <span>{{ autoRefreshIntervalLabel(sec) }}</span>
                       <Icon v-if="autoRefreshIntervalSeconds === sec" name="check" size="sm" class="text-primary-500 group-hover:text-white" />
                     </button>
+                    </div>
                   </div>
-                </div>
+                </transition>
               </div>
 
               <!-- More Tools Dropdown -->
@@ -69,6 +84,7 @@
                   @click="toggleAccountToolsDropdown"
                   class="btn btn-secondary px-2 md:px-3"
                   :title="t('admin.accounts.moreActions')"
+                  aria-haspopup="menu"
                   :aria-expanded="showAccountToolsDropdown"
                 >
                   <Icon name="more" size="sm" class="md:mr-1.5" />
@@ -76,12 +92,13 @@
                   <Icon name="chevronDown" size="xs" class="ml-1 hidden md:inline" />
                 </button>
                 <Teleport to="body">
-                  <div
-                    v-if="showAccountToolsDropdown"
-                    class="dropdown fixed z-[9999] overflow-hidden"
-                    :style="accountToolsDropdownStyle"
-                    @click.stop
-                  >
+                  <transition name="dropdown">
+                    <div
+                      v-if="showAccountToolsDropdown"
+                      class="account-tools-dropdown dropdown fixed z-[9999] animate-none overflow-hidden"
+                      :style="accountToolsDropdownStyle"
+                      @click.stop
+                    >
                     <div class="overflow-y-auto" :style="{ maxHeight: `${accountToolsDropdownPosition.maxHeight}px` }">
                       <div class="px-2.5 py-1.5">
                         <div class="on-glass text-[11px] font-semibold uppercase tracking-[0.04em] text-gray-400 dark:text-gray-500">
@@ -160,7 +177,8 @@
                         </button>
                       </div>
                     </div>
-                  </div>
+                    </div>
+                  </transition>
                 </Teleport>
               </div>
             </template>
@@ -297,6 +315,9 @@
             <button
               @click="handleToggleSchedulable(row)"
               :disabled="togglingSchedulable === row.id"
+              role="switch"
+              :aria-checked="!!row.schedulable"
+              :aria-label="`${t('admin.accounts.columns.schedulable')}: ${row.name}`"
               :class="[
                 'switch flex-shrink-0 disabled:cursor-not-allowed disabled:opacity-50',
                 'focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]',
@@ -435,7 +456,12 @@
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
                 <span class="text-xs">{{ t('common.delete') }}</span>
               </button>
-              <button @click="openMenu(row, $event)" class="row-action hover:text-gray-900 dark:hover:text-white">
+              <button
+                @click="openMenu(row, $event)"
+                class="row-action hover:text-gray-900 dark:hover:text-white"
+                aria-haspopup="menu"
+                :aria-expanded="menu.show && menu.acc?.id === row.id"
+              >
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
                 <span class="text-xs">{{ t('common.more') }}</span>
               </button>
@@ -674,6 +700,7 @@ const sortState = reactive<AccountSortState>(loadInitialAccountSortState())
 // Auto refresh settings
 const showAutoRefreshDropdown = ref(false)
 const autoRefreshDropdownRef = ref<HTMLElement | null>(null)
+const autoRefreshTriggerRef = ref<HTMLElement | null>(null)
 const AUTO_REFRESH_STORAGE_KEY = 'account-auto-refresh'
 const autoRefreshIntervals = [5, 10, 15, 30] as const
 const autoRefreshEnabled = ref(false)
@@ -2106,6 +2133,27 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 }
 
+/**
+ * Escape closes the open toolbar menu and puts focus back on its trigger.
+ *
+ * Without the focus move, dismissing a menu from the keyboard left focus on the
+ * menu item that was just unmounted, i.e. nowhere — the next Tab restarted from
+ * the top of the document. The row action menu owns its own Escape handling
+ * (AccountActionMenu), so it is deliberately not handled here.
+ */
+const handleTopLevelEscape = (event: KeyboardEvent) => {
+  if (event.key !== 'Escape') return
+  if (showAccountToolsDropdown.value) {
+    showAccountToolsDropdown.value = false
+    accountToolsTriggerRef.value?.focus({ preventScroll: true })
+    return
+  }
+  if (showAutoRefreshDropdown.value) {
+    showAutoRefreshDropdown.value = false
+    autoRefreshTriggerRef.value?.focus({ preventScroll: true })
+  }
+}
+
 onMounted(async () => {
   load()
   loadUpstreamBillingProbeGlobalState()
@@ -2119,6 +2167,7 @@ onMounted(async () => {
   window.addEventListener('scroll', handleScroll, true)
   window.addEventListener('resize', handleViewportResize)
   document.addEventListener('click', handleClickOutside)
+  document.addEventListener('keydown', handleTopLevelEscape)
 
   if (autoRefreshEnabled.value) {
     autoRefreshCountdown.value = autoRefreshIntervalSeconds.value
@@ -2132,10 +2181,54 @@ onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll, true)
   window.removeEventListener('resize', handleViewportResize)
   document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('keydown', handleTopLevelEscape)
 })
 </script>
 
 <style scoped>
+/*
+  Teleported to <body>, so this panel is not inside the modal backdrop root and
+  its `backdrop-filter` re-blurs whatever is actually painted underneath. Same
+  call already made for Select.vue's portal and Toast; only the fill and blur
+  change, the four glass edges and --shadow-3 from `.dropdown` stay.
+*/
+.account-tools-dropdown {
+  background: var(--surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/*
+  Symmetric enter/leave for both toolbar menus. `.dropdown`'s intrinsic
+  `animate-scale-in` is suppressed with `animate-none` at each call site, so the
+  transition is the single owner of the motion in both directions.
+  transform-origin comes from `.dropdown` (origin-top-right) or the call site.
+*/
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition:
+    opacity 240ms var(--ease-out),
+    transform 240ms var(--spring);
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: scale(0.94) translateY(-4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropdown-enter-active,
+  .dropdown-leave-active {
+    transition-duration: 1ms;
+  }
+
+  .dropdown-enter-from,
+  .dropdown-leave-to {
+    transform: none;
+  }
+}
+
 /* Rich menu rows: tinted icon chips read badly on a full accent highlight,
    so these keep the surface-hover treatment instead of .dropdown-item's
    accent fill. Press feedback still lands on pointer-down. */

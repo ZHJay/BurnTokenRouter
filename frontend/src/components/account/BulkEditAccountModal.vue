@@ -66,6 +66,9 @@
           <button
             id="bulk-edit-openai-passthrough-toggle"
             type="button"
+            role="switch"
+            :aria-checked="openaiPassthroughEnabled"
+            aria-labelledby="bulk-edit-openai-passthrough-label"
             :class="[
               'switch flex-shrink-0 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]',
               openaiPassthroughEnabled && 'switch-active'
@@ -470,6 +473,9 @@
         <div v-if="enableInterceptWarmup" id="bulk-edit-intercept-warmup-body" class="mt-3">
           <button
             type="button"
+            role="switch"
+            :aria-checked="interceptWarmupRequests"
+            aria-labelledby="bulk-edit-intercept-warmup-label"
             :class="[
               'switch flex-shrink-0 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]',
               interceptWarmupRequests && 'switch-active'
@@ -507,6 +513,9 @@
         <div v-if="enableHeaderOverride" id="bulk-edit-header-override-body" class="mt-3 space-y-3">
           <button
             type="button"
+            role="switch"
+            :aria-checked="headerOverrideEnabled"
+            aria-labelledby="bulk-edit-header-override-label"
             :class="[
               'switch flex-shrink-0 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]',
               headerOverrideEnabled && 'switch-active'
@@ -779,6 +788,9 @@
           <button
             id="bulk-edit-openai-codex-cli-only-toggle"
             type="button"
+            role="switch"
+            :aria-checked="codexCLIOnlyEnabled"
+            aria-labelledby="bulk-edit-openai-codex-cli-only-label"
             :class="[
               'switch flex-shrink-0 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]',
               codexCLIOnlyEnabled && 'switch-active'
@@ -818,6 +830,9 @@
           <button
             id="bulk-edit-openai-codex-app-server-toggle"
             type="button"
+            role="switch"
+            :aria-checked="codexCLIOnlyAppServerEnabled"
+            aria-labelledby="bulk-edit-openai-codex-app-server-label"
             :class="[
               'switch flex-shrink-0 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]',
               codexCLIOnlyAppServerEnabled && 'switch-active'
@@ -1035,10 +1050,16 @@
           aria-labelledby="bulk-edit-rpm-limit-label"
         >
           <div class="mb-3 flex items-center justify-between">
-            <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('admin.accounts.quotaControl.rpmLimit.hint') }}</span>
+            <span
+              id="bulk-edit-rpm-limit-toggle-label"
+              class="text-sm text-gray-700 dark:text-gray-300"
+            >{{ t('admin.accounts.quotaControl.rpmLimit.hint') }}</span>
             <button
               type="button"
               @click="rpmLimitEnabled = !rpmLimitEnabled"
+              role="switch"
+              :aria-checked="rpmLimitEnabled"
+              aria-labelledby="bulk-edit-rpm-limit-toggle-label"
               :class="[
                 'switch flex-shrink-0 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]',
                 rpmLimitEnabled && 'switch-active'

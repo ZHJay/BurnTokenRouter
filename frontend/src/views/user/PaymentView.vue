@@ -1,17 +1,23 @@
 <template>
   <AppLayout>
-    <div class="mx-auto max-w-4xl space-y-6">
+    <div class="mx-auto max-w-4xl space-y-4">
       <div v-if="loading" class="flex items-center justify-center py-20">
         <div class="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent"></div>
       </div>
       <template v-else>
-        <!-- Tab Switcher (hide during payment and subscription confirm) -->
-        <div v-if="tabs.length > 1 && paymentPhase === 'select' && !selectedPlan" class="flex space-x-1 rounded-xl bg-gray-100 p-1 dark:bg-dark-800">
-          <button v-for="tab in tabs" :key="tab.key"
-            class="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all"
-            :class="activeTab === tab.key ? 'bg-white text-gray-900 shadow dark:bg-dark-700 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'"
-            @click="activeTab = tab.key">{{ tab.label }}</button>
-        </div>
+        <!-- Tab Switcher (hide during payment and subscription confirm).
+             共享 Segmented：切换的是下方整块面板（充值 / 订阅），语义是 tablist。
+             role/aria-selected 与选中态背景都由 Segmented 自己渲染，调用点不再手写；
+             item-class="flex-1" 保留原先两段等宽铺满的版式。 -->
+        <Segmented
+          v-if="tabs.length > 1 && paymentPhase === 'select' && !selectedPlan"
+          v-model="activeTab"
+          :options="tabOptions"
+          mode="tablist"
+          :aria-label="t('payment.title')"
+          class="w-full"
+          item-class="flex-1"
+        />
         <!-- Payment in progress (shared by recharge and subscription) -->
         <template v-if="paymentPhase === 'paying'">
           <PaymentStatusPanel
@@ -36,32 +42,42 @@
           <!-- Top-up Tab -->
           <template v-if="activeTab === 'recharge'">
             <!-- Recharge Account Card -->
-            <div class="card p-5">
-              <p class="text-xs font-medium text-gray-400 dark:text-gray-500">{{ t('payment.rechargeAccount') }}</p>
-              <p class="mt-1 text-base font-semibold text-gray-900 dark:text-white">{{ user?.username || '' }}</p>
-              <p class="mt-0.5 text-sm font-medium text-green-600 dark:text-green-400">{{ t('payment.currentBalance') }}: {{ user?.balance?.toFixed(2) || '0.00' }}</p>
+            <div class="card">
+              <div class="card-body">
+                <p class="text-xs font-medium text-gray-400 dark:text-gray-500">{{ t('payment.rechargeAccount') }}</p>
+                <p class="mt-1 text-base font-semibold text-gray-900 dark:text-white">{{ user?.username || '' }}</p>
+                <!-- 余额是 USD 记账层（见 currency.ts 的 BALANCE_LEDGER_CURRENCY），
+                     不跟随所选支付方式；此前它连符号都没有。 -->
+                <p class="mt-0.5 text-sm font-medium tabular text-green-600 dark:text-green-400">{{ t('payment.currentBalance') }}: {{ formattedCurrentBalance }}</p>
+              </div>
             </div>
             <div v-if="enabledMethods.length === 0" class="card py-16 text-center">
               <p class="text-gray-500 dark:text-gray-400">{{ t('payment.notAvailable') }}</p>
             </div>
             <template v-else>
-            <div class="card p-6">
-              <AmountInput
-                v-model="amount"
-                :amounts="[10, 20, 50, 100, 200, 500, 1000, 2000, 5000]"
-                :min="globalMinAmount"
-                :max="globalMaxAmount"
-              />
-              <p v-if="amountError" class="mt-2 text-xs text-amber-600 dark:text-amber-300">{{ amountError }}</p>
+            <div class="card">
+              <div class="card-body">
+                <AmountInput
+                  v-model="amount"
+                  :amounts="[10, 20, 50, 100, 200, 500, 1000, 2000, 5000]"
+                  :min="globalMinAmount"
+                  :max="globalMaxAmount"
+                  :currency="selectedCurrency"
+                />
+                <p v-if="amountError" class="mt-2 text-xs text-amber-600 dark:text-amber-300">{{ amountError }}</p>
+              </div>
             </div>
-            <div v-if="enabledMethods.length >= 1" class="card p-6">
-              <PaymentMethodSelector
-                :methods="methodOptions"
-                :selected="selectedMethod"
-                @select="selectedMethod = $event"
-              />
+            <div v-if="enabledMethods.length >= 1" class="card">
+              <div class="card-body">
+                <PaymentMethodSelector
+                  :methods="methodOptions"
+                  :selected="selectedMethod"
+                  @select="selectedMethod = $event"
+                />
+              </div>
             </div>
-            <div v-if="validAmount > 0" class="card p-6">
+            <div v-if="validAmount > 0" class="card">
+              <div class="card-body">
               <div class="space-y-2 text-sm">
                 <div class="flex justify-between">
                   <span class="text-gray-500 dark:text-gray-400">{{ t('payment.paymentAmount') }}</span>
@@ -71,20 +87,33 @@
                   <span class="text-gray-500 dark:text-gray-400">{{ t('payment.fee') }} (<span class="tabular">{{ feeRate }}</span>%)</span>
                   <span class="tabular text-gray-900 dark:text-white">{{ formatSelectedPaymentAmount(feeAmount) }}</span>
                 </div>
-                <div v-if="feeRate > 0" class="flex justify-between border-t border-gray-200 pt-2 dark:border-dark-600">
+                <!-- 0.5px hairline via inset ring —— 与 PolicyPanel / AdminOrdersView 等
+                     处同一写法。1px 硬编码灰边不在系统里（见 style.css 头部：系统用
+                     inset ring 与 0.5px 发丝线）。 -->
+                <div v-if="feeRate > 0" class="flex justify-between pt-2 shadow-[inset_0_0.5px_0_var(--separator)]">
                   <span class="font-medium text-gray-700 dark:text-gray-300">{{ t('payment.actualPay') }}</span>
                   <span class="text-lg font-semibold tabular tracking-[-0.014em] text-primary-600 dark:text-primary-400">{{ formatSelectedPaymentAmount(totalAmount) }}</span>
                 </div>
-                <div v-if="balanceRechargeMultiplier !== 1" class="flex justify-between" :class="{ 'border-t border-gray-200 pt-2 dark:border-dark-600': feeRate <= 0 }">
+                <div v-if="balanceRechargeMultiplier !== 1" class="flex justify-between" :class="{ 'pt-2 shadow-[inset_0_0.5px_0_var(--separator)]': feeRate <= 0 }">
                   <span class="text-gray-500 dark:text-gray-400">{{ t('payment.creditedBalance') }}</span>
-                  <span class="tabular text-gray-900 dark:text-white">${{ creditedAmount.toFixed(2) }}</span>
+                  <!-- 到账余额同样是 USD 记账层：倍率正是「支付货币 → USD 余额」那一步。 -->
+                  <span class="tabular text-gray-900 dark:text-white">{{ formattedCreditedAmount }}</span>
                 </div>
-                <p v-if="balanceRechargeMultiplier !== 1" class="border-t border-gray-200 pt-2 text-xs tabular text-gray-500 dark:border-dark-600 dark:text-gray-400">
+                <p v-if="balanceRechargeMultiplier !== 1" class="pt-2 text-xs tabular text-gray-500 shadow-[inset_0_0.5px_0_var(--separator)] dark:text-gray-400">
                   {{ t('payment.rechargeRatePreview', { usd: balanceRechargeMultiplier.toFixed(2) }) }}
                 </p>
               </div>
+              </div>
             </div>
-            <button :class="['btn w-full py-3 text-base font-medium', paymentButtonClass]" :disabled="!canSubmit || submitting" @click="handleSubmitRecharge">
+            <!-- btn-lg 已提供 44px/16px，无需 py-3 text-base font-medium。
+                 禁用态不走 opacity-40（btn-primary 在该档只有 1.26:1，而这个按钮
+                 恰恰在金额为 0 的首屏就是禁用的），改用实心中性底 + 三级标签色。 -->
+            <button
+              data-test="recharge-cta"
+              :class="['btn btn-lg w-full', paymentButtonClass, 'disabled:opacity-100 disabled:bg-[var(--surface-secondary)] disabled:text-[var(--label-tertiary)] disabled:shadow-none']"
+              :disabled="!canSubmit || submitting"
+              @click="handleSubmitRecharge"
+            >
               <span v-if="submitting" class="flex items-center justify-center gap-2">
                 <span class="spinner h-4 w-4 text-white"></span>
                 {{ t('common.processing') }}
@@ -97,7 +126,8 @@
           <template v-else-if="activeTab === 'subscription'">
             <!-- Subscription confirm (inline, replaces plan list) -->
             <template v-if="selectedPlan">
-              <div class="card p-5">
+              <div class="card">
+                <div class="card-body">
                 <!-- Header: platform badge + plan name -->
                 <div class="mb-3 flex flex-wrap items-center gap-2">
                   <span :class="['rounded-md border px-2 py-0.5 text-xs font-medium', planBadgeClass]">
@@ -148,15 +178,19 @@
                     <div class="text-lg font-semibold text-gray-800 dark:text-gray-200">{{ t('payment.planCard.unlimited') }}</div>
                   </div>
                 </div>
+                </div>
               </div>
-              <div v-if="enabledMethods.length >= 1" class="card p-6">
-                <PaymentMethodSelector
-                  :methods="subMethodOptions"
-                  :selected="selectedMethod"
-                  @select="selectedMethod = $event"
-                />
+              <div v-if="enabledMethods.length >= 1" class="card">
+                <div class="card-body">
+                  <PaymentMethodSelector
+                    :methods="subMethodOptions"
+                    :selected="selectedMethod"
+                    @select="selectedMethod = $event"
+                  />
+                </div>
               </div>
-              <div v-if="feeRate > 0 && selectedPlan.price > 0" class="card p-6">
+              <div v-if="feeRate > 0 && selectedPlan.price > 0" class="card">
+                <div class="card-body">
                 <div class="space-y-2 text-sm">
                   <div class="flex justify-between">
                     <span class="text-gray-500 dark:text-gray-400">{{ t('payment.amountLabel') }}</span>
@@ -166,20 +200,25 @@
                     <span class="text-gray-500 dark:text-gray-400">{{ t('payment.fee') }} (<span class="tabular">{{ feeRate }}</span>%)</span>
                     <span class="tabular text-gray-900 dark:text-white">{{ formatSelectedPaymentAmount(subFeeAmount) }}</span>
                   </div>
-                  <div class="flex justify-between border-t border-gray-200 pt-2 dark:border-dark-600">
+                  <div class="flex justify-between pt-2 shadow-[inset_0_0.5px_0_var(--separator)]">
                     <span class="font-medium text-gray-700 dark:text-gray-300">{{ t('payment.actualPay') }}</span>
                     <span class="text-lg font-semibold tabular tracking-[-0.014em] text-primary-600 dark:text-primary-400">{{ formatSelectedPaymentAmount(subTotalAmount) }}</span>
                   </div>
                 </div>
+                </div>
               </div>
-              <button :class="['btn w-full py-3 text-base font-medium', paymentButtonClass]" :disabled="!canSubmitSubscription || submitting" @click="confirmSubscribe">
+              <button
+                :class="['btn btn-lg w-full', paymentButtonClass, 'disabled:opacity-100 disabled:bg-[var(--surface-secondary)] disabled:text-[var(--label-tertiary)] disabled:shadow-none']"
+                :disabled="!canSubmitSubscription || submitting"
+                @click="confirmSubscribe"
+              >
                 <span v-if="submitting" class="flex items-center justify-center gap-2">
                   <span class="spinner h-4 w-4 text-white"></span>
                   {{ t('common.processing') }}
                 </span>
                 <span v-else class="tabular">{{ t('payment.createOrder') }} {{ formatSelectedPaymentAmount(subTotalAmount) }}</span>
               </button>
-              <button class="btn btn-secondary w-full" @click="selectedPlan = null">{{ t('common.cancel') }}</button>
+              <button class="btn btn-secondary btn-lg w-full" @click="selectedPlan = null">{{ t('common.cancel') }}</button>
             </template>
             <!-- Plan list -->
             <template v-else>
@@ -287,7 +326,8 @@ import { platformAccentBarClass, platformBadgeLightClass, platformBadgeClass, pl
 import SubscriptionPlanCard from '@/components/payment/SubscriptionPlanCard.vue'
 import PaymentStatusPanel from '@/components/payment/PaymentStatusPanel.vue'
 import Icon from '@/components/icons/Icon.vue'
-import { DEFAULT_PAYMENT_CURRENCY, formatPaymentAmount, normalizePaymentCurrency } from '@/components/payment/currency'
+import Segmented from '@/components/common/Segmented.vue'
+import { DEFAULT_PAYMENT_CURRENCY, formatBalanceAmount, formatPaymentAmount, normalizePaymentCurrency } from '@/components/payment/currency'
 import { planValiditySuffix as validitySuffixOf } from '@/components/payment/validity'
 import type { PaymentMethodOption } from '@/components/payment/PaymentMethodSelector.vue'
 import { buildPaymentErrorToastMessage, describePaymentScenarioError } from './paymentUx'
@@ -512,6 +552,9 @@ const tabs = computed(() => {
   return result
 })
 
+// Segmented 的入参形状（value/label）。跟着 tabs 走，所以切换语言时标签同步更新。
+const tabOptions = computed(() => tabs.value.map((tab) => ({ value: tab.key, label: tab.label })))
+
 const visibleMethods = computed(() => getVisibleMethods(checkout.value.methods))
 const enabledMethods = computed(() => Object.keys(visibleMethods.value))
 const validAmount = computed(() => amount.value ?? 0)
@@ -605,6 +648,11 @@ function formatSelectedPaymentAmount(value: number): string {
 function formatSelectedSubscriptionPaymentAmount(value: number): string {
   return formatSelectedPaymentAmount(subscriptionPaymentAmountForCurrency(value, selectedCurrency.value))
 }
+
+/* 余额层的两个金额走 USD 记账货币，而不是 selectedCurrency ——
+   见 currency.ts:BALANCE_LEDGER_CURRENCY 对两个单位的说明。 */
+const formattedCurrentBalance = computed(() => formatBalanceAmount(user.value?.balance ?? 0, localeCode.value))
+const formattedCreditedAmount = computed(() => formatBalanceAmount(creditedAmount.value, localeCode.value))
 
 const methodOptions = computed<PaymentMethodOption[]>(() =>
   enabledMethods.value.map((type) => {

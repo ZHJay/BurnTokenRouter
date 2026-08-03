@@ -20,58 +20,71 @@
         </div>
         <p class="mt-2 text-xs text-gray-500 dark:text-dark-400">{{ t('admin.promptAudit.events.filterTimeRangeHint') }}</p>
         <div v-if="preset === 'custom'" class="mt-3 grid gap-3 sm:grid-cols-2" data-test="custom-range">
-          <label class="text-xs text-gray-600 dark:text-dark-200">
-            <span>{{ t('admin.promptAudit.events.startAt') }}</span>
-            <input v-model="local.start_at" type="datetime-local" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.startAt')" @change="criteriaChanged" />
+          <!-- 这两个字段刻意保留原生 datetime-local，而不是换成 DateRangePicker：
+               这个对话框划定的是一次**不可逆批量删除**的确切边界。显式录入的时间戳
+               比预设驱动的区间更安全 —— 用户看到并确认的就是发给后端的那两个值，
+               中间没有"最近 7 天"这类会随打开时刻漂移的间接层。原生控件同时免费
+               带来键盘录入与本地化格式（locale 决定 mm/dd 还是 dd/mm）。
+               在这唯一的不可回头处，精度优先于视觉一致性。
+
+               另一条硬约束：DateRangePicker 只产出 YYYY-MM-DD，而
+               hasExplicitDeleteRange / resolveDeleteRangeFilters 之后要把值交给
+               new Date() —— 日期串按 UTC 解析、datetime-local 串按本地时区解析，
+               两者混用会让"自定义区间"与预设区间的时区语义不一致。
+               color-scheme 已由 style.css 的 .dark .input[type='datetime-local'] 处理。 -->
+          <label class="block">
+            <span class="input-label">{{ t('admin.promptAudit.events.startAt') }}</span>
+            <input v-model="local.start_at" type="datetime-local" class="input h-9 w-full" :aria-label="t('admin.promptAudit.events.startAt')" @change="criteriaChanged" />
           </label>
-          <label class="text-xs text-gray-600 dark:text-dark-200">
-            <span>{{ t('admin.promptAudit.events.endAt') }}</span>
-            <input v-model="local.end_at" type="datetime-local" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.endAt')" @change="criteriaChanged" />
+          <label class="block">
+            <span class="input-label">{{ t('admin.promptAudit.events.endAt') }}</span>
+            <input v-model="local.end_at" type="datetime-local" class="input h-9 w-full" :aria-label="t('admin.promptAudit.events.endAt')" @change="criteriaChanged" />
           </label>
           <p v-if="!canPreview" class="text-xs sm:col-span-2" :style="{ color: 'var(--sys-red)' }">{{ t('admin.promptAudit.events.customRangeInvalid') }}</p>
         </div>
       </fieldset>
 
       <div class="grid gap-3 sm:grid-cols-2">
-        <label class="text-xs text-gray-600 dark:text-dark-200">
-          <span>{{ t('admin.promptAudit.events.decision') }}</span>
-          <select v-model="local.decision" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.decision')" data-test="delete-decision" @change="criteriaChanged">
-            <option value="">{{ t('common.all') }}</option>
-            <option value="pass">{{ t('admin.promptAudit.decisions.pass') }}</option>
-            <option value="flag">{{ t('admin.promptAudit.decisions.flag') }}</option>
-            <option value="critical">{{ t('admin.promptAudit.decisions.critical') }}</option>
-          </select>
+        <label class="block">
+          <span class="input-label">{{ t('admin.promptAudit.events.decision') }}</span>
+          <Select
+            :model-value="local.decision"
+            :options="decisionSelectOptions"
+            :aria-label="t('admin.promptAudit.events.decision')"
+            data-test="delete-decision"
+            @update:model-value="setCriteria('decision', $event)"
+          />
         </label>
-        <label class="text-xs text-gray-600 dark:text-dark-200">
-          <span>{{ t('admin.promptAudit.events.risk') }}</span>
-          <select v-model="local.risk_level" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.risk')" data-test="delete-risk" @change="criteriaChanged">
-            <option value="">{{ t('common.all') }}</option>
-            <option value="low">{{ t('admin.promptAudit.riskLevels.low') }}</option>
-            <option value="medium">{{ t('admin.promptAudit.riskLevels.medium') }}</option>
-            <option value="high">{{ t('admin.promptAudit.riskLevels.high') }}</option>
-            <option value="critical">{{ t('admin.promptAudit.riskLevels.critical') }}</option>
-          </select>
+        <label class="block">
+          <span class="input-label">{{ t('admin.promptAudit.events.risk') }}</span>
+          <Select
+            :model-value="local.risk_level"
+            :options="riskSelectOptions"
+            :aria-label="t('admin.promptAudit.events.risk')"
+            data-test="delete-risk"
+            @update:model-value="setCriteria('risk_level', $event)"
+          />
         </label>
       </div>
 
       <details class="card-inset rounded-xl px-4 py-3" data-test="more-conditions">
         <summary class="cursor-pointer select-none text-xs font-medium text-gray-600 dark:text-dark-200">{{ t('admin.promptAudit.events.moreConditions') }}</summary>
         <div class="mt-3 grid gap-3 sm:grid-cols-2">
-          <label class="text-xs text-gray-600 dark:text-dark-200">
-            <span>{{ t('admin.promptAudit.events.endpoint') }}</span>
-            <input v-model="local.endpoint" type="text" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.endpoint')" @input="criteriaChanged" />
+          <label class="block">
+            <span class="input-label">{{ t('admin.promptAudit.events.endpoint') }}</span>
+            <input v-model="local.endpoint" type="text" class="input w-full" :aria-label="t('admin.promptAudit.events.endpoint')" @input="criteriaChanged" />
           </label>
-          <label class="text-xs text-gray-600 dark:text-dark-200">
-            <span>{{ t('admin.promptAudit.events.keyword') }}</span>
-            <input v-model="local.keyword" type="text" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.keyword')" @input="criteriaChanged" />
+          <label class="block">
+            <span class="input-label">{{ t('admin.promptAudit.events.keyword') }}</span>
+            <input v-model="local.keyword" type="text" class="input w-full" :aria-label="t('admin.promptAudit.events.keyword')" @input="criteriaChanged" />
           </label>
-          <label class="text-xs text-gray-600 dark:text-dark-200">
-            <span>{{ t('admin.promptAudit.events.groupId') }}</span>
-            <input v-model="local.group_id" type="number" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.groupId')" @input="criteriaChanged" />
+          <label class="block">
+            <span class="input-label">{{ t('admin.promptAudit.events.groupId') }}</span>
+            <input v-model="local.group_id" type="number" class="input w-full" :aria-label="t('admin.promptAudit.events.groupId')" @input="criteriaChanged" />
           </label>
-          <label class="text-xs text-gray-600 dark:text-dark-200">
-            <span>{{ t('admin.promptAudit.events.userId') }}</span>
-            <input v-model="local.user_id" type="number" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.userId')" @input="criteriaChanged" />
+          <label class="block">
+            <span class="input-label">{{ t('admin.promptAudit.events.userId') }}</span>
+            <input v-model="local.user_id" type="number" class="input w-full" :aria-label="t('admin.promptAudit.events.userId')" @input="criteriaChanged" />
           </label>
         </div>
       </details>
@@ -129,13 +142,16 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/components/common/BaseDialog.vue'
+import Select from '@/components/common/Select.vue'
 import type { PromptDeletePreview, PromptEventFilters } from '../types'
 import {
   DELETE_RANGE_PRESETS,
   cloneData,
+  decisionOptions,
   emptyEventFilters,
   hasExplicitDeleteRange,
   resolveDeleteRangeFilters,
+  riskOptions,
   type DeleteRangePreset,
 } from '../viewModel'
 
@@ -156,6 +172,16 @@ const { t, locale } = useI18n()
 
 const preset = ref<DeleteRangePreset>('7d')
 const local = reactive<PromptEventFilters>(emptyEventFilters())
+const decisionSelectOptions = computed(() => decisionOptions(t))
+const riskSelectOptions = computed(() => riskOptions(t))
+
+// Select's payload is loosely typed (string | number | boolean | null) while the
+// criteria object is all strings; normalise on the way in and keep the old
+// <select> behaviour of invalidating a stale preview on every pick.
+function setCriteria(key: 'decision' | 'risk_level', value: string | number | boolean | null) {
+  local[key] = value == null ? '' : String(value)
+  criteriaChanged()
+}
 
 watch(
   () => props.show,

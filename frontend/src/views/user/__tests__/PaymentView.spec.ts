@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, shallowMount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount, shallowMount } from '@vue/test-utils'
 import PaymentView from '../PaymentView.vue'
 import { PAYMENT_RECOVERY_STORAGE_KEY } from '@/components/payment/paymentFlow'
-import { formatPaymentAmount } from '@/components/payment/currency'
+import AmountInput from '@/components/payment/AmountInput.vue'
+import { formatBalanceAmount, formatPaymentAmount } from '@/components/payment/currency'
 import SubscriptionPlanCard from '@/components/payment/SubscriptionPlanCard.vue'
 import type { CheckoutInfoResponse, MethodLimit, SubscriptionPlan } from '@/types/payment'
 
@@ -12,6 +13,10 @@ const routeState = vi.hoisted(() => ({
 }))
 
 const routerReplace = vi.hoisted(() => vi.fn())
+const authUser = vi.hoisted(() => ({
+  username: 'demo-user',
+  balance: 0,
+}))
 const routerPush = vi.hoisted(() => vi.fn())
 const routerResolve = vi.hoisted(() => vi.fn(() => ({ href: '/payment/stripe?mock=1' })))
 const createOrder = vi.hoisted(() => vi.fn())
@@ -48,10 +53,7 @@ vi.mock('vue-i18n', async () => {
 
 vi.mock('@/stores/auth', () => ({
   useAuthStore: () => ({
-    user: {
-      username: 'demo-user',
-      balance: 0,
-    },
+    user: authUser,
     refreshUser,
   }),
 }))
@@ -276,6 +278,228 @@ async function mountSubscriptionPlanList(planCount: number) {
   await flushPromises()
   return wrapper
 }
+
+/* 这一组是本次货币 bug 的回归锁。
+
+   修复前的同屏状态：AmountInput 的前缀硬编码 `$`，而 CTA 走
+   formatSelectedPaymentAmount() → formatPaymentAmount()，后端不下发 currency 时
+   回落到 DEFAULT_PAYMENT_CURRENCY='CNY' → ¥。于是 `$` 输入框上面顶着
+   "Confirm Payment ¥0.00"。同时 Current Balance 完全没有符号。
+
+   所以必须用真实的 AmountInput 挂载（不是 shallowMount 的桩），才能让「输入框前缀」
+   与「CTA 文案」在同一棵 DOM 里被同时断言 —— 只测其中一侧的 spec 抓不到这个 bug。 */
+async function mountRecharge(options: {
+  method?: Partial<MethodLimit>
+  checkout?: Partial<CheckoutInfoResponse>
+  balance?: number
+} = {}) {
+  vi.useRealTimers()
+  routeState.path = '/purchase'
+  routeState.query = {}
+  routerReplace.mockReset().mockResolvedValue(undefined)
+  routerPush.mockReset().mockResolvedValue(undefined)
+  routerResolve.mockClear()
+  createOrder.mockReset()
+  refreshUser.mockReset()
+  fetchActiveSubscriptions.mockReset().mockResolvedValue(undefined)
+  showError.mockReset()
+  showInfo.mockReset()
+  showWarning.mockReset()
+  bridgeInvoke.mockReset()
+  window.localStorage.clear()
+  ;(window as Window & { WeixinJSBridge?: { invoke: typeof bridgeInvoke } }).WeixinJSBridge = undefined
+  authUser.balance = options.balance ?? 0
+
+  const base = checkoutInfoFixture(options.checkout).data
+  getCheckoutInfo.mockReset().mockResolvedValue({
+    data: {
+      ...base,
+      methods: {
+        wxpay: { ...base.methods.wxpay, ...options.method },
+      },
+    },
+  })
+
+  const wrapper = mount(PaymentView, {
+    global: {
+      stubs: {
+        AppLayout: { template: '<div><slot /></div>' },
+        PaymentStatusPanel: true,
+        PaymentMethodSelector: true,
+        SubscriptionPlanCard: true,
+        Icon: true,
+        Teleport: true,
+        Transition: false,
+      },
+    },
+  })
+  await flushPromises()
+  await flushPromises()
+  return wrapper
+}
+
+type RechargeWrapper = Awaited<ReturnType<typeof mountRecharge>>
+
+function ctaText(wrapper: RechargeWrapper): string {
+  return wrapper.get('[data-test="recharge-cta"]').text()
+}
+
+function amountPrefix(wrapper: RechargeWrapper): string {
+  return wrapper.get('[data-test="amount-currency-prefix"]').text()
+}
+
+describe('PaymentView currency source of truth', () => {
+  afterEach(() => {
+    authUser.balance = 0
+  })
+
+  it.each([
+    ['CNY', '¥'],
+    ['USD', '$'],
+    ['EUR', '€'],
+  ])('agrees between the amount input prefix and the CTA for %s', async (currency, symbol) => {
+    const wrapper = await mountRecharge({ method: { currency } })
+
+    expect(amountPrefix(wrapper)).toBe(symbol)
+    // CTA 走 formatPaymentAmount，与前缀必须是同一个币种。
+    expect(ctaText(wrapper)).toContain(symbol)
+    expect(wrapper.getComponent(AmountInput).props('currency')).toBe(currency)
+  })
+
+  it('agrees on the CNY fallback path when the backend sends no currency', async () => {
+    // 这一条就是原始 bug 的形状：method.currency 缺失 → CTA 回落到 ¥，
+    // 而前缀此前硬编码 $。
+    const wrapper = await mountRecharge({ method: { currency: undefined } })
+
+    expect(amountPrefix(wrapper)).toBe('¥')
+    expect(ctaText(wrapper)).toContain('¥')
+    expect(amountPrefix(wrapper)).not.toBe('$')
+  })
+
+  it('never shows a $ input above a ¥ CTA, whatever the backend sends', async () => {
+    for (const currency of [undefined, '', 'CNY', 'USD']) {
+      const wrapper = await mountRecharge({ method: { currency } })
+      const prefix = amountPrefix(wrapper)
+      const cta = ctaText(wrapper)
+
+      // 前缀出现在 CTA 里，且另一个币种的符号不出现 —— 双向锁死。
+      expect(cta).toContain(prefix)
+      expect(cta).not.toContain(prefix === '$' ? '¥' : '$')
+    }
+  })
+
+  it('keeps the CTA in sync after the user types a custom amount', async () => {
+    const wrapper = await mountRecharge({ method: { currency: 'CNY' } })
+
+    await wrapper.get('input').setValue('88')
+    await flushPromises()
+
+    expect(ctaText(wrapper)).toContain(formatPaymentAmount(88, 'CNY'))
+    expect(amountPrefix(wrapper)).toBe('¥')
+    expect(ctaText(wrapper)).not.toContain('$')
+  })
+
+  it('gives the current balance a symbol, in the USD ledger currency', async () => {
+    // 余额是全站 USD 记账层，不跟随所选支付方式：支付宝（CNY）下也必须是 $。
+    const wrapper = await mountRecharge({ method: { currency: 'CNY' }, balance: 248.74 })
+
+    const text = wrapper.text()
+    expect(text).toContain(formatBalanceAmount(248.74))
+    expect(text).toContain('$248.74')
+    // 修复前这里是裸的 `248.74`，一个符号都没有。
+    expect(text).not.toMatch(/currentBalance:\s*248\.74/)
+  })
+
+  it('keeps the credited balance in USD while the payment total stays in CNY', async () => {
+    const wrapper = await mountRecharge({
+      method: { currency: 'CNY' },
+      checkout: { balance_recharge_multiplier: 0.14 },
+    })
+
+    await wrapper.get('input').setValue('100')
+    await flushPromises()
+
+    const text = wrapper.text()
+    // 支付 ¥100 → 到账 $14.00。倍率正是「支付货币 → USD 余额」那一步，
+    // 所以这两个金额本就是两个单位，不能被统一成同一个符号。
+    expect(text).toContain(formatPaymentAmount(100, 'CNY'))
+    expect(text).toContain(formatBalanceAmount(14))
+  })
+})
+
+describe('PaymentView amount grid and tabs', () => {
+  it('preselects the first amount so the selected state is visible on first paint', async () => {
+    const wrapper = await mountRecharge({ method: { currency: 'CNY' } })
+
+    const selected = wrapper.findAll('[aria-pressed="true"]')
+    expect(selected).toHaveLength(1)
+    expect(selected[0].text()).toBe('10')
+    // 预选让首屏 CTA 从 ¥0.00 + 禁用变成可提交的真实金额。
+    expect(ctaText(wrapper)).toContain(formatPaymentAmount(10, 'CNY'))
+    expect(wrapper.get('[data-test="recharge-cta"]').attributes('disabled')).toBeUndefined()
+  })
+
+  it('uses the shared .tabs/.tab segmented control with tablist semantics', async () => {
+    const wrapper = await mountRecharge()
+
+    const tablist = wrapper.get('[role="tablist"]')
+    expect(tablist.classes()).toContain('tabs')
+    // 手搓的 bg-gray-100 分段控件必须消失。
+    expect(tablist.classes()).not.toContain('bg-gray-100')
+
+    const tabs = tablist.findAll('[role="tab"]')
+    expect(tabs.length).toBeGreaterThan(1)
+    expect(tabs.every(tab => tab.classes().includes('tab'))).toBe(true)
+    // 这里已迁到共享 Segmented：选中面由会移动的 thumb 画，不再有 .tab-active
+    // （Segmented 刻意丢掉它，两边都画会叠成双层填充，见 Segmented.spec.ts）。
+    // 选中态改由 aria-selected 表达，且每段都带值。
+    expect(tabs.every(tab => tab.classes().includes('segmented-item'))).toBe(true)
+    expect(tabs.filter(tab => tab.attributes('aria-selected') === 'true')).toHaveLength(1)
+    expect(tablist.find('.segmented-thumb').exists()).toBe(true)
+    expect(tabs[0].attributes('aria-selected')).toBe('true')
+  })
+
+  it('moves the active tab on click', async () => {
+    const wrapper = await mountRecharge()
+    const tabs = wrapper.findAll('[role="tab"]')
+
+    await tabs[1].trigger('click')
+
+    expect(wrapper.findAll('[role="tab"]')[1].attributes('aria-selected')).toBe('true')
+    expect(wrapper.findAll('[role="tab"]')[0].attributes('aria-selected')).toBe('false')
+  })
+
+  it('keeps the disabled CTA readable instead of falling to opacity-40', async () => {
+    const wrapper = await mountRecharge({ checkout: { global_min: 0, global_max: 0 } })
+    const cta = wrapper.get('[data-test="recharge-cta"]')
+
+    expect(cta.classes()).toEqual(expect.arrayContaining([
+      'btn',
+      'btn-lg',
+      'w-full',
+      'disabled:opacity-100',
+      'disabled:bg-[var(--surface-secondary)]',
+      'disabled:text-[var(--label-tertiary)]',
+      'disabled:shadow-none',
+    ]))
+    // btn-lg 已供 44px/16px，这些手写尺寸必须撤掉。
+    expect(cta.classes()).not.toContain('py-3')
+    expect(cta.classes()).not.toContain('text-base')
+  })
+
+  it('standardises the route cards on .card + .card-body', async () => {
+    const wrapper = await mountRecharge()
+
+    const cards = wrapper.findAll('.card')
+    expect(cards.length).toBeGreaterThan(0)
+    for (const card of cards) {
+      // 帮助卡（p-4）不在本次标准化范围内，其余卡片必须走 .card-body。
+      if (card.classes().includes('p-4')) continue
+      expect(card.classes()).not.toContain('p-6')
+      expect(card.classes()).not.toContain('p-5')
+    }
+  })
+})
 
 describe('PaymentView subscription plan grid', () => {
   it.each([3, 4, 6])('keeps %i plans on the existing mobile/tablet/desktop grid', async (planCount) => {

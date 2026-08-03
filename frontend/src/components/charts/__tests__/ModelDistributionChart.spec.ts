@@ -184,8 +184,12 @@ describe('ModelDistributionChart', () => {
     expect(chartData.datasets[0].data).toEqual([12, 8, 10])
     // Apple 系统色，浅色档（jsdom 下 <html> 无 .dark）：首个类目取 --sys-blue，
     // 「其他」取中性灰，与真实类目区分。
+    //
+    // 中性灰的浅色档是 #6d6d72。这里原先断言 #8e8e93 —— 那是 --c-gray-500 的
+    // **深色**档：调色板注释声称镜像某个 `--sys-gray`，而 style.css 里没有这个
+    // token，于是两档都写成了深色值，浅色下用错了一整档。
     expect(chartData.datasets[0].backgroundColor[0]).toBe('#007aff')
-    expect(chartData.datasets[0].backgroundColor[2]).toBe('#8e8e93')
+    expect(chartData.datasets[0].backgroundColor[2]).toBe('#6d6d72')
     expect(chartData.datasets[0].backgroundColor[2]).not.toBe(chartData.datasets[0].backgroundColor[0])
 
     const rows = wrapper.findAll('tbody tr')
@@ -263,21 +267,6 @@ describe('ModelDistributionChart accessibility semantics', () => {
     expect(radios[1].attributes('aria-checked')).toBe('false')
     expect(radios[0].attributes('aria-selected')).toBeUndefined()
     expect(radios[0].attributes('role')).toBe('radio')
-
-    wrapper.unmount()
-  })
-
-  it('keeps the segmented styling classes on the radiogroups', () => {
-    const wrapper = mountChart({ showSourceToggle: true, showMetricToggle: true, source: 'requested' })
-
-    const groups = wrapper.findAll('[role="radiogroup"]')
-    expect(groups[0].classes()).toContain('tabs')
-    expect(groups[1].classes()).toContain('tabs')
-
-    const radios = wrapper.findAll('[role="radiogroup"] [role="radio"]')
-    expect(radios[0].classes()).toContain('tab')
-    expect(radios[0].classes()).toContain('tab-active')
-    expect(radios[1].classes()).not.toContain('tab-active')
 
     wrapper.unmount()
   })

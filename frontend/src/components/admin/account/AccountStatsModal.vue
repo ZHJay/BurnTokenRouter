@@ -385,7 +385,13 @@
             {{ t('admin.accounts.stats.usageTrend') }}
           </h3>
           <div class="h-64">
-            <Line v-if="trendChartData" :data="trendChartData" :options="lineChartOptions" />
+            <!-- vue-chartjs 渲染的是裸 <canvas>（已带 role="img"），不给 aria-label 就是一个无名图形 -->
+            <Line
+              v-if="trendChartData"
+              :data="trendChartData"
+              :options="lineChartOptions"
+              :aria-label="t('admin.accounts.stats.usageTrend')"
+            />
             <div
               v-else
               class="flex h-full items-center justify-center text-sm text-gray-500 dark:text-gray-400"
@@ -456,6 +462,17 @@ import EndpointDistributionChart from '@/components/charts/EndpointDistributionC
 import Icon from '@/components/icons/Icon.vue'
 import { adminAPI } from '@/api/admin'
 import type { Account, AccountUsageStatsResponse } from '@/types'
+import {
+  chartAxisChrome,
+  chartAxisFont,
+  chartAxisNoGrid,
+  chartChrome,
+  chartHue,
+  chartLegendStyle,
+  chartTooltipStyle,
+  useChartScheme,
+  withAlpha
+} from '@/lib/chart'
 
 ChartJS.register(
   CategoryScale,
@@ -482,38 +499,28 @@ const emit = defineEmits<{
 const loading = ref(false)
 const stats = ref<AccountUsageStatsResponse | null>(null)
 
-// Dark mode detection
-const isDarkMode = computed(() => {
-  return document.documentElement.classList.contains('dark')
-})
-
 /**
- * Chart colors — Apple 系统色（见 style.css）。
+ * 配色跟随 `<html class="dark">`。
  *
  * 多色语义须保留：账号计费 = 蓝，用户计费 = 绿，请求数 = 橙。
- * Chart.js 画在 canvas 上拿不到 CSS 变量，所以这里是 `--sys-*` 的字面镜像，
- * light / dark 各一档（系统色在深色下会提亮）。
+ * 色值取自 `lib/chart` 的共享色相 —— 这里原先自带一份 hex 镜像与一套手写填充色。
+ *
+ * 弹窗每次打开都会重挂，所以原来那个「在 computed 里读 DOM」的写法后果较轻；
+ * 但打开期间切主题一样不会重绘，因此同样换成 `useChartScheme()`。
  */
-const SERIES_HUES = {
-  accountCost: { light: '#007aff', dark: '#0a84ff' }, // --sys-blue
-  userCost: { light: '#34c759', dark: '#30d158' }, // --sys-green
-  requests: { light: '#ff9500', dark: '#ff9f0a' } // --sys-orange
-} as const
+const scheme = useChartScheme()
 
-const seriesAccountCost = computed(() =>
-  isDarkMode.value ? SERIES_HUES.accountCost.dark : SERIES_HUES.accountCost.light
-)
-const seriesUserCost = computed(() =>
-  isDarkMode.value ? SERIES_HUES.userCost.dark : SERIES_HUES.userCost.light
-)
-const seriesRequests = computed(() =>
-  isDarkMode.value ? SERIES_HUES.requests.dark : SERIES_HUES.requests.light
-)
+const seriesAccountCost = computed(() => chartHue('blue', scheme.value))
+const seriesUserCost = computed(() => chartHue('green', scheme.value))
+const seriesRequests = computed(() => chartHue('orange', scheme.value))
 
-const chartColors = computed(() => ({
-  text: isDarkMode.value ? '#e5e5ea' : '#48484a',
-  grid: isDarkMode.value ? '#38383a' : '#e3e3e8'
-}))
+/** 面积填充的浓度：深色下要重一点才看得出体量 */
+const fillAlpha = computed(() => (scheme.value === 'dark' ? 0.16 : 0.1))
+
+const chartColors = computed(() => {
+  const chrome = chartChrome(scheme.value)
+  return { text: chrome.axis, legend: chrome.legend }
+})
 
 // Line chart data
 const trendChartData = computed(() => {
@@ -526,7 +533,7 @@ const trendChartData = computed(() => {
         label: t('usage.accountBilled') + ' (USD)',
         data: stats.value.history.map((h) => h.actual_cost),
         borderColor: seriesAccountCost.value,
-        backgroundColor: isDarkMode.value ? 'rgba(10, 132, 255, 0.16)' : 'rgba(0, 122, 255, 0.1)',
+        backgroundColor: withAlpha(seriesAccountCost.value, fillAlpha.value),
         fill: true,
         tension: 0.3,
         yAxisID: 'y'
@@ -535,7 +542,7 @@ const trendChartData = computed(() => {
         label: t('usage.userBilled') + ' (USD)',
         data: stats.value.history.map((h) => h.user_cost),
         borderColor: seriesUserCost.value,
-        backgroundColor: isDarkMode.value ? 'rgba(48, 209, 88, 0.14)' : 'rgba(52, 199, 89, 0.08)',
+        backgroundColor: withAlpha(seriesUserCost.value, fillAlpha.value),
         fill: false,
         tension: 0.3,
         borderDash: [5, 5],
@@ -545,7 +552,7 @@ const trendChartData = computed(() => {
         label: t('admin.accounts.stats.requests'),
         data: stats.value.history.map((h) => h.requests),
         borderColor: seriesRequests.value,
-        backgroundColor: isDarkMode.value ? 'rgba(255, 159, 10, 0.16)' : 'rgba(255, 149, 0, 0.1)',
+        backgroundColor: withAlpha(seriesRequests.value, fillAlpha.value),
         fill: false,
         tension: 0.3,
         yAxisID: 'y1'
@@ -565,17 +572,12 @@ const lineChartOptions = computed(() => ({
   plugins: {
     legend: {
       position: 'top' as const,
-      labels: {
-        color: chartColors.value.text,
-        usePointStyle: true,
-        pointStyle: 'circle',
-        padding: 15,
-        font: {
-          size: 11
-        }
-      }
+      labels: chartLegendStyle(scheme.value)
     },
     tooltip: {
+      // 原先只给了 callbacks，于是浮层落回 Chart.js 默认的深灰盒子（圆角 6、Helvetica），
+      // 与应用里其他浮层明显不是一套。走共享样式。
+      ...chartTooltipStyle(scheme.value),
       callbacks: {
         label: (context: any) => {
           const label = context.dataset.label || ''
@@ -590,14 +592,11 @@ const lineChartOptions = computed(() => ({
   },
   scales: {
     x: {
-      grid: {
-        color: chartColors.value.grid
-      },
+      // 网格从 --separator-opaque（实色分隔线）换到 --separator（发丝线），与其余图表一致
+      ...chartAxisChrome(scheme.value),
       ticks: {
         color: chartColors.value.text,
-        font: {
-          size: 10
-        },
+        font: chartAxisFont(),
         maxRotation: 45,
         minRotation: 0
       }
@@ -606,46 +605,34 @@ const lineChartOptions = computed(() => ({
       type: 'linear' as const,
       display: true,
       position: 'left' as const,
-      grid: {
-        color: chartColors.value.grid
-      },
+      ...chartAxisChrome(scheme.value, true),
       ticks: {
         color: seriesAccountCost.value,
-        font: {
-          size: 10
-        },
+        font: chartAxisFont(),
         callback: (value: string | number) => '$' + formatCost(Number(value))
       },
       title: {
         display: true,
         text: t('usage.accountBilled') + ' (USD)',
         color: seriesAccountCost.value,
-        font: {
-          size: 11
-        }
+        font: { size: 11, family: chartAxisFont().family }
       }
     },
     y1: {
       type: 'linear' as const,
       display: true,
       position: 'right' as const,
-      grid: {
-        drawOnChartArea: false
-      },
+      ...chartAxisNoGrid('chartArea'),
       ticks: {
         color: seriesRequests.value,
-        font: {
-          size: 10
-        },
+        font: chartAxisFont(),
         callback: (value: string | number) => formatNumber(Number(value))
       },
       title: {
         display: true,
         text: t('admin.accounts.stats.requests'),
         color: seriesRequests.value,
-        font: {
-          size: 11
-        }
+        font: { size: 11, family: chartAxisFont().family }
       }
     }
   }

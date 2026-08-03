@@ -164,6 +164,9 @@
               <td>
                 <button
                   @click="toggleEnabled(rule)"
+                  role="switch"
+                  :aria-checked="rule.enabled"
+                  :aria-label="`${t('admin.errorPassthrough.columns.status')}: ${rule.name}`"
                   :class="[
                     'switch flex-shrink-0 origin-left scale-[0.72] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)]',
                     rule.enabled ? 'switch-active' : ''

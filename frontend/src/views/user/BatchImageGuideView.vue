@@ -415,7 +415,7 @@
                 </td>
                 <td :class="isRecoveredOriginalFailure(item) ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'">
                   <div
-                    class="batch-prompt-trigger cursor-default truncate rounded px-1 text-sm leading-6 focus:outline-none"
+                    class="batch-prompt-trigger cursor-default truncate rounded px-1 text-sm leading-6 focus:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
                     tabindex="0"
                     @pointerenter="schedulePromptPopoverOpen($event, item.prompt_preview || '-')"
                     @pointerleave="schedulePromptPopoverClose"
@@ -2673,7 +2673,13 @@ onBeforeUnmount(() => {
   margin-right: 0 !important;
 }
 
-.batch-prompt-trigger:focus {
+/* 只在指针聚焦时抑制指示器。原先是无条件 :focus —— 作用域选择器
+   .batch-prompt-trigger[data-v-*]:focus 特异性 (0,3,0)，压过 Tailwind
+   focus-visible:ring 的 (0,2,0)，box-shadow: none 会把环整个擦掉，
+   这个 tabindex="0" 元素在键盘下就完全没有可见焦点（违反 2.4.7）。
+   :not(:focus-visible) 让键盘聚焦时本规则不参与匹配，环得以显示；
+   鼠标点击仍然干净无环，保持原本意图。 */
+.batch-prompt-trigger:focus:not(:focus-visible) {
   outline: none;
   box-shadow: none;
 }

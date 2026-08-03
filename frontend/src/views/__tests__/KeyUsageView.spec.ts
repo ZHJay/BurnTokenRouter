@@ -345,7 +345,7 @@ describe('KeyUsageView segmented value pickers', () => {
     wrapper.unmount()
   })
 
-  it('marks the selected option with aria-checked and keeps segmented styling', async () => {
+  it('marks the selected option with aria-checked', async () => {
     const wrapper = await mountQueried()
 
     const rangeRadios = wrapper.findAll('[role="radiogroup"]')[0].findAll('[role="radio"]')
@@ -358,11 +358,6 @@ describe('KeyUsageView segmented value pickers', () => {
     expect(dayRadios).toHaveLength(3)
     // 默认统计天数是 30。
     expect(dayRadios[1].attributes('aria-checked')).toBe('true')
-
-    expect(wrapper.findAll('[role="radiogroup"]')[0].classes()).toContain('tabs')
-    expect(rangeRadios[0].classes()).toContain('tab')
-    expect(rangeRadios[0].classes()).toContain('tab-active')
-    expect(rangeRadios[1].classes()).not.toContain('tab-active')
 
     wrapper.unmount()
   })

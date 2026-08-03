@@ -356,15 +356,15 @@ export default {
         'mesh-gradient': 'var(--ambient-wash)'
       },
       backdropBlur: {
-        xs: '2px',
-        thin: 'var(--mat-blur-thin)',
-        regular: 'var(--mat-blur-regular)',
-        thick: 'var(--mat-blur-thick)'
+        xs: '2px'
       },
       backgroundColor: {
-        'mat-thin': 'var(--mat-thin)',
-        'mat-regular': 'var(--mat-regular)',
-        'mat-thick': 'var(--mat-thick)',
+        // bg-mat-* 与 backdrop-blur-{thin,regular,thick} 已删除：各 0 处使用，
+        // 且 bg-mat-* 从构造上就是错的 —— 它只上材质填充、不带 backdrop-filter，
+        // 半透明填充后面没有模糊，得到的是"脏玻璃"而不是材质。三档材质必须成套
+        // 使用（填充 + 模糊 + 漫射），这正是 .glass / .glass-thick / .glass-thin
+        // 三个语义类存在的原因；留着这些 token 等于提供一个必然用错的入口。
+        // 全仓无动态类名拼接、无 safelist，因此删除不会影响任何产物。
         surface: 'var(--surface)',
         'surface-secondary': 'var(--surface-secondary)'
       },

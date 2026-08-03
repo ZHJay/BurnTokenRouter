@@ -6,77 +6,26 @@
       </h3>
       <div class="flex flex-wrap items-center justify-end gap-2">
         <span v-if="showSourceToggle" :id="sourceLabelId" class="sr-only">{{ t('usage.chartDataSource') }}</span>
-        <div
+        <Segmented
           v-if="showSourceToggle"
-          class="tabs"
-          role="radiogroup"
+          :model-value="source"
+          :options="sourceOptions"
+          mode="radiogroup"
           :aria-labelledby="sourceGroupLabelledBy"
-        >
-          <button
-            type="button"
-            role="radio"
-            :aria-checked="source === 'inbound'"
-            class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
-            :class="source === 'inbound' && 'tab-active'"
-            @click="emit('update:source', 'inbound')"
-            @keydown="handleRadioGroupKeydown"
-          >
-            {{ t('usage.inbound') }}
-          </button>
-          <button
-            type="button"
-            role="radio"
-            :aria-checked="source === 'upstream'"
-            class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
-            :class="source === 'upstream' && 'tab-active'"
-            @click="emit('update:source', 'upstream')"
-            @keydown="handleRadioGroupKeydown"
-          >
-            {{ t('usage.upstream') }}
-          </button>
-          <button
-            type="button"
-            role="radio"
-            :aria-checked="source === 'path'"
-            class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
-            :class="source === 'path' && 'tab-active'"
-            @click="emit('update:source', 'path')"
-            @keydown="handleRadioGroupKeydown"
-          >
-            {{ t('usage.path') }}
-          </button>
-        </div>
+          item-class="px-2.5 py-1 text-xs"
+          @update:model-value="emit('update:source', $event)"
+        />
 
         <span v-if="showMetricToggle" :id="metricLabelId" class="sr-only">{{ t('usage.chartMetric') }}</span>
-        <div
+        <Segmented
           v-if="showMetricToggle"
-          class="tabs"
-          role="radiogroup"
+          :model-value="metric"
+          :options="metricOptions"
+          mode="radiogroup"
           :aria-labelledby="metricGroupLabelledBy"
-        >
-          <button
-            type="button"
-            role="radio"
-            :aria-checked="metric === 'tokens'"
-            class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
-            :class="metric === 'tokens' && 'tab-active'"
-            @click="emit('update:metric', 'tokens')"
-            @keydown="handleRadioGroupKeydown"
-          >
-            {{ t('admin.dashboard.metricTokens') }}
-          </button>
-          <button
-            type="button"
-            role="radio"
-            :aria-checked="metric === 'actual_cost'"
-            class="tab px-2.5 py-1 text-xs active:scale-[0.96]"
-            :class="metric === 'actual_cost' && 'tab-active'"
-            @click="emit('update:metric', 'actual_cost')"
-            @keydown="handleRadioGroupKeydown"
-          >
-            {{ t('admin.dashboard.metricActualCost') }}
-          </button>
-        </div>
+          item-class="px-2.5 py-1 text-xs"
+          @update:model-value="emit('update:metric', $event)"
+        />
       </div>
     </div>
     <div v-if="loading" class="flex h-48 items-center justify-center">
@@ -84,7 +33,13 @@
     </div>
     <div v-else-if="displayEndpointStats.length > 0 && chartData" class="flex flex-col items-center gap-4 sm:flex-row sm:gap-6">
       <div class="h-48 w-48 shrink-0">
-        <Doughnut :data="chartData" :options="doughnutOptions" />
+        <!-- vue-chartjs 渲染的是裸 <canvas>（已带 role="img"），不给 aria-label 就是一个无名图形。
+             右侧表格是同一份数据的等价替代，因此这里只需要一个名字。 -->
+        <Doughnut
+          :data="chartData"
+          :options="doughnutOptions"
+          :aria-label="title || t('usage.endpointDistribution')"
+        />
       </div>
       <div class="max-h-48 w-full min-w-0 flex-1 overflow-auto">
         <table class="w-full text-xs">
@@ -149,17 +104,17 @@ import { useI18n } from 'vue-i18n'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Doughnut } from 'vue-chartjs'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import Segmented from '@/components/common/Segmented.vue'
 import UserBreakdownSubTable from './UserBreakdownSubTable.vue'
 import type { EndpointStat, UserBreakdownItem } from '@/types'
 import { getUserBreakdown } from '@/api/admin/dashboard'
-import { chartTooltipStyle, distributionColor, useChartScheme } from './chartPalette'
-import { handleRadioGroupKeydown } from '@/utils/radioGroupKeyboard'
+import { chartTooltipStyle, distributionColor, useChartScheme } from '@/lib/chart'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
 const { t } = useI18n()
 
-// 数据源 / 指标分段控件都是「选值」而非切面板，用 radiogroup 语义。
+// 数据源 / 指标分段控件都是「选值」而非切面板，用 Segmented 的 radiogroup 模式。
 // 两组都只指向 <h3> 会得到同名的无障碍名称，读屏用户无法区分「选数据源」和「选指标」，
 // 因此各自再挂一个视觉隐藏标签：名称读作「端点分布 数据来源 / 端点分布 统计指标」，
 // 同卡片内彼此可分，多张图表同页时也能分辨归属。
@@ -205,6 +160,17 @@ const emit = defineEmits<{
   'update:metric': [value: DistributionMetric]
   'update:source': [value: EndpointSource]
 }>()
+
+const sourceOptions = computed(() => [
+  { value: 'inbound' as const, label: t('usage.inbound') },
+  { value: 'upstream' as const, label: t('usage.upstream') },
+  { value: 'path' as const, label: t('usage.path') },
+])
+
+const metricOptions = computed(() => [
+  { value: 'tokens' as const, label: t('admin.dashboard.metricTokens') },
+  { value: 'actual_cost' as const, label: t('admin.dashboard.metricActualCost') },
+])
 
 const expandedKey = ref<string | null>(null)
 const breakdownItems = ref<UserBreakdownItem[]>([])

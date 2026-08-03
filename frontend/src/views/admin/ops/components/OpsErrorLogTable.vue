@@ -108,7 +108,7 @@
 
         <template #cell-status="{ row }">
           <div class="flex items-center gap-1.5">
-            <span class="tabular inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium" :class="getStatusClass(row.status_code)">
+            <span class="badge tabular" :class="getStatusClass(row.status_code)">
               {{ row.status_code }}
             </span>
             <span

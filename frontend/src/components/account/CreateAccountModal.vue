@@ -70,97 +70,61 @@
       <!-- Platform Selection - Segmented Control Style -->
       <div>
         <label class="input-label">{{ t('admin.accounts.platform') }}</label>
-        <div class="tabs mt-2 flex w-full flex-wrap" data-tour="account-form-platform">
-          <button
-            type="button"
-            @click="form.platform = 'anthropic'"
-            :class="[
-              'tab flex flex-1 items-center justify-center gap-2 px-4 py-2.5',
-              form.platform === 'anthropic'
-                ? 'tab-active text-orange-600 dark:text-orange-400'
-                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
-            ]"
-          >
-            <Icon name="sparkles" size="sm" />
-            Anthropic
-          </button>
-          <button
-            type="button"
-            @click="form.platform = 'openai'"
-            :class="[
-              'tab flex flex-1 items-center justify-center gap-2 px-4 py-2.5',
-              form.platform === 'openai'
-                ? 'tab-active text-green-600 dark:text-green-400'
-                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
-            ]"
-          >
-            <svg
-              class="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="1.5"
+        <!-- 每个平台的选中态各有自己的品牌色，所以颜色留在 option 插槽里按
+             `selected` 切；itemClass 只放所有段共用的排版。 -->
+        <Segmented
+          v-model="form.platform"
+          :options="platformOptions"
+          mode="radiogroup"
+          :aria-label="t('admin.accounts.platform')"
+          class="mt-2 flex w-full flex-wrap"
+          item-class="group flex flex-1 items-center justify-center gap-2 px-4 py-2.5"
+          data-tour="account-form-platform"
+        >
+          <template #option="{ option, selected }">
+            <span
+              class="flex items-center justify-center gap-2"
+              :class="
+                selected
+                  ? PLATFORM_ACTIVE_CLASS[option.value]
+                  : 'text-gray-600 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-gray-200'
+              "
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
-              />
-            </svg>
-            OpenAI
-          </button>
-          <button
-            type="button"
-            @click="form.platform = 'gemini'"
-            :class="[
-              'tab flex flex-1 items-center justify-center gap-2 px-4 py-2.5',
-              form.platform === 'gemini'
-                ? 'tab-active text-blue-600 dark:text-blue-400'
-                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
-            ]"
-          >
-            <svg
-              class="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="1.5"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M12 2l1.5 6.5L20 10l-6.5 1.5L12 18l-1.5-6.5L4 10l6.5-1.5L12 2z"
-              />
-            </svg>
-            Gemini
-          </button>
-          <button
-            type="button"
-            @click="form.platform = 'antigravity'"
-            :class="[
-              'tab flex flex-1 items-center justify-center gap-2 px-4 py-2.5',
-              form.platform === 'antigravity'
-                ? 'tab-active text-purple-600 dark:text-purple-400'
-                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
-            ]"
-          >
-            <Icon name="cloud" size="sm" />
-            Antigravity
-          </button>
-          <button
-            type="button"
-            @click="form.platform = 'grok'"
-            :class="[
-              'tab flex flex-1 items-center justify-center gap-2 px-4 py-2.5',
-              form.platform === 'grok'
-                ? 'tab-active text-zinc-900 dark:text-zinc-100'
-                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
-            ]"
-          >
-            <PlatformIcon platform="grok" size="sm" />
-            Grok
-          </button>
-        </div>
+              <Icon v-if="option.value === 'anthropic'" name="sparkles" size="sm" />
+              <svg
+                v-else-if="option.value === 'openai'"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
+                />
+              </svg>
+              <svg
+                v-else-if="option.value === 'gemini'"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 2l1.5 6.5L20 10l-6.5 1.5L12 18l-1.5-6.5L4 10l6.5-1.5L12 2z"
+                />
+              </svg>
+              <Icon v-else-if="option.value === 'antigravity'" name="cloud" size="sm" />
+              <PlatformIcon v-else platform="grok" size="sm" />
+              {{ option.label }}
+            </span>
+          </template>
+        </Segmented>
       </div>
 
       <!-- Account Type Selection (Anthropic) -->
@@ -3433,6 +3397,7 @@ import BaseDialog from '@/components/common/BaseDialog.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import Select from '@/components/common/Select.vue'
 import PlatformIcon from '@/components/common/PlatformIcon.vue'
+import Segmented from '@/components/common/Segmented.vue'
 import Icon from '@/components/icons/Icon.vue'
 import ProxySelector from '@/components/common/ProxySelector.vue'
 import ProxyAdBanner from '@/components/common/ProxyAdBanner.vue'
@@ -3952,6 +3917,28 @@ const tempUnschedPresets = computed(() => [
     }
   }
 ])
+
+/**
+ * 平台分段控件。
+ *
+ * 选中态的文字颜色是每个平台的品牌色，无法收进共享的 `itemClass`（那是所有段共用的），
+ * 因此按 value 索引，在 option 插槽里根据 `selected` 应用。
+ */
+const PLATFORM_ACTIVE_CLASS: Record<string, string> = {
+  anthropic: 'text-orange-600 dark:text-orange-400',
+  openai: 'text-green-600 dark:text-green-400',
+  gemini: 'text-blue-600 dark:text-blue-400',
+  antigravity: 'text-purple-600 dark:text-purple-400',
+  grok: 'text-zinc-900 dark:text-zinc-100'
+}
+
+const platformOptions = [
+  { value: 'anthropic', label: 'Anthropic' },
+  { value: 'openai', label: 'OpenAI' },
+  { value: 'gemini', label: 'Gemini' },
+  { value: 'antigravity', label: 'Antigravity' },
+  { value: 'grok', label: 'Grok' }
+] as const
 
 const form = reactive({
   name: '',

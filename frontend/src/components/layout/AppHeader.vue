@@ -5,7 +5,7 @@
     bar spans the full viewport.
   -->
   <header
-    class="glass fixed right-0 top-0 z-30 left-0 transition-all duration-300"
+    class="app-header glass fixed right-0 top-0 z-30 left-0 transition-all duration-300"
     :class="[sidebarCollapsed ? 'lg:left-[72px]' : 'lg:left-64']"
     style="
       box-shadow:
@@ -24,14 +24,24 @@
       <div class="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
         <button
           @click="toggleMobileSidebar"
-          class="btn-ghost btn-icon lg:hidden"
+          class="btn btn-ghost btn-icon lg:hidden"
           :aria-label="t('common.toggleMenu')"
         >
           <Icon name="menu" size="md" />
         </button>
 
-        <!-- min-w-0 lets the truncate on the children actually take effect -->
-        <div class="hidden min-w-0 lg:block">
+        <!--
+          min-w-0 lets the truncate on the children actually take effect.
+
+          `sr-only` rather than `hidden` below lg: this block holds the only h1
+          on an app page, and `display: none` removed it from the accessibility
+          tree entirely, leaving every page under 1024px with no h1 and content
+          starting at h2/h3 (WCAG 1.3.1). `sr-only` keeps the heading in the tree
+          while staying invisible, and because it also positions the block
+          absolutely it stays out of the flex flow exactly like `hidden` did — the
+          compact layout is unchanged.
+        -->
+        <div class="sr-only min-w-0 lg:not-sr-only lg:block">
           <!-- Vibrancy: text over glass gets heavier weight, never flat grey -->
           <h1
             class="on-glass truncate text-[17px] font-semibold leading-tight tracking-[-0.014em] text-gray-900 dark:text-white"
@@ -45,32 +55,54 @@
       </div>
 
       <!-- Right: Announcements + Docs + Language + Subscriptions + Balance + User Dropdown -->
-      <!-- shrink-0: the action row is fixed-content and must never wrap; the
-           title block on the left absorbs any width pressure instead. -->
-      <div class="flex shrink-0 items-center gap-1 sm:gap-3">
+      <!--
+        The action row must never WRAP, but it must be allowed to SHRINK.
+
+        It used to be `shrink-0`, which is what stranded the user menu: below lg
+        the left group collapses to 0 wide (its only visible child is the
+        hamburger and the title is hidden), so the action row started at x=24 and
+        ran 45-72px past the viewport with no scroller — the surplus was simply
+        unreachable, and log out / account settings could not be tapped on an
+        iPad. `min-w-0` lets it give ground instead of clipping; the individual
+        links carry `whitespace-nowrap` so the no-wrap guarantee that `shrink-0`
+        was really providing is kept where it belongs, and the username block is
+        the designated pressure valve (it truncates).
+
+        gap-2 rather than gap-1 at the base size: the bell-to-language gap
+        measured 4.0px, too tight to hit reliably with a thumb.
+      -->
+      <div class="flex min-w-0 items-center gap-2 sm:gap-3">
         <!-- Announcement Bell -->
         <AnnouncementBell v-if="user" />
 
-        <!-- Docs Link -->
+        <!--
+          Docs + Model Plaza reveal at lg, not sm.
+
+          They used to appear from 640px up while the sidebar stays off-canvas
+          until 1024px, so the 640-1023px band rendered the drawer toggle AND the
+          full desktop link set at once and overflowed the viewport. The drawer
+          already carries this navigation below lg, so revealing it here was pure
+          duplication that cost 196px of a 667px viewport.
+        -->
         <a
           v-if="docUrl"
           :href="docUrl"
           target="_blank"
           rel="noopener noreferrer"
-          class="hidden items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white sm:flex"
+          class="hidden items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white lg:flex"
         >
           <Icon name="book" size="sm" />
-          <span class="hidden sm:inline">{{ t('nav.docs') }}</span>
+          <span>{{ t('nav.docs') }}</span>
         </a>
 
         <!-- Model Plaza Entry -->
         <router-link
           v-if="user && modelPlazaEnabled"
           :to="{ path: '/model-plaza', query: { embedded: '1' } }"
-          class="hidden items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white sm:flex"
+          class="hidden items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white lg:flex"
         >
           <Icon name="grid" size="sm" />
-          <span class="hidden sm:inline">{{ t('nav.modelPlaza') }}</span>
+          <span>{{ t('nav.modelPlaza') }}</span>
         </router-link>
 
         <!-- Language Switcher -->
@@ -128,14 +160,22 @@
         </div>
 
         <!-- User Dropdown -->
-        <div v-if="user" class="relative" ref="dropdownRef">
+        <!--
+          keydown is bound on the wrapper, not the trigger: Escape has to work
+          while focus is on a menu item too, and the event bubbles here from
+          either.
+        -->
+        <div v-if="user" class="relative min-w-0" ref="dropdownRef" @keydown="handleMenuKeydown">
           <button
+            ref="triggerRef"
             @click="toggleDropdown"
-            class="flex items-center gap-2 rounded-full p-1.5 transition-[background-color,color,transform] duration-fast ease-apple-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] hover:bg-gray-100 dark:hover:bg-dark-800"
+            class="btn btn-ghost min-w-0 p-1.5"
             :aria-label="t('common.userMenu')"
+            aria-haspopup="menu"
+            :aria-expanded="dropdownOpen ? 'true' : 'false'"
           >
             <div
-              class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-sm font-medium text-white shadow-sm"
+              class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-sm font-medium text-white shadow-sm"
             >
               <img
                 v-if="avatarUrl"
@@ -145,22 +185,40 @@
               >
               <span v-else>{{ userInitials }}</span>
             </div>
-            <div class="hidden text-left md:block">
+            <!--
+              The pressure valve. Everything else in the action row is a
+              fixed-size control, so this is the one thing that can absorb width
+              pressure; min-w-0 + truncate is what turns "shrink" into an
+              ellipsis instead of an overflow.
+            -->
+            <div class="hidden min-w-0 text-left md:block">
               <div class="text-sm font-medium text-gray-900 dark:text-white">
-                {{ displayName }}
+                <span class="block truncate">{{ displayName }}</span>
               </div>
               <div class="text-xs capitalize text-gray-500 dark:text-dark-400">
-                {{ user.role }}
+                <span class="block truncate">{{ user.role }}</span>
               </div>
             </div>
-            <Icon name="chevronDown" size="sm" class="hidden text-gray-400 md:block" />
+            <Icon name="chevronDown" size="sm" class="hidden shrink-0 text-gray-400 md:block" />
           </button>
 
           <!-- Dropdown Menu -->
+          <!--
+            animate-none is required, not decorative: `.dropdown` carries an
+            intrinsic `animate-scale-in`, so inside a <transition> both the
+            keyframe and the transition drive `transform` on enter with different
+            scale values and fight. Same fix as AccountGroupsCell.vue.
+          -->
           <transition name="dropdown">
-            <div v-if="dropdownOpen" class="dropdown right-0 mt-2 w-56">
+            <div
+              v-if="dropdownOpen"
+              ref="menuRef"
+              class="dropdown right-0 mt-2 w-56 animate-none"
+              role="menu"
+              :aria-label="t('common.userMenu')"
+            >
               <!-- User Info -->
-              <div class="border-b border-gray-100 px-4 py-3 dark:border-dark-700">
+              <div role="none" class="border-b border-gray-100 px-4 py-3 dark:border-dark-700">
                 <div class="text-sm font-medium text-gray-900 dark:text-white">
                   {{ displayName }}
                 </div>
@@ -168,7 +226,7 @@
               </div>
 
               <!-- Balance (mobile only) -->
-              <div class="border-b border-gray-100 px-4 py-2 dark:border-dark-700 sm:hidden">
+              <div role="none" class="border-b border-gray-100 px-4 py-2 dark:border-dark-700 sm:hidden">
                 <div class="text-xs text-gray-500 dark:text-dark-400">
                   {{ t('common.balance') }}
                 </div>
@@ -180,13 +238,13 @@
                 </div>
               </div>
 
-              <div class="py-1">
-                <router-link to="/profile" @click="closeDropdown" class="dropdown-item">
+              <div role="none" class="py-1">
+                <router-link to="/profile" role="menuitem" @click="closeDropdown" class="dropdown-item">
                   <Icon name="user" size="sm" />
                   {{ t('nav.profile') }}
                 </router-link>
 
-                <router-link to="/keys" @click="closeDropdown" class="dropdown-item">
+                <router-link to="/keys" role="menuitem" @click="closeDropdown" class="dropdown-item">
                   <Icon name="key" size="sm" />
                   {{ t('nav.apiKeys') }}
                 </router-link>
@@ -196,6 +254,7 @@
                   href="https://github.com/Wei-Shaw/sub2api"
                   target="_blank"
                   rel="noopener noreferrer"
+                  role="menuitem"
                   @click="closeDropdown"
                   class="dropdown-item"
                 >
@@ -214,6 +273,7 @@
               <!-- Contact Support (only show if configured) -->
               <div
                 v-if="contactInfo"
+                role="none"
                 class="border-t border-gray-100 px-4 py-2.5 dark:border-dark-700"
               >
                 <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
@@ -237,8 +297,8 @@
                 </div>
               </div>
 
-              <div v-if="showOnboardingButton" class="border-t border-gray-100 py-1 dark:border-dark-700">
-                <button @click="handleReplayGuide" class="dropdown-item w-full">
+              <div v-if="showOnboardingButton" role="none" class="border-t border-gray-100 py-1 dark:border-dark-700">
+                <button role="menuitem" @click="handleReplayGuide" class="dropdown-item w-full">
                   <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                     <path
                       d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 14a1 1 0 110 2 1 1 0 010-2zm1.07-7.75c0-.6-.49-1.25-1.32-1.25-.7 0-1.22.4-1.43 1.02a1 1 0 11-1.9-.62A3.41 3.41 0 0111.8 5c2.02 0 3.25 1.4 3.25 2.9 0 2-1.83 2.55-2.43 3.12-.43.4-.47.75-.47 1.23a1 1 0 01-2 0c0-1 .16-1.82 1.1-2.7.69-.64 1.82-1.05 1.82-2.06z"
@@ -248,8 +308,9 @@
                 </button>
               </div>
 
-              <div class="border-t border-gray-100 py-1 dark:border-dark-700">
+              <div role="none" class="border-t border-gray-100 py-1 dark:border-dark-700">
                 <button
+                  role="menuitem"
                   @click="handleLogout"
                   class="dropdown-item w-full text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
                 >
@@ -278,7 +339,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore, useAuthStore, useOnboardingStore } from '@/stores'
@@ -301,6 +362,8 @@ const onboardingStore = useOnboardingStore()
 const user = computed(() => authStore.user)
 const dropdownOpen = ref(false)
 const dropdownRef = ref<HTMLElement | null>(null)
+const triggerRef = ref<HTMLButtonElement | null>(null)
+const menuRef = ref<HTMLElement | null>(null)
 const contactInfo = computed(() => appStore.contactInfo)
 const docUrl = computed(() => sanitizeUrl(appStore.docUrl))
 const sidebarCollapsed = computed(() => appStore.sidebarCollapsed)
@@ -374,6 +437,77 @@ function closeDropdown() {
   dropdownOpen.value = false
 }
 
+/**
+ * Close and hand focus back to the trigger.
+ *
+ * Separate from closeDropdown() on purpose: closeDropdown is bound as
+ * `@click="closeDropdown"` on the menu items, so a `returnFocus` parameter would
+ * receive the MouseEvent and always read as truthy. Keyboard dismissal has to
+ * restore focus explicitly — the panel is `v-if`, so the focused item is removed
+ * from the DOM and focus would otherwise fall back to <body>, stranding the user
+ * at the top of the tab order.
+ */
+function closeDropdownAndRestoreFocus() {
+  if (!dropdownOpen.value) return
+  dropdownOpen.value = false
+  triggerRef.value?.focus()
+}
+
+/** The menu items, in DOM order. Read live: several are conditional. */
+function menuItems(): HTMLElement[] {
+  if (!menuRef.value) return []
+  return Array.from(menuRef.value.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+}
+
+function focusItemAt(index: number) {
+  const items = menuItems()
+  if (items.length === 0) return
+  // Wrap at both ends: ArrowDown past the last item returns to the first.
+  const target = ((index % items.length) + items.length) % items.length
+  items[target].focus()
+}
+
+async function openDropdownAndFocusFirst() {
+  dropdownOpen.value = true
+  await nextTick()
+  focusItemAt(0)
+}
+
+function handleMenuKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    if (!dropdownOpen.value) return
+    event.stopPropagation()
+    closeDropdownAndRestoreFocus()
+    return
+  }
+
+  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    event.preventDefault() // otherwise the page scrolls behind the open menu
+    if (!dropdownOpen.value) {
+      void openDropdownAndFocusFirst()
+      return
+    }
+    const items = menuItems()
+    const current = items.indexOf(document.activeElement as HTMLElement)
+    if (current === -1) {
+      focusItemAt(event.key === 'ArrowDown' ? 0 : items.length - 1)
+    } else {
+      focusItemAt(current + (event.key === 'ArrowDown' ? 1 : -1))
+    }
+    return
+  }
+
+  if (!dropdownOpen.value) return
+
+  if (event.key === 'Home') {
+    event.preventDefault()
+    focusItemAt(0)
+  } else if (event.key === 'End') {
+    event.preventDefault()
+    focusItemAt(menuItems().length - 1)
+  }
+}
+
 async function handleLogout() {
   closeDropdown()
   try {
@@ -411,6 +545,30 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/*
+ * Notch / status-bar inset.
+ *
+ * The bar is `position: fixed; top: 0`, so on a device with a safe area it sits
+ * under the status bar. Padding the top by the inset pushes the 4rem content row
+ * clear of it while the glass itself still runs edge to edge — the status bar
+ * gets the material behind it instead of raw page background. The height grows by
+ * the same term so the padding adds to the bar rather than eating the row.
+ *
+ * Requires `viewport-fit=cover` in index.html; without it env() resolves to 0px
+ * and both values collapse to today's behaviour, which is also the correct
+ * no-safe-area result.
+ *
+ * Deliberately declared here rather than reusing the safe-area helper classes in
+ * style.css: those have no call sites, so Tailwind purges them and they never
+ * reach the served stylesheet. Note that naming one in a comment is enough to
+ * un-purge it — the content globs scan .vue files as plain text — so this comment
+ * avoids spelling them out.
+ */
+.app-header {
+  padding-top: env(safe-area-inset-top);
+  height: calc(4rem + env(safe-area-inset-top));
+}
+
 .dropdown-enter-active,
 .dropdown-leave-active {
   transition: all 0.2s ease;

@@ -380,31 +380,19 @@
       <div
         class="mb-6 flex items-center justify-between gap-3"
       >
-        <div class="tabs min-w-0 shrink-0" role="tablist">
-          <button
-            type="button"
-            role="tab"
-            :aria-selected="createMode === 'standard'"
-            @click="createMode = 'standard'"
-            :class="[
-              'tab inline-flex items-center transition-transform duration-instant ease-apple-out focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] active:scale-[0.96]',
-              createMode === 'standard' ? 'tab-active' : ''
-            ]"
-          >
-            <Icon name="plus" size="sm" class="mr-1.5 inline" />
-            {{ t('admin.proxies.standardAdd') }}
-          </button>
-          <button
-            type="button"
-            role="tab"
-            :aria-selected="createMode === 'batch'"
-            @click="createMode = 'batch'"
-            :class="[
-              'tab inline-flex items-center transition-transform duration-instant ease-apple-out focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] active:scale-[0.96]',
-              createMode === 'batch' ? 'tab-active' : ''
-            ]"
-          >
+        <!-- min-w-0 shrink-0：右侧 ProxyAdBanner 会争抢空间，分段轨道不能被压缩换行。 -->
+        <Segmented
+          v-model="createMode"
+          :options="createModeOptions"
+          mode="tablist"
+          :aria-label="t('admin.proxies.createProxy')"
+          class="min-w-0 shrink-0"
+          item-class="inline-flex items-center"
+        >
+          <template #option="{ option }">
+            <Icon v-if="option.value === 'standard'" name="plus" size="sm" class="mr-1.5 inline" />
             <svg
+              v-else
               class="mr-1.5 inline h-4 w-4"
               fill="none"
               viewBox="0 0 24 24"
@@ -417,9 +405,9 @@
                 d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"
               />
             </svg>
-            {{ t('admin.proxies.batchAdd') }}
-          </button>
-        </div>
+            {{ option.label }}
+          </template>
+        </Segmented>
         <ProxyAdBanner />
       </div>
 
@@ -984,6 +972,7 @@ import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import ImportDataModal from '@/components/admin/proxy/ImportDataModal.vue'
 import Select from '@/components/common/Select.vue'
+import Segmented from '@/components/common/Segmented.vue'
 import ProxyAdBanner from '@/components/common/ProxyAdBanner.vue'
 import Icon from '@/components/icons/Icon.vue'
 import PlatformTypeBadge from '@/components/common/PlatformTypeBadge.vue'
@@ -1111,6 +1100,12 @@ const qualityReport = ref<ProxyQualityCheckResult | null>(null)
 
 // Batch import state
 const createMode = ref<'standard' | 'batch'>('standard')
+
+// 图标随 option 走（一个 Icon、一个内联 svg），所以标签在这里、图形在插槽里。
+const createModeOptions = computed(() => [
+  { value: 'standard' as const, label: t('admin.proxies.standardAdd') },
+  { value: 'batch' as const, label: t('admin.proxies.batchAdd') }
+])
 const batchInput = ref('')
 const batchParseResult = reactive({
   total: 0,

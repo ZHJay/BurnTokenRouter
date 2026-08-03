@@ -361,6 +361,19 @@
     font-weight: 590;
     letter-spacing: -0.006em;
     white-space: nowrap;
+    /* 高度必须显式声明，不能由内距推导出来。
+
+       px-4 py-2 text-sm 按算术是 36px（8+20+8），但那是"恰好没有子元素改行高"
+       时的结果：任何子元素的行高都能把父按钮顶高。实测 .btn-sm 在生产里同时渲染
+       成 24px 和 32px —— src/components/common/LocaleSwitcher.vue:9 的
+       <span class="text-base"> 行高 24px，把同一个类撑到 32px。同一个类算出两个
+       高度，尺寸阶梯就不成立了。
+
+       写 height 而不是 min-height：这里要的是"钉死"而不是"下限"，内距保持不变，
+       inline-flex + items-center 让内容在固定高度里自动居中（.btn 已带这两个）。
+       模板上的 h-* 工具类仍然赢（utilities 层在 components 层之后，同为 (0,1,0)
+       靠源码顺序取胜）—— 全仓 20 处 .btn + h-8/h-9/h-10/h-11 的调用点行为不变。 */
+    height: 36px;
     transition:
       transform 100ms var(--ease-out),
       background-color 240ms var(--ease-out),
@@ -544,18 +557,23 @@
 
   .btn-sm {
     @apply rounded-full px-3 py-1 text-xs;
-  }
-
-  .btn-md {
-    @apply rounded-full px-4 py-2 text-sm;
+    /* 24px（py-1 + text-xs 的 16px 行高）低于 Apple 的 28pt 下限，且原型规定 28。
+       与 .btn 同理必须显式给高度：LocaleSwitcher.vue:9 的 text-base 子元素把同一
+       个 .btn-sm 撑到 32px，实测生产里 24px 与 32px 并存。 */
+    height: 28px;
   }
 
   .btn-lg {
     @apply rounded-full px-6 py-2.5 text-base;
+    height: 44px;
   }
 
   .btn-icon {
     @apply rounded-full p-2;
+    /* 图标按钮必须是正方形。此前只有 p-2，宽度由图标内容决定 ——
+       实测裸 .btn .btn-icon 渲染成 28.23 × 36，不是方的。 */
+    height: 36px;
+    width: 36px;
   }
 
   /* ============ 输入框样式 ============ */
@@ -566,9 +584,60 @@
     border: 0;
     box-shadow: inset 0 0 0 1px var(--separator);
     letter-spacing: -0.006em;
+    /* 此前从未设 appearance，于是原生控件的自带装饰直接穿透设计系统：
+       <select> 顶着系统箭头（38 处 / 12 文件），datetime-local 与 date 顶着
+       mm/dd/yyyy 微调器（33 处 / 18 文件）。两者都在圆角 + inset 描边的表面上
+       画自己的一套控件，观感与 .input 无关。
+
+       checkbox / radio / file / range / color 都**没有**用 .input（已逐 type 统计：
+       text 282、number 245、password 44、email 23、datetime-local 20、url 18、
+       date 9、time 4、search 3，其余为三元表达式的 text/password 切换），
+       因此 appearance: none 不会打掉任何原生开关类控件。 */
+    appearance: none;
+    -webkit-appearance: none;
     transition:
       box-shadow 240ms var(--ease-out),
       background-color 240ms var(--ease-out);
+  }
+
+  /* 与 .btn 同一个论证：高度不能由内距推导。实测同一个 .input 在
+     <input> 上是 36px、<select> 上是 35px、datetime-local 上是 38px ——
+     并排放在同一行的字段互相错位。
+
+     :where() 把整条选择器的特异性钉回 (0,1,0)（与 .input 本身相同），因此
+     模板上的 h-* 工具类照旧靠源码顺序取胜 —— 全仓 61 处 input + h-8/h-11/h-12/
+     h-[42px] 与 1 处 select + h-9 的调用点行为不变。若写成 .input:not(textarea)
+     则会变成 (0,1,1)，反而把这些调用点的 h-* 打死。
+
+     textarea 必须排除：53 处 textarea.input 里多数只靠 rows 决定高度，
+     钉成 36px 会把它们压成一行。 */
+  .input:where(:not(textarea)) {
+    height: 36px;
+  }
+
+  /* select 的箭头必须和 appearance: none 在同一次改动里补回来 —— 去掉 appearance
+     等于删掉 <select> 的下拉指示器，38 处 select 会失去唯一的"这是可展开的"
+     affordance。
+
+     用内联 SVG data-URI 而不是 ::after：<select> 是替换元素，伪元素在其上无效。
+     data-URI 里无法引用 CSS 变量（url() 内容不参与变量替换），因此描边颜色写成
+     与 --label-secondary 同源的字面值，并在深色下换一张：
+       浅色 #3c3c43（= rgb(60,60,67)，--label-secondary 的色相）
+       深色 #ebebf5（= rgb(235,235,245)，深色 --label-secondary 的色相）
+     两者与轨道的对比度都远高于 1.4.11 对图形对象要求的 3:1。
+
+     同样用 :where() 保持 (0,1,0)，让调用点的 bg-* / px-* 工具类仍可覆盖。
+     padding-right 留出箭头的位置，避免长 option 文本压到箭头下面。 */
+  .input:where(select) {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1.5 1.75 6 6.25l4.5-4.5' stroke='%233c3c43' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 12px 8px;
+    padding-right: 2rem;
+  }
+
+  .dark .input:where(select) {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1.5 1.75 6 6.25l4.5-4.5' stroke='%23ebebf5' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   }
 
   .input::placeholder {
@@ -626,6 +695,10 @@
      片段和 URL 更吃力，而高度已经由内距解决。 */
   .input-sm {
     @apply rounded-md px-2.5 py-1.5;
+    /* .input 现在钉死 36px，若不在这里给出自己的高度，紧凑档会被一并拉到 36px，
+       上面那段注释里"压到 py-1.5 仍有约 32px"的结论就失效了。显式写 32px 保住
+       这一级阶梯（同为 (0,1,0)，靠源码顺序压过 .input 的 36px）。 */
+    height: 32px;
   }
 
   .input-label {
@@ -780,6 +853,28 @@
       box-shadow 240ms var(--spring);
   }
 
+  /* 为什么 .card 故意不设默认内距（勿"修复"）：
+
+     .card 是**外壳**，内距归它的子块。全仓 272 个 .card class 串里 178 个自带
+     p-*，余下 94 个渲染成 0px —— 但这 94 个全部是有意的，逐个核对过直接子元素：
+       · 53 个的直接子是 .card-header / .card-body（约 40 个在 SettingsView.vue，
+         其余在 PaymentView / AffiliateView / RedeemView / SettingsView 等），
+         内距已由 px-6 py-4 / p-6 提供；
+       · 28 个的第一个直接子自带 px- / py- 工具类（Profile 系列、KeyUsageView、
+         GroupsView、RiskControlView 等手写页眉，与 .card-header 等价但用裸工具类）；
+       · 8 个是表格/滚动外壳（TablePageLayout 的 .table-scroll-container、
+         UserErrorRequestsTable、EventWorkspace、RiskControlView 的表格卡）；
+       · 5 个是整幅出血内容（AccountTestModal 的 .img-tile 图片磁贴、
+         StripePaymentInline / StripePaymentView 的品牌色横幅、EmptyState 外壳）。
+
+     给 .card 加默认内距（哪怕用 :has() 排除 .card-header/.card-body/.table）仍会
+     命中其中 37 个，其中 28 个的第一个子元素已经有内距 —— 结果是内距叠两层，
+     并把手写页眉的 inset 分隔线从卡片边缘缩进 16px；那条线的作用正是横贯整张卡片。
+     图片磁贴与品牌色横幅还会多出一圈白边。真正"缺内距"的裸卡片数量是 0。
+
+     结论：0px 不是遗漏，是这一层的契约。需要内距的调用点写 p-4 / p-6（既有 178
+     处就是这么做的）。同理没有引入 .card-flush —— 默认内距不存在，退出口就没有
+     对象可退出，只会变成一个恒等类。 */
   .card-hover {
     @apply hover:-translate-y-0.5;
   }
@@ -793,19 +888,6 @@
   .card-hover:active {
     @apply translate-y-0 scale-[0.994];
     transition-duration: 100ms;
-  }
-
-  .card-glass {
-    background: var(--mat-thin);
-    backdrop-filter: blur(var(--mat-blur-thin)) var(--mat-diffuse);
-    -webkit-backdrop-filter: blur(var(--mat-blur-thin)) var(--mat-diffuse);
-    border: 0;
-    box-shadow:
-      0 0 0 0.5px var(--glass-edge-outer),
-      inset 0 0 0 0.5px var(--glass-edge),
-      inset 0 -1px 0 0 var(--glass-counter),
-      inset 0 1.5px 0 0 var(--glass-specular),
-      var(--shadow-4);
   }
 
   .card-inset {
@@ -831,13 +913,14 @@
   }
 
   /* ============ 统计卡片 ============ */
-  .stat-card {
-    @apply card p-4;
-    @apply flex items-start gap-4;
-  }
-
   .stat-icon {
-    @apply h-10 w-10 rounded-lg;
+    /* 声明 40px 但全仓 33 个活动落点没有一个真的是 40px：42 个 class 串里 38 个
+       自带 h-8 w-8（或 h-12/h-16/h-20）覆盖，实测一律 32px。默认值与现实不符时，
+       改默认值 —— 4 处裸调用点（AccountTestModal / AccountStatsModal /
+       RiskControlView / RedeemView）因此与其余 38 处对齐，而不是继续做例外。
+       半径同步 12px（rounded-xl）：32px 磁贴上 8px 圆角偏方，12px 是 Apple 在这个
+       尺寸的连续圆角落点。 */
+    @apply h-8 w-8 rounded-xl;
     @apply flex items-center justify-center;
     @apply text-xl;
   }
@@ -892,19 +975,6 @@
     font-weight: 500;
     letter-spacing: 0.01em;
     color: var(--label-secondary);
-  }
-
-  .stat-trend {
-    @apply mt-1 flex items-center gap-1 text-xs;
-    font-weight: 590;
-  }
-
-  .stat-trend-up {
-    color: var(--sys-green);
-  }
-
-  .stat-trend-down {
-    color: var(--sys-red);
   }
 
   /* ============ 表格样式 ============ */
@@ -1046,6 +1116,21 @@
   .dropdown-item:hover {
     background-color: var(--accent);
     @apply text-white;
+  }
+
+  /* 键盘焦点。此前只有 :hover，于是 55 处 .dropdown-item 在 Tab 导航时落到
+     Chrome 默认的蓝色 1px outline（实测 :focus-visible 命中但 box-shadow: none），
+     而不是设计系统的 accent 焦点环 —— 鼠标能看见指向、键盘看不见。
+     几何与 .btn:focus-visible 完全一致（3.5px tint + 1px accent），
+     背景同时落到 --accent 与 :hover 对齐：菜单项的"当前项"在两种输入方式下
+     应该长得一样。 */
+  .dropdown-item:focus-visible {
+    outline: none;
+    background-color: var(--accent);
+    @apply text-white;
+    box-shadow:
+      0 0 0 3.5px var(--accent-tint-strong),
+      0 0 0 1px var(--accent);
   }
 
   /* ============ 模态框 ============ */
@@ -1198,41 +1283,13 @@
       var(--shadow-4);
   }
 
-  .dialog-header {
-    @apply flex items-center justify-between px-6 py-4;
-    border: 0;
-    box-shadow: inset 0 -0.5px 0 var(--separator);
-  }
-
-  .dialog-body {
-    @apply overflow-y-auto px-6 py-4;
-  }
-
-  .dialog-footer {
-    @apply flex items-center justify-end gap-3 px-6 py-4;
-    border: 0;
-    box-shadow: inset 0 0.5px 0 var(--separator);
-  }
-
   /* ============ Toast 通知 ============ */
-  .toast {
-    @apply fixed right-4 top-4 z-[100];
-    @apply min-w-[320px] max-w-md;
-    @apply rounded-xl p-4;
-    background: var(--mat-thin);
-    backdrop-filter: blur(var(--mat-blur-thin)) var(--mat-diffuse);
-    -webkit-backdrop-filter: blur(var(--mat-blur-thin)) var(--mat-diffuse);
-    border: 0;
-    border-left: 3px solid transparent;
-    box-shadow:
-      0 0 0 0.5px var(--glass-edge-outer),
-      inset 0 0 0 0.5px var(--glass-edge),
-      inset 0 1px 0 0 var(--glass-specular),
-      var(--shadow-3);
-    /* 进出同路径：从右侧进入，也向右侧离开 */
-    @apply animate-slide-in-right;
-  }
-
+  /* 基类 .toast 已删除：Toast.vue 不再施加它，改用组件内的 .toast-item。
+     原因有二 —— .toast 带 `position: fixed` + `top/right` + `z-[100]`，而定位与
+     堆叠归容器 .toast-region 所有，套上去会把每条 toast 叠到同一坐标；且它带
+     固有 `animate-slide-in-right`，与 TransitionGroup 的位移转场同时驱动
+     transform，形成双驱动。四层边缘与高对比描边由组件侧的 shadow-glass-edge
+     承担。下面的 .toast-{success,error,warning,info} 仍在使用，保留。 */
   .toast-success {
     border-left-color: var(--sys-green);
   }
@@ -1265,6 +1322,12 @@
       1px 0 28px -8px rgb(0 0 0 / 0.09);
     @apply transition-transform duration-300;
     transition-property: width, transform;
+    /* 安全区。侧栏是 inset-y-0 的全高抽屉，在 viewport-fit=cover 下顶端会伸到
+       刘海/状态栏底下，.sidebar-header 的 logo 与关闭按钮被挡住。
+       env() 在不支持或无安全区时求值为 0px，桌面端与非刘海设备零影响。
+       只处理顶端：底部由抽屉内部的 .sidebar-nav 滚动区承担，且 header/main 的
+       安全区由另一个 agent 在 index.html + 布局侧处理，此处不越界。 */
+    padding-top: env(safe-area-inset-top);
   }
 
   /* 竖向镜面 sweep：高瘦玻璃面板沿前缘捕捉光线，顶部最强 */
@@ -1365,10 +1428,6 @@
   }
 
   /* ============ 页面头部 ============ */
-  .page-header {
-    @apply mb-6;
-  }
-
   /* 大字号收紧 tracking —— 字母放大后视觉间距会显得过宽 */
   .page-title {
     @apply text-2xl;
@@ -1376,11 +1435,6 @@
     line-height: 1.18;
     letter-spacing: -0.022em;
     color: var(--label);
-  }
-
-  .page-description {
-    @apply mt-1 text-sm;
-    color: var(--label-secondary);
   }
 
   /* ============ 空状态 ============ */
@@ -1475,7 +1529,9 @@
   .switch-active {
     /* --sys-green 下白色滑块只有 2.22:1，轨道对表面也是 2.22:1 —— 开关状态读不出来。
        #1f9d43：白滑块 3.52:1，轨道对浅色表面 3.52:1，对深色表面 4.83:1。
-       只作用于 .switch-active，--sys-green 仍供 .toast-success 边框与 .stat-trend-up。 */
+       只作用于 .switch-active，--sys-green 仍供 .toast-success 边框、.stat-icon-success
+       与图表语义色。（原注释还提到 .stat-trend-up，该类已随零消费者的 .stat-trend
+       一并删除。） */
     background-color: var(--switch-track-on);
   }
 
@@ -1564,6 +1620,37 @@
      可访问性：三个独立信号，须同时支持
      ============================================================================ */
 
+  /* 触达目标：粗指针下所有交互控件至少 44px。
+
+     实测在 390px 宽度下 321 个控件里有 263 个至少一个方向不足 44px（WCAG 2.5.5
+     / Apple HIG 44pt）。改在 token 上而不是调用点上：这一个块清掉约 200 个失败，
+     零调用点改动。
+
+     为什么用 (pointer: coarse) 而不是 max-width 断点：
+     44pt 的依据是手指的接触面积，不是视口宽度。窄窗口里的鼠标用户不需要 44px
+     （会白白牺牲桌面端信息密度），而平板横屏 1024px 的手指用户需要。
+     pointer: coarse 直接命中"主输入设备精度低"这个真实条件，两种情况都对。
+     hover: none 也能近似，但触控笔记本（既有触屏又有鼠标）会被误判。
+
+     为什么用 min-height 而不是改 height：
+     min-height 压过同元素上的 height（含上面刚钉死的 36px 与调用点的 h-8 等
+     工具类），因此不必逐一提高每个尺寸档，也不会影响桌面端。.btn 已带
+     inline-flex + items-center + justify-center，多出来的高度自动居中，
+     内距一行不用改。.btn-icon 同时给 min-width 才能保持正方形。 */
+  @media (pointer: coarse) {
+    .btn,
+    .btn-sm,
+    .sidebar-link,
+    .tab {
+      min-height: 44px;
+    }
+
+    .btn-icon {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
   /* 减弱动效不等于没有反馈 —— 换成不引发前庭反应的交叉淡入 */
   @media (prefers-reduced-motion: reduce) {
     .btn,
@@ -1575,6 +1662,23 @@
       transition-property: opacity, background-color, color !important;
       transition-duration: 120ms !important;
       transform: none !important;
+    }
+
+    /* .switch 只取上面清单的时长上限，不能取 transform: none。
+       实测轨道此前仍跑 background-color 240ms，收进 120ms 是必要的；但轨道的
+       transform 是功能性的、常驻的，不是按压反馈：
+         src/components/admin/ErrorPassthroughRulesModal.vue:171
+         class="switch ... origin-left scale-[0.72]"
+       表格列按 0.72 缩排这个开关（44×24 → 约 31.7×17.3）。`transform: none
+       !important` 在 components 层，压得过 utilities 层的非 important 工具类，
+       于是该偏好一开就把开关弹回全尺寸、撑破单元格布局。仅在此偏好下复现，
+       不模拟就看不见。
+       （原注释说"轨道自身没有位移，清掉 transform 无害"——就 style.css 而言成立，
+       但调用点会加，所以结论不成立。轨道的 transform 必须留给调用点。）
+       滑块的豁免见下方 .switch-thumb 一条，两者不可合并成同一条规则。 */
+    .switch {
+      transition-property: opacity, background-color, color !important;
+      transition-duration: 120ms !important;
     }
 
     /* .switch-thumb 必须排除在 transform 清除之外。
@@ -1643,7 +1747,6 @@
 
     /* 入场动效保留淡入（“减弱动效不等于没有反馈”），只去掉位移与缩放 */
     .dropdown,
-    .toast,
     .glass-card {
       animation: rm-fade-in 120ms var(--ease-out) both !important;
     }
@@ -1709,12 +1812,10 @@
     .glass-thick,
     .glass-thin,
     .glass-card,
-    .card-glass,
     .sidebar,
     .dropdown,
     .modal-content,
     .dialog-container,
-    .toast,
     .btn-secondary,
     .table th {
       background: var(--surface) !important;
@@ -1774,8 +1875,56 @@
       --c-gray-500: 88 88 93;
     }
 
-    .dark {
-      --label-tertiary: rgba(235, 235, 245, 0.75); /* → 8.56:1 */
+    /* 深色下必须逐一夺回上面那四个变量，且选择器要用 html.dark 而不是 .dark。
+
+       此前这里只声明了 --label-tertiary，于是高对比 + 深色把对比度**反转**了：
+       查询内的 :root 与 .dark 特异性同为 (0,1,0)、同落在 <html> 上，:root 在源码
+       里更靠后，所以浅色主题的深色墨水落到了深色表面上。实测（Chromium
+       prefers-contrast: more + .dark）：
+         --label-secondary rgba(60,60,67,0.86)  on --surface #1c1c1e  = 1.45:1
+                                                on --surface-secondary = 1.23:1
+         --c-gray-400 99 99 102                 on --surface #1c1c1e  = 2.84:1
+         --c-gray-500 88 88 93                  on --surface #1c1c1e  = 2.41:1
+       表头因此从 6.1:1 掉到 1.45:1 —— 请求高对比反而得到几乎读不出的文字。
+
+       为什么升到 html.dark (0,1,1) 而不是继续靠源码顺序：
+       与本文件 reduced-transparency 分支里"!important 是必需的"同一个论证
+       （见上方 :root, .dark 材质中和块的注释）—— 可访问性分支不能靠源码顺序侥幸
+       取胜。(0,1,1) 结构性地压过查询内的 :root，因此**下一个**往那个 :root 里加
+       变量的人不会静默地重新引入同一个 bug。这里不需要 !important：特异性已经
+       够了，而 !important 会顺带打死 [data-glass] 档位对同名变量的合法覆盖。
+       html.dark 也与 index.html 里既有的 html.dark 防闪屏规则写法一致；全仓
+       `dark` 类只由 document.documentElement.classList 操作，没有任何组件把它
+       加到非 <html> 元素上（已 grep 确认），因此收窄选择器不会漏掉任何落点。
+
+       取值（实测 on --surface #1c1c1e / --surface-secondary #2c2c2e）：
+         --label-secondary rgba(235,235,245,0.82) → 10.00:1 / 8.44:1
+           镜像浅色侧 7.14:1 的意图并留出余量；0.82 是同时在两个深色表面上都
+           过 7:1 的最低档（0.78 → 9.16:1 但 #2c2c2e 上只有 8.0 附近，取 0.82
+           一并覆盖高程表面）。
+         --label-tertiary  rgba(235,235,245,0.75) → 8.56:1 / 7.33:1（沿用原值）
+       层级仍单调：--label 15.12:1 > secondary 10.00:1 > tertiary 8.56:1。
+
+       色阶必须往色阶的**亮**端走，不能照抄深色基线值：
+       深色基线本来就是 --c-gray-400: 174 174 178 / --c-gray-500: 142 142 147
+       （7.69:1 / 5.22:1），照抄等于在高对比下把对比度提高 0，其中 500 档还低于
+       浅色侧同档的 7.07:1。各自沿既有色阶上移一档，不新造颜色值：
+         --c-gray-400: 209 209 214（= 300 档）→ 11.18:1 / 9.16:1
+         --c-gray-500: 174 174 178（= 400 档）→ 7.69:1 / 6.30:1
+       深色下 400 档比 500 档更亮是既有设计（只有 500 档随主题翻转），此处保持
+       该顺序。两档合计 3518 处 text-gray-400/500 直接受益；bg-/border-gray-400/500
+       仅 41 处，且同样是"更亮 = 在深色下更可见"的方向。
+
+       --label 不在这四个之列，因此 .table th 等处的
+       box-shadow: inset 0 0 0 1px var(--label) 在深色下取到基础层 .dark 的
+       rgba(255,255,255,0.94) → 15.12:1，描边本身是主题正确的（浅色 16.56:1）。
+       但它今天正确只是因为查询内的 :root **恰好没有**声明 --label —— 靠遗漏成立
+       的正确性正是上面换 html.dark 要消除的东西。 */
+    html.dark {
+      --label-secondary: rgba(235, 235, 245, 0.82); /* → 10.00:1 on --surface / 8.44:1 on --surface-secondary */
+      --label-tertiary: rgba(235, 235, 245, 0.75); /* → 8.56:1 / 7.33:1 */
+      --c-gray-400: 209 209 214; /* → 11.18:1 / 9.16:1 */
+      --c-gray-500: 174 174 178; /* → 7.69:1 / 6.30:1 */
     }
 
     /* 与 reduced-transparency 同样的结构性中和：本分支此前只覆盖了表面清单，
@@ -1796,16 +1945,14 @@
     .glass-thick,
     .glass-thin,
     .glass-card,
-    .card-glass,
     .sidebar,
     .dropdown,
     .modal-content,
     .dialog-container,
-    /* .btn-secondary / .table th / .toast 此前只出现在 reduced-transparency 分支里，
+    /* .btn-secondary / .table th 此前只出现在 reduced-transparency 分支里，
        在高对比下仍是半透明玻璃 */
     .btn-secondary,
-    .table th,
-    .toast {
+    .table th {
       /* 此前本分支不带 !important，只靠源码顺序取胜 —— 同层里任何后续规则都能翻掉它 */
       background: var(--surface) !important;
       backdrop-filter: none !important;
@@ -1875,12 +2022,6 @@
 }
 
 @layer utilities {
-  /* 文字渐变 */
-  .text-gradient {
-    background-image: linear-gradient(135deg, var(--accent) 0%, var(--sys-indigo) 100%);
-    @apply bg-clip-text text-transparent;
-  }
-
   /* Vibrancy：玻璃上的文字要更重、字距略开，不能用扁平灰 */
   .on-glass {
     font-weight: 500;
@@ -1901,7 +2042,17 @@
     display: none;
   }
 
-  /* 安全区域 */
+  /* 安全区域。
+
+     两个类今天 0 处使用，因此被 Tailwind 的 content 扫描摇掉、不在产物里 ——
+     保留定义待接线（index.html 的 viewport-fit=cover 已由另一 agent 落地，
+     env() 现在会真的求值）。
+
+     声明本身是正确的：env() 在无安全区或不支持时求值为 0px，因此可以无条件挂。
+     接线时注意一点：它们设的是 padding 而不是叠加，且位于 utilities 层，会盖掉
+     同元素上组件类的 padding-top / padding-bottom（例如 .sidebar-header 的 px-6
+     不受影响，但任何 py-* 会被覆盖）。需要"既有内距 + 安全区"时应挂在外层容器，
+     或改用 calc()/max() 形式。 */
   .safe-top {
     padding-top: env(safe-area-inset-top);
   }

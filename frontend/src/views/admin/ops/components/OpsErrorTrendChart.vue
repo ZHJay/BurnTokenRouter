@@ -17,14 +17,16 @@ import type { OpsErrorTrendPoint } from '@/api/admin/ops'
 import type { ChartState } from '../types'
 import { formatHistoryLabel, sumNumbers } from '../utils/opsFormatters'
 import {
-  opsAreaFill,
-  opsAxisFont,
-  opsChartChrome,
-  opsHue,
-  opsLegendStyle,
-  opsScheme,
-  opsTooltipStyle
-} from '../utils/chartTheme'
+  chartAreaFill,
+  chartAxisChrome,
+  chartAxisFont,
+  chartAxisNoGrid,
+  chartChrome,
+  chartHue,
+  chartLegendStyle,
+  chartTooltipStyle,
+  useChartScheme
+} from '@/lib/chart'
 import HelpTooltip from '@/components/common/HelpTooltip.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 
@@ -43,16 +45,20 @@ const emit = defineEmits<{
 }>()
 const { t } = useI18n()
 
-const isDarkMode = computed(() => document.documentElement.classList.contains('dark'))
-const scheme = computed(() => opsScheme(isDarkMode.value))
+/**
+ * canvas 读不到 CSS 变量，配色只能由 JS 侧驱动 —— `useChartScheme()` 用
+ * MutationObserver 盯 `<html class="dark">`，主题切换时让下面的 computed 重新求值。
+ * （此前 `isDarkMode` 直接在 computed 里读 DOM：`classList.contains()` 不是响应式源，
+ * computed 永不失效，切主题后图表会停在旧配色直到整页刷新。）
+ */
+const scheme = useChartScheme()
 // 请求错误=红，上游错误=紫，业务限流=中性虚线：三类错误的严重度靠色相拉开
 const colors = computed(() => {
-  const chrome = opsChartChrome(scheme.value)
+  const chrome = chartChrome(scheme.value)
   return {
-    red: opsHue('red', scheme.value),
-    purple: opsHue('purple', scheme.value),
-    gray: opsHue('gray', scheme.value),
-    grid: chrome.grid,
+    red: chartHue('red', scheme.value),
+    purple: chartHue('purple', scheme.value),
+    gray: chartHue('gray', scheme.value),
     text: chrome.axis
   }
 })
@@ -81,7 +87,7 @@ const chartData = computed(() => {
         label: t('admin.ops.errorsSla'),
         data: props.points.map((p) => p.error_count_sla ?? 0),
         borderColor: colors.value.red,
-        backgroundColor: opsAreaFill(colors.value.red),
+        backgroundColor: chartAreaFill(colors.value.red),
         fill: true,
         tension: 0.35,
         borderWidth: 2,
@@ -92,7 +98,7 @@ const chartData = computed(() => {
         label: t('admin.ops.upstreamExcl429529'),
         data: props.points.map((p) => p.upstream_error_count_excl_429_529 ?? 0),
         borderColor: colors.value.purple,
-        backgroundColor: opsAreaFill(colors.value.purple),
+        backgroundColor: chartAreaFill(colors.value.purple),
         fill: true,
         tension: 0.35,
         borderWidth: 2,
@@ -131,17 +137,17 @@ const options = computed(() => {
       legend: {
         position: 'top' as const,
         align: 'end' as const,
-        labels: opsLegendStyle(scheme.value)
+        labels: chartLegendStyle(scheme.value, 'compact')
       },
-      tooltip: opsTooltipStyle(scheme.value)
+      tooltip: chartTooltipStyle(scheme.value)
     },
     scales: {
       x: {
         type: 'category' as const,
-        grid: { display: false },
+        ...chartAxisNoGrid(),
         ticks: {
           color: c.text,
-          font: opsAxisFont(),
+          font: chartAxisFont(),
           maxTicksLimit: 8,
           autoSkip: true,
           autoSkipPadding: 10
@@ -151,8 +157,8 @@ const options = computed(() => {
         type: 'linear' as const,
         display: true,
         position: 'left' as const,
-        grid: { color: c.grid, borderDash: [4, 4] },
-        ticks: { color: c.text, font: opsAxisFont(), precision: 0 }
+        ...chartAxisChrome(scheme.value, true),
+        ticks: { color: c.text, font: chartAxisFont(), precision: 0 }
       }
     }
   }
@@ -196,7 +202,13 @@ const options = computed(() => {
     </div>
 
     <div class="min-h-0 flex-1">
-      <Line v-if="state === 'ready' && chartData" :data="chartData" :options="options" />
+      <!-- vue-chartjs 渲染的是裸 <canvas>（已带 role="img"），不给 aria-label 就是一个无名图形 -->
+      <Line
+        v-if="state === 'ready' && chartData"
+        :data="chartData"
+        :options="options"
+        :aria-label="t('admin.ops.errorTrend')"
+      />
       <div v-else class="flex h-full items-center justify-center">
         <div v-if="state === 'loading'" class="animate-pulse text-sm text-gray-400">{{ t('common.loading') }}</div>
         <EmptyState v-else :title="t('common.noData')" :description="t('admin.ops.charts.emptyError')" />

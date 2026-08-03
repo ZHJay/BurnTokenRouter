@@ -17,14 +17,16 @@ import type { OpsThroughputTrendPoint } from '@/api/admin/ops'
 import type { ChartState } from '../types'
 import { formatHistoryLabel, sumNumbers } from '../utils/opsFormatters'
 import {
-  opsAreaFill,
-  opsAxisFont,
-  opsChartChrome,
-  opsHue,
-  opsLegendStyle,
-  opsScheme,
-  opsTooltipStyle
-} from '../utils/chartTheme'
+  chartAreaFill,
+  chartAxisChrome,
+  chartAxisFont,
+  chartAxisNoGrid,
+  chartChrome,
+  chartHue,
+  chartLegendStyle,
+  chartTooltipStyle,
+  useChartScheme
+} from '@/lib/chart'
 import HelpTooltip from '@/components/common/HelpTooltip.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 
@@ -40,14 +42,18 @@ interface Props {
 const props = defineProps<Props>()
 const { t } = useI18n()
 
-const isDarkMode = computed(() => document.documentElement.classList.contains('dark'))
-const scheme = computed(() => opsScheme(isDarkMode.value))
+/**
+ * canvas 读不到 CSS 变量，配色只能由 JS 侧驱动 —— `useChartScheme()` 用
+ * MutationObserver 盯 `<html class="dark">`，主题切换时让下面的 computed 重新求值。
+ * （此前 `isDarkMode` 直接在 computed 里读 DOM：`classList.contains()` 不是响应式源，
+ * computed 永不失效，切主题后图表会停在旧配色直到整页刷新。）
+ */
+const scheme = useChartScheme()
 // 切换率用系统青，保留原有色相语义
 const colors = computed(() => {
-  const chrome = opsChartChrome(scheme.value)
+  const chrome = chartChrome(scheme.value)
   return {
-    teal: opsHue('teal', scheme.value),
-    grid: chrome.grid,
+    teal: chartHue('teal', scheme.value),
     text: chrome.axis
   }
 })
@@ -68,7 +74,7 @@ const chartData = computed(() => {
           return switches / requests
         }),
         borderColor: colors.value.teal,
-        backgroundColor: opsAreaFill(colors.value.teal),
+        backgroundColor: chartAreaFill(colors.value.teal),
         fill: true,
         tension: 0.35,
         borderWidth: 2,
@@ -95,10 +101,10 @@ const options = computed(() => {
       legend: {
         position: 'top' as const,
         align: 'end' as const,
-        labels: opsLegendStyle(scheme.value)
+        labels: chartLegendStyle(scheme.value, 'compact')
       },
       tooltip: {
-        ...opsTooltipStyle(scheme.value),
+        ...chartTooltipStyle(scheme.value),
         callbacks: {
           label: (context: any) => {
             const value = typeof context?.parsed?.y === 'number' ? context.parsed.y : 0
@@ -110,10 +116,10 @@ const options = computed(() => {
     scales: {
       x: {
         type: 'category' as const,
-        grid: { display: false },
+        ...chartAxisNoGrid(),
         ticks: {
           color: c.text,
-          font: opsAxisFont(),
+          font: chartAxisFont(),
           maxTicksLimit: 8,
           autoSkip: true,
           autoSkipPadding: 10
@@ -123,10 +129,10 @@ const options = computed(() => {
         type: 'linear' as const,
         display: true,
         position: 'left' as const,
-        grid: { color: c.grid, borderDash: [4, 4] },
+        ...chartAxisChrome(scheme.value, true),
         ticks: {
           color: c.text,
-          font: opsAxisFont(),
+          font: chartAxisFont(),
           callback: (value: any) => Number(value).toFixed(3)
         }
       }
@@ -149,7 +155,13 @@ const options = computed(() => {
     </div>
 
     <div class="min-h-0 flex-1">
-      <Line v-if="state === 'ready' && chartData" :data="chartData" :options="options" />
+      <!-- vue-chartjs 渲染的是裸 <canvas>（已带 role="img"），不给 aria-label 就是一个无名图形 -->
+      <Line
+        v-if="state === 'ready' && chartData"
+        :data="chartData"
+        :options="options"
+        :aria-label="t('admin.ops.switchRateTrend')"
+      />
       <div v-else class="flex h-full items-center justify-center">
         <div v-if="state === 'loading'" class="animate-pulse text-sm text-gray-400">{{ t('common.loading') }}</div>
         <EmptyState v-else :title="t('common.noData')" :description="t('admin.ops.charts.emptyRequest')" />

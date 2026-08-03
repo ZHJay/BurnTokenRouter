@@ -75,12 +75,68 @@ describe('DataTable', () => {
     expect(nameHeader.findAll('svg')[0].classes()).toContain('text-primary-600')
     expect(nameHeader.findAll('svg')[1].classes()).toContain('text-gray-300')
 
-    await nameHeader.trigger('click')
+    // 排序交互挂在 <th> 内层的真按钮上，而非 <th> 自身。aria-sort 留在 <th>
+    // （规范要求），可聚焦与键盘激活归 button。VTU 的 trigger 不会向子元素冒泡，
+    // 所以这里必须点按钮。
+    const nameSortButton = nameHeader.find('button.sort-trigger')
+    expect(nameSortButton.exists()).toBe(true)
+    await nameSortButton.trigger('click')
     await wrapper.vm.$nextTick()
 
     expect(nameHeader.attributes('aria-sort')).toBe('descending')
     expect(nameHeader.findAll('svg')[0].classes()).toContain('text-gray-300')
     expect(nameHeader.findAll('svg')[1].classes()).toContain('text-primary-600')
+  })
+
+  it('exposes sortable headers as real buttons and leaves non-sortable ones inert', async () => {
+    // 回归守卫：此前 @click 挂在裸 <th> 上，5 个可排序表头 tabIndex 全为 -1、
+    // 无可聚焦子元素 —— aria-sort 对外宣告可排序，读屏用户却无操作入口。
+    const wrapper = mount(DataTable, {
+      props: {
+        columns: [
+          { key: 'name', label: 'Name', sortable: true },
+          { key: 'note', label: 'Note' }
+        ],
+        data: [{ id: 1, name: 'a', note: 'n' }],
+        sortKey: '',
+        sortOrder: 'asc'
+      }
+    })
+
+    const headers = wrapper.findAll('th')
+    const sortable = headers[0]
+    const plain = headers[1]
+
+    expect(sortable.find('button.sort-trigger').exists()).toBe(true)
+    expect(sortable.attributes('aria-sort')).toBe('none')
+    // 不可排序列不应生成按钮，否则会向读屏暴露一个无操作的控件
+    expect(plain.find('button').exists()).toBe(false)
+    expect(plain.attributes('aria-sort')).toBeUndefined()
+
+    // 断言 aria-sort 而不是 emit：`sort` 事件只在 serverSideSort 模式下发出
+    // （handleSort 的客户端分支只改内部状态），而 aria-sort 在两种模式下都翻转，
+    // 所以它才是这里真正要守的契约 —— 按钮被激活后，列的排序状态对读屏可见。
+    await sortable.find('button.sort-trigger').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(sortable.attributes('aria-sort')).toBe('ascending')
+  })
+
+  it('gives every selection checkbox a wrapping hit target', () => {
+    // 卡片模式下行选择框实测 16×16，一页 21 个。视觉尺寸保留，命中区由
+    // .row-checkbox-hit 在 pointer:coarse 下扩到 44px。
+    const wrapper = mount(DataTable, {
+      props: {
+        columns: [{ key: 'name', label: 'Name' }],
+        data: [{ id: 1, name: 'a' }],
+        selectable: true
+      }
+    })
+
+    const boxes = wrapper.findAll('input.row-checkbox')
+    expect(boxes.length).toBeGreaterThan(0)
+    for (const box of boxes) {
+      expect(box.element.closest('label.row-checkbox-hit')).not.toBeNull()
+    }
   })
 
   it('renders every row with no virtual padding spacer for small datasets (virtualization off)', async () => {

@@ -8,14 +8,16 @@ import type { OpsThroughputGroupBreakdownItem, OpsThroughputPlatformBreakdownIte
 import type { ChartState } from '../types'
 import { formatHistoryLabel, sumNumbers } from '../utils/opsFormatters'
 import {
-  opsAreaFill,
-  opsAxisFont,
-  opsChartChrome,
-  opsHue,
-  opsLegendStyle,
-  opsScheme,
-  opsTooltipStyle
-} from '../utils/chartTheme'
+  chartAreaFill,
+  chartAxisChrome,
+  chartAxisFont,
+  chartAxisNoGrid,
+  chartChrome,
+  chartHue,
+  chartLegendStyle,
+  chartTooltipStyle,
+  useChartScheme
+} from '@/lib/chart'
 import HelpTooltip from '@/components/common/HelpTooltip.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import { formatNumber } from '@/utils/format'
@@ -52,15 +54,19 @@ watch(
   }
 )
 
-const isDarkMode = computed(() => document.documentElement.classList.contains('dark'))
-const scheme = computed(() => opsScheme(isDarkMode.value))
+/**
+ * canvas 读不到 CSS 变量，配色只能由 JS 侧驱动 —— `useChartScheme()` 用
+ * MutationObserver 盯 `<html class="dark">`，主题切换时让下面的 computed 重新求值。
+ * （此前 `isDarkMode` 直接在 computed 里读 DOM：`classList.contains()` 不是响应式源，
+ * computed 永不失效，切主题后图表会停在旧配色直到整页刷新。）
+ */
+const scheme = useChartScheme()
 // QPS 走系统蓝，TPS 走系统紫：两条序列必须一眼分得开
 const colors = computed(() => {
-  const chrome = opsChartChrome(scheme.value)
+  const chrome = chartChrome(scheme.value)
   return {
-    blue: opsHue('blue', scheme.value),
-    purple: opsHue('purple', scheme.value),
-    grid: chrome.grid,
+    blue: chartHue('blue', scheme.value),
+    purple: chartHue('purple', scheme.value),
     text: chrome.axis
   }
 })
@@ -76,7 +82,7 @@ const chartData = computed(() => {
         label: 'QPS',
         data: props.points.map((p) => p.qps ?? 0),
         borderColor: colors.value.blue,
-        backgroundColor: opsAreaFill(colors.value.blue),
+        backgroundColor: chartAreaFill(colors.value.blue),
         fill: true,
         tension: 0.4,
         borderWidth: 2,
@@ -87,7 +93,7 @@ const chartData = computed(() => {
         label: t('admin.ops.tpsK'),
         data: props.points.map((p) => (p.tps ?? 0) / 1000),
         borderColor: colors.value.purple,
-        backgroundColor: opsAreaFill(colors.value.purple),
+        backgroundColor: chartAreaFill(colors.value.purple),
         fill: true,
         tension: 0.4,
         borderWidth: 2,
@@ -115,10 +121,10 @@ const options = computed(() => {
       legend: {
         position: 'top' as const,
         align: 'end' as const,
-        labels: opsLegendStyle(scheme.value)
+        labels: chartLegendStyle(scheme.value, 'compact')
       },
       tooltip: {
-        ...opsTooltipStyle(scheme.value),
+        ...chartTooltipStyle(scheme.value),
         callbacks: {
           label: (context: any) => {
             let label = context.dataset.label || ''
@@ -137,10 +143,10 @@ const options = computed(() => {
     scales: {
       x: {
         type: 'category' as const,
-        grid: { display: false },
+        ...chartAxisNoGrid(),
         ticks: {
           color: c.text,
-          font: opsAxisFont(),
+          font: chartAxisFont(),
           maxTicksLimit: 8,
           autoSkip: true,
           autoSkipPadding: 10
@@ -150,16 +156,16 @@ const options = computed(() => {
         type: 'linear' as const,
         display: true,
         position: 'left' as const,
-        grid: { color: c.grid, borderDash: [4, 4] },
-        ticks: { color: c.text, font: opsAxisFont() }
+        ...chartAxisChrome(scheme.value, true),
+        ticks: { color: c.text, font: chartAxisFont() }
       },
       y1: {
         type: 'linear' as const,
         display: true,
         position: 'right' as const,
-        grid: { display: false },
+        ...chartAxisNoGrid(),
         // 右轴刻度沿用该序列色，读者才知道这条轴属于哪条线
-        ticks: { color: c.purple, font: opsAxisFont() }
+        ticks: { color: c.purple, font: chartAxisFont() }
       }
     }
   }
@@ -265,7 +271,14 @@ function downloadChart() {
     </div>
 
     <div class="min-h-0 min-w-0 flex-1">
-      <Line v-if="state === 'ready' && chartData" ref="throughputChartRef" :data="chartData" :options="options" />
+      <!-- vue-chartjs 渲染的是裸 <canvas>（已带 role="img"），不给 aria-label 就是一个无名图形 -->
+      <Line
+        v-if="state === 'ready' && chartData"
+        ref="throughputChartRef"
+        :data="chartData"
+        :options="options"
+        :aria-label="t('admin.ops.throughputTrend')"
+      />
       <div v-else class="flex h-full items-center justify-center">
         <div v-if="state === 'loading'" class="animate-pulse text-sm text-gray-400">{{ t('common.loading') }}</div>
         <EmptyState v-else :title="t('common.noData')" :description="t('admin.ops.charts.emptyRequest')" />

@@ -1,10 +1,15 @@
 <template>
   <component :is="isFullscreen ? 'div' : AppLayout" :class="isFullscreen ? 'flex min-h-screen flex-col justify-center bg-gray-50 dark:bg-dark-950' : ''">
-    <div :class="[isFullscreen ? 'p-4 md:p-6' : '', 'space-y-6 pb-12']">
+    <!-- 全屏分支用的是纯 div + 平铺底色，AppLayout 的 ambient 层不在。
+         backdrop-filter 模糊一个纯色返回同一个纯色，Header 里的
+         glass-thin / glass-edge 弹层会在全屏下静默退化成不透明块。
+         补一层 ambient 让玻璃背后有东西可折射。 -->
+    <div v-if="isFullscreen" class="ambient-layer"></div>
+    <div :class="[isFullscreen ? 'relative z-10 p-4 md:p-6' : '', 'space-y-4 pb-8']">
       <div
         v-if="errorMessage"
         class="rounded-xl p-4 text-sm"
-        :style="{ background: 'rgb(255 59 48 / 0.1)', color: 'var(--sys-red)' }"
+        :style="{ background: 'rgb(255 59 48 / 0.1)', color: 'var(--sys-red-text)' }"
       >
         {{ errorMessage }}
       </div>
@@ -41,7 +46,7 @@
       />
 
       <!-- Row: Concurrency + Throughput -->
-      <div v-if="opsEnabled && !(loading && !hasLoadedOnce)" class="grid grid-cols-1 gap-6 lg:grid-cols-4">
+      <div v-if="opsEnabled && !(loading && !hasLoadedOnce)" class="grid grid-cols-1 gap-4 lg:grid-cols-4">
         <div class="lg:col-span-1 min-h-[360px]">
           <OpsConcurrencyCard :platform-filter="platform" :group-id-filter="groupId" :refresh-token="dashboardRefreshToken" />
         </div>
@@ -69,7 +74,7 @@
       </div>
 
       <!-- Row: Visual Analysis (baseline 3-up grid) -->
-      <div v-if="opsEnabled && !(loading && !hasLoadedOnce)" class="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <div v-if="opsEnabled && !(loading && !hasLoadedOnce)" class="grid grid-cols-1 gap-4 md:grid-cols-3">
         <OpsLatencyChart :latency-data="latencyHistogram" :loading="loadingLatency" />
         <OpsErrorDistributionChart
           :data="errorDistribution"
@@ -86,7 +91,7 @@
       </div>
 
       <!-- Row: OpenAI Token Stats -->
-      <div v-if="opsEnabled && showOpenAITokenStats && !(loading && !hasLoadedOnce)" class="grid grid-cols-1 gap-6">
+      <div v-if="opsEnabled && showOpenAITokenStats && !(loading && !hasLoadedOnce)" class="grid grid-cols-1 gap-4">
         <OpsOpenAITokenStatsCard
           :platform-filter="platform"
           :group-id-filter="groupId"

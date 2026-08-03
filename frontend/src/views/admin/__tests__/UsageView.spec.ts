@@ -472,7 +472,7 @@ describe('admin UsageView errors tab filter forwarding', () => {
     await flushPromises()
 
     // 切换到「错误请求」标签（第二个 tab 按钮）触发 loadAdminErrors
-    const tabs = wrapper.findAll('[data-testid="usage-detail-tab"]')
+    const tabs = wrapper.findAll('[role="tablist"] [role="tab"]')
     await tabs[1].trigger('click')
     await flushPromises()
 
@@ -523,7 +523,7 @@ describe('admin UsageView ranking tab', () => {
     // 懒挂载:切到排行 tab 前不渲染
     expect(wrapper.find('[data-test="ranking"]').exists()).toBe(false)
 
-    const tabs = wrapper.findAll('[data-testid="usage-detail-tab"]')
+    const tabs = wrapper.findAll('[role="tablist"] [role="tab"]')
     expect(tabs).toHaveLength(3)
     await tabs[2].trigger('click')
     await flushPromises()

@@ -325,13 +325,79 @@
               <div v-if="userTrendLoading" class="flex h-full items-center justify-center">
                 <LoadingSpinner size="md" />
               </div>
-              <Line v-else-if="userTrendChartData" :data="userTrendChartData" :options="lineOptions" />
+              <!-- vue-chartjs 渲染的是裸 <canvas>（已带 role="img"），不给 aria-label 就是一个无名图形 -->
+              <Line
+                v-else-if="userTrendChartData"
+                :data="userTrendChartData"
+                :options="lineOptions"
+                :aria-label="`${t('admin.dashboard.recentUsage')} (Top 12)`"
+              />
               <div
                 v-else
                 class="flex h-full items-center justify-center text-sm text-gray-500 dark:text-gray-400"
               >
                 {{ t('admin.dashboard.noDataAvailable') }}
               </div>
+            </div>
+
+            <!--
+              图表的等价替代。12 条线只靠色相 + 线型区分，落到色觉障碍 / 低视力 / 读屏
+              场景仍然读不出具体数值；分布图早就配了并排表格，这张最复杂的图反而没有。
+              数据现成（userTrend），不额外请求。
+
+              左侧色块同时带上该序列的线型，读者才能把表格行和图上某条线对应起来。
+            -->
+            <div v-if="userTrendTable" class="mt-4 max-h-48 overflow-auto">
+              <table class="w-full text-xs">
+                <caption class="sr-only">
+                  {{ t('admin.dashboard.recentUsage') }} (Top 12)
+                </caption>
+                <thead>
+                  <tr class="text-gray-500 dark:text-gray-400">
+                    <th scope="col" class="sticky left-0 z-10 bg-[color:var(--surface)] pb-2 pr-3 text-left">
+                      {{ t('admin.dashboard.spendingRankingUser') }}
+                    </th>
+                    <th
+                      v-for="date in userTrendTable.dates"
+                      :key="date"
+                      scope="col"
+                      class="whitespace-nowrap pb-2 pl-3 text-right font-medium"
+                    >
+                      {{ date }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in userTrendTable.rows" :key="row.name" class="chart-row">
+                    <th
+                      scope="row"
+                      class="sticky left-0 z-10 max-w-[160px] bg-[color:var(--surface)] py-1.5 pr-3 text-left font-medium text-gray-900 dark:text-white"
+                    >
+                      <span class="flex min-w-0 items-center gap-1.5">
+                        <svg class="h-2 w-4 shrink-0" viewBox="0 0 16 8" aria-hidden="true">
+                          <line
+                            x1="0"
+                            y1="4"
+                            x2="16"
+                            y2="4"
+                            :stroke="row.color"
+                            stroke-width="2"
+                            :stroke-dasharray="row.dash"
+                          />
+                        </svg>
+                        <span class="truncate" :title="row.name">{{ row.name }}</span>
+                      </span>
+                    </th>
+                    <td
+                      v-for="(value, i) in row.values"
+                      :key="i"
+                      class="whitespace-nowrap py-1.5 pl-3 text-right tabular text-gray-600 dark:text-gray-400"
+                    >
+                      {{ formatTokens(value) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -363,6 +429,16 @@ import Select from '@/components/common/Select.vue'
 import ModelDistributionChart from '@/components/charts/ModelDistributionChart.vue'
 import TokenUsageTrend from '@/components/charts/TokenUsageTrend.vue'
 import { useBatchImageAccess } from '@/composables/useBatchImageAccess'
+import {
+  chartAxisChrome,
+  chartAxisFont,
+  chartHue,
+  chartLegendStyle,
+  chartTooltipStyle,
+  useChartScheme,
+  withAlpha,
+  type ChartHue
+} from '@/lib/chart'
 
 import {
   Chart as ChartJS,
@@ -388,24 +464,42 @@ ChartJS.register(
 )
 
 /**
- * Multi-series palette on Apple system colors. Order is tuned for hue
- * separation between neighbours so 12 concurrent user series stay
- * distinguishable; the trend chart relies on that, so keep them distinct.
+ * 12 条并行用户序列的色板 —— Apple 系统色，light / dark 各一档。
+ *
+ * 顺序是按「相邻色相尽量拉开」调过的，多色语义刻意保留：12 个用户必须能相互区分。
+ *
+ * 之前这里只有浅色一档，所以深色模式下 12 条线仍是浅色值（蓝一直是 `0,122,255`），
+ * 浅色序列压在深色表面上。另外第 12 位曾写死 `#bf5af2` —— 那是**深色**档的紫，
+ * 出现在一个纯浅色数组里，等于和第 5 位的 `#af52de` 撞成同一个色相的两档。
+ * 现在第 12 位改用中性灰：它是色板里唯一还没被用掉、且与其余 11 色都拉得开的色相
+ * （这张图没有「其他」序列，灰不与任何既有语义冲突）。
+ *
+ * teal 与 indigo 的相对位置有意与分布色板不同：下面的 borderDash 每 4 条循环一次，
+ * 同一种线型内部的三个色相必须互相分得开，而 teal 与 cyan 挨在同一组会撞。
  */
-const SERIES_COLORS = [
-  '#007aff', // blue
-  '#34c759', // green
-  '#ff9500', // orange
-  '#ff3b30', // red
-  '#af52de', // purple
-  '#ff2d55', // pink
-  '#30b0c7', // teal
-  '#5856d6', // indigo
-  '#ffcc00', // yellow
-  '#00c7be', // mint
-  '#32ade6', // cyan
-  '#bf5af2' // purple (light)
-] as const
+const SERIES_HUES: readonly ChartHue[] = [
+  'blue',
+  'green',
+  'orange',
+  'red',
+  'purple',
+  'pink',
+  'indigo',
+  'teal',
+  'yellow',
+  'mint',
+  'cyan',
+  'gray'
+]
+
+/**
+ * 第二条区分通道：线型。
+ *
+ * 12 条线只靠色相区分时，色觉障碍用户（以及任何打印/投影场景）会丢掉全部信息 ——
+ * 这是 SC 1.4.1「不能只用颜色传达信息」。4 种线型 × 循环，让每条线除了颜色
+ * 还有一个形状特征；配合下方的 <table> 替代，图表不再是唯一的数据入口。
+ */
+const SERIES_DASHES: readonly number[][] = [[], [6, 3], [2, 2], [8, 3, 2, 3]]
 
 const appStore = useAppStore()
 const router = useRouter()
@@ -456,17 +550,22 @@ const granularityOptions = computed(() => [
   { value: 'hour', label: t('admin.dashboard.hour') }
 ])
 
-// Dark mode detection
-const isDarkMode = computed(() => {
-  return document.documentElement.classList.contains('dark')
-})
+/**
+ * 配色跟随 `<html class="dark">`。
+ *
+ * canvas 读不到 CSS 自定义属性，所以主题切换必须由 JS 侧驱动 —— `useChartScheme()`
+ * 用 MutationObserver 盯 class 变化。（此前 `isDarkMode` 直接在 computed 里读 DOM：
+ * `classList.contains()` 不是响应式源，computed 永不失效，Chart.js 继续用缓存的
+ * options，图表会停在旧配色直到整页刷新。）
+ */
+const scheme = useChartScheme()
 
 /**
- * Chart chrome colors.
+ * 轴 / 网格色。
  *
- * Canvas can't consume CSS custom properties, so the design tokens are read
- * off the document at runtime and the Apple neutral ramp is used as the
- * fallback (matters for jsdom, where stylesheet vars don't resolve).
+ * 这里刻意继续在运行时读真实 CSS 变量，而不是用 `chartChrome()` 的镜像字面量：
+ * `@media (prefers-contrast: more)` 会把 `--label-secondary` 提到 0.86，
+ * 读真值能自动跟上那一档，镜像不会。镜像只作为兜底（jsdom 下变量解析不出来）。
  */
 const readToken = (name: string, fallback: string): string => {
   const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
@@ -474,13 +573,11 @@ const readToken = (name: string, fallback: string): string => {
 }
 
 const chartColors = computed(() => ({
-  // --label-secondary / --separator-opaque
-  text: isDarkMode.value
+  // --label-secondary / --separator
+  text: scheme.value === 'dark'
     ? readToken('--label-secondary', 'rgba(235, 235, 245, 0.6)')
-    : readToken('--label-secondary', 'rgba(60, 60, 67, 0.6)'),
-  grid: isDarkMode.value
-    ? readToken('--separator-opaque', '#38383a')
-    : readToken('--separator-opaque', '#e3e3e8')
+    // 0.6 在 --surface 上只有 3.44:1；token 早已提到 0.74，这个兜底值曾停在被否决的旧值
+    : readToken('--label-secondary', 'rgba(60, 60, 67, 0.74)')
 }))
 
 // Line chart options (for user trend chart)
@@ -494,17 +591,12 @@ const lineOptions = computed(() => ({
   plugins: {
     legend: {
       position: 'top' as const,
-      labels: {
-        color: chartColors.value.text,
-        usePointStyle: true,
-        pointStyle: 'circle',
-        padding: 15,
-        font: {
-          size: 11
-        }
-      }
+      labels: { ...chartLegendStyle(scheme.value), color: chartColors.value.text }
     },
     tooltip: {
+      // 原先只给了 callbacks，于是浮层落回 Chart.js 默认的深灰盒子（圆角 6、Helvetica），
+      // 与应用里其他浮层明显不是一套。走共享样式。
+      ...chartTooltipStyle(scheme.value),
       itemSort: (a: any, b: any) => {
         const aValue = typeof a?.raw === 'number' ? a.raw : Number(a?.parsed?.y ?? 0)
         const bValue = typeof b?.raw === 'number' ? b.raw : Number(b?.parsed?.y ?? 0)
@@ -519,25 +611,18 @@ const lineOptions = computed(() => ({
   },
   scales: {
     x: {
-      grid: {
-        color: chartColors.value.grid
-      },
+      // 网格从 --separator-opaque（实色分隔线）换到 --separator（发丝线），与其余图表一致
+      ...chartAxisChrome(scheme.value),
       ticks: {
         color: chartColors.value.text,
-        font: {
-          size: 10
-        }
+        font: chartAxisFont()
       }
     },
     y: {
-      grid: {
-        color: chartColors.value.grid
-      },
+      ...chartAxisChrome(scheme.value, true),
       ticks: {
         color: chartColors.value.text,
-        font: {
-          size: 10
-        },
+        font: chartAxisFont(),
         callback: (value: string | number) => formatTokens(Number(value))
       }
     }
@@ -576,18 +661,47 @@ const userTrendChartData = computed(() => {
   })
 
   const sortedDates = Array.from(allDates).sort()
-  const datasets = Array.from(userGroups.values()).map((group, idx) => ({
-    label: group.name,
-    data: sortedDates.map((date) => group.data.get(date) || 0),
-    borderColor: SERIES_COLORS[idx % SERIES_COLORS.length],
-    backgroundColor: `${SERIES_COLORS[idx % SERIES_COLORS.length]}20`,
-    fill: false,
-    tension: 0.3
-  }))
+  const datasets = Array.from(userGroups.values()).map((group, idx) => {
+    const color = chartHue(SERIES_HUES[idx % SERIES_HUES.length], scheme.value)
+    return {
+      label: group.name,
+      data: sortedDates.map((date) => group.data.get(date) || 0),
+      borderColor: color,
+      backgroundColor: withAlpha(color, 0.125),
+      // 颜色之外的第二条通道，见 SERIES_DASHES
+      borderDash: SERIES_DASHES[idx % SERIES_DASHES.length],
+      fill: false,
+      tension: 0.3,
+      borderWidth: 2,
+      pointRadius: 0,
+      pointHitRadius: 10
+    }
+  })
 
   return {
     labels: sortedDates,
     datasets
+  }
+})
+
+/**
+ * 图表的表格替代。
+ *
+ * 12 条线的折线图在色觉障碍、低视力、读屏等场景下都读不出具体数值，
+ * 分布图早就配了并排表格，这张最复杂的图反而没有。数据现成（userTrend），
+ * 直接按「用户 × 日期」摊平即可，不额外请求。
+ */
+const userTrendTable = computed(() => {
+  const data = userTrendChartData.value
+  if (!data) return null
+  return {
+    dates: data.labels,
+    rows: data.datasets.map((ds) => ({
+      name: ds.label,
+      color: ds.borderColor,
+      dash: ds.borderDash.length ? ds.borderDash.join(' ') : undefined,
+      values: ds.data as number[]
+    }))
   }
 })
 
@@ -776,4 +890,9 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* 行间用发丝线分隔，而不是 1px 实线框 —— 与分布图表里的 .chart-row 同一套值。
+   （那份定义在各自组件的 scoped style 里，不会跨组件生效。） */
+.chart-row {
+  box-shadow: inset 0 0.5px 0 var(--separator);
+}
 </style>

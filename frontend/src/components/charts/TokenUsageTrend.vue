@@ -7,7 +7,12 @@
       <LoadingSpinner />
     </div>
     <div v-else-if="trendData.length > 0 && chartData" class="h-48">
-      <Line :data="chartData" :options="lineOptions" />
+      <!-- vue-chartjs 渲染的是裸 <canvas>（已带 role="img"），不给 aria-label 就是一个无名图形 -->
+      <Line
+        :data="chartData"
+        :options="lineOptions"
+        :aria-label="t('admin.dashboard.tokenUsageTrend')"
+      />
     </div>
     <div
       v-else
@@ -37,14 +42,16 @@ import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import type { TrendDataPoint } from '@/types'
 import {
   chartAreaFill,
+  chartAxisChrome,
   chartAxisFont,
+  chartAxisNoGrid,
   chartChrome,
   chartHue,
   chartLegendStyle,
   chartTooltipStyle,
   useChartScheme,
   withAlpha
-} from './chartPalette'
+} from '@/lib/chart'
 
 ChartJS.register(
   CategoryScale,
@@ -75,13 +82,12 @@ const scheme = useChartScheme()
  * 序列色 —— Apple 系统色，light / dark 各一档。
  *
  * 一序列一色相：五条线必须相互区分，可读性优先于色彩克制。
- * 色相角色沿用 chartPalette 的约定：主序列蓝、输出绿、缓存创建橙、缓存读取青、
+ * 色相角色沿用 lib/chart 的约定：主序列蓝、输出绿、缓存创建橙、缓存读取青、
  * 比率紫（与右轴同色，读者才知道这条轴属于哪条线）。
  */
 const chartColors = computed(() => {
   const chrome = chartChrome(scheme.value)
   return {
-    grid: chrome.grid,
     axis: chrome.axis,
     input: chartHue('blue', scheme.value),
     output: chartHue('green', scheme.value),
@@ -196,18 +202,14 @@ const lineOptions = computed(() => ({
   },
   scales: {
     x: {
-      grid: {
-        color: chartColors.value.grid
-      },
+      ...chartAxisChrome(scheme.value),
       ticks: {
         color: chartColors.value.axis,
         font: chartAxisFont()
       }
     },
     y: {
-      grid: {
-        color: chartColors.value.grid
-      },
+      ...chartAxisChrome(scheme.value),
       ticks: {
         color: chartColors.value.axis,
         font: chartAxisFont(),
@@ -218,9 +220,7 @@ const lineOptions = computed(() => ({
       position: 'right' as const,
       min: 0,
       max: 100,
-      grid: {
-        drawOnChartArea: false
-      },
+      ...chartAxisNoGrid('chartArea'),
       ticks: {
         // 右轴刻度沿用该序列色，读者才知道这条轴属于哪条线
         color: chartColors.value.cacheHitRate,

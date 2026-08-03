@@ -3,12 +3,14 @@
     <div v-if="loading" class="py-12 text-center text-sm text-gray-500" aria-busy="true">{{ t('common.loading') }}</div>
     <div v-else-if="event" class="flex flex-col">
       <!-- Apple 分段控件：切页不改变对话框尺寸 -->
-      <div class="flex flex-wrap pb-3" role="tablist">
-        <div class="tabs flex-wrap">
-          <button v-for="tab in tabs" :key="tab" type="button" role="tab" :aria-selected="activeTab === tab" class="tab" :class="activeTab === tab ? 'tab-active' : ''" @click="activeTab = tab">
-          {{ t(`admin.promptAudit.events.tabs.${tab}`) }}
-          </button>
-        </div>
+      <div class="flex flex-wrap pb-3">
+        <Segmented
+          v-model="activeTab"
+          :options="tabOptions"
+          mode="tablist"
+          :aria-label="t('admin.promptAudit.events.detailTitle')"
+          class="flex-wrap"
+        />
       </div>
 
       <!-- Fixed panel height so switching tabs does not resize the dialog -->
@@ -79,9 +81,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/components/common/BaseDialog.vue'
+import Segmented from '@/components/common/Segmented.vue'
 import type { PromptAuditEvent, PromptIssueSummary } from '../types'
 import { SCANNER_CATALOG } from '../viewModel'
 
@@ -91,6 +94,10 @@ const { t } = useI18n()
 const tabs = ['summary', 'risks', 'technical'] as const
 const activeTab = ref<(typeof tabs)[number]>('summary')
 watch(() => props.event?.id, () => { activeTab.value = 'summary' })
+
+const tabOptions = computed(() =>
+  tabs.map((tab) => ({ value: tab, label: t(`admin.promptAudit.events.tabs.${tab}`) })),
+)
 
 const DECISIONS = new Set(['pass', 'flag', 'critical'])
 const ACTIONS = new Set(['Allow', 'Warn', 'Block'])

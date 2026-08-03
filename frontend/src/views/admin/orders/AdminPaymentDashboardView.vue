@@ -5,22 +5,14 @@
       <div class="flex items-center justify-end">
         <div class="flex items-center gap-2">
           <!-- Apple 分段控件：天数切换 -->
-          <!-- 选天数是「选值」，不切换面板：radiogroup 语义 + 方向键遍历 -->
-          <div class="tabs" role="radiogroup" :aria-label="t('dashboard.timeRange')">
-            <button
-              v-for="d in DAYS_OPTIONS"
-              :key="d"
-              type="button"
-              role="radio"
-              class="tab tabular px-3 py-1.5 text-xs"
-              :class="days === d ? 'tab-active' : ''"
-              :aria-checked="days === d"
-              @click="days = d"
-              @keydown="handleRadioGroupKeydown"
-            >
-              {{ d }}{{ t('payment.admin.daySuffix') }}
-            </button>
-          </div>
+          <!-- 选天数是「选值」，不切换面板：radiogroup 模式，方向键遍历由 Segmented 提供 -->
+          <Segmented
+            v-model="days"
+            :options="dayOptions"
+            mode="radiogroup"
+            :aria-label="t('dashboard.timeRange')"
+            item-class="tabular px-3 py-1.5 text-xs"
+          />
           <button @click="loadDashboard" :disabled="loading" class="btn btn-secondary" :title="t('common.refresh')">
             <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
           </button>
@@ -74,16 +66,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { adminPaymentAPI } from '@/api/admin/payment'
 import { extractI18nErrorMessage } from '@/utils/apiError'
-import { handleRadioGroupKeydown } from '@/utils/radioGroupKeyboard'
 import type { CurrencyAmounts, DashboardStats, TopUserPaymentStats } from '@/types/payment'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import Icon from '@/components/icons/Icon.vue'
+import Segmented from '@/components/common/Segmented.vue'
 import OrderStatsCards from '@/components/admin/payment/OrderStatsCards.vue'
 import DailyRevenueChart from '@/components/admin/payment/DailyRevenueChart.vue'
 
@@ -92,6 +84,10 @@ const appStore = useAppStore()
 
 const DAYS_OPTIONS = [7, 30, 90] as const
 const days = ref<number>(30)
+
+const dayOptions = computed(() =>
+  DAYS_OPTIONS.map((d) => ({ value: d as number, label: `${d}${t('payment.admin.daySuffix')}` })),
+)
 const loading = ref(false)
 const stats = ref<DashboardStats | null>(null)
 

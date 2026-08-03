@@ -132,8 +132,13 @@ describe('UseKeyModal', () => {
     expect(parsedSettings.env.ANTHROPIC_MODEL).toBe('grok-4.5')
     expect(wrapper.text()).toContain('keys.useKeyModal.claudeSettingsHint')
     expect(wrapper.text()).toContain('keys.useKeyModal.grok.claudeNote')
-    expect(wrapper.find('nav[aria-label="Client"]').classes()).toContain('min-w-max')
-    expect(wrapper.find('nav[aria-label="Client"]').element.parentElement?.classList.contains('overflow-x-auto')).toBe(true)
+    // The client tablist is a Segmented control (a div, formerly a <nav>). The
+    // pairing that matters is unchanged: min-w-max on the track inside an
+    // overflow-x-auto scroller, so overflowing segments scroll instead of wrap.
+    const clientTablist = wrapper.find('[role="tablist"][aria-label="Client"]')
+    expect(clientTablist.exists()).toBe(true)
+    expect(clientTablist.classes()).toContain('min-w-max')
+    expect(clientTablist.element.parentElement?.classList.contains('overflow-x-auto')).toBe(true)
 
     const cmdTab = wrapper.findAll('button').find(
       (button) => button.text().trim() === 'Windows CMD'
@@ -291,7 +296,7 @@ describe('UseKeyModal', () => {
       }
     })
 
-    const apiKeyMode = wrapper.get('[data-testid="codex-auth-mode-api-key"]')
+    const apiKeyMode = wrapper.get('#codex-auth-mode-api-key')
     await apiKeyMode.trigger('click')
     await nextTick()
 
@@ -312,7 +317,7 @@ describe('UseKeyModal', () => {
       'keys.useKeyModal.openai.authModeApiKeyRestartNotice'
     )
 
-    await wrapper.get('[data-testid="codex-auth-mode-legacy"]').trigger('click')
+    await wrapper.get('#codex-auth-mode-legacy').trigger('click')
     await nextTick()
 
     expect(wrapper.find('[data-testid="codex-api-key-restart-notice"]').exists()).toBe(false)
@@ -388,7 +393,7 @@ describe('UseKeyModal', () => {
       }
     })
 
-    const apiKeyMode = wrapper.get('[data-testid="codex-auth-mode-api-key"]')
+    const apiKeyMode = wrapper.get('#codex-auth-mode-api-key')
     await apiKeyMode.trigger('click')
 
     const wsTab = wrapper.findAll('button').find((button) =>
@@ -401,7 +406,7 @@ describe('UseKeyModal', () => {
     const codeBlocks = wrapper.findAll('pre code').map((code) => code.text())
     const configToml = codeBlocks.find((content) => content.includes('supports_websockets = true'))
 
-    expect(wrapper.get('[data-testid="codex-auth-mode-api-key"]').attributes('aria-checked')).toBe('true')
+    expect(wrapper.get('#codex-auth-mode-api-key').attributes('aria-checked')).toBe('true')
     expect(configToml).toBeDefined()
     expect(configToml).toContain('requires_openai_auth = false')
     expect(configToml).toContain('http_headers = { "x-openai-actor-authorization" = "local-image-extension" }')
@@ -432,20 +437,20 @@ describe('UseKeyModal', () => {
       }
     })
 
-    await wrapper.get('[data-testid="codex-auth-mode-api-key"]').trigger('click')
+    await wrapper.get('#codex-auth-mode-api-key').trigger('click')
     await wrapper.setProps({ show: false })
     await wrapper.setProps({ show: true })
     await nextTick()
 
-    expect(wrapper.get('[data-testid="codex-auth-mode-legacy"]').attributes('aria-checked')).toBe('true')
+    expect(wrapper.get('#codex-auth-mode-legacy').attributes('aria-checked')).toBe('true')
     expect(wrapper.findAll('pre code').map((code) => code.text()).join('\n')).toContain('requires_openai_auth = true')
 
-    await wrapper.get('[data-testid="codex-auth-mode-api-key"]').trigger('click')
+    await wrapper.get('#codex-auth-mode-api-key').trigger('click')
     await wrapper.setProps({ platform: 'gemini' })
     await wrapper.setProps({ platform: 'openai' })
     await nextTick()
 
-    expect(wrapper.get('[data-testid="codex-auth-mode-legacy"]').attributes('aria-checked')).toBe('true')
+    expect(wrapper.get('#codex-auth-mode-legacy').attributes('aria-checked')).toBe('true')
     expect(wrapper.findAll('pre code').map((code) => code.text()).join('\n')).not.toContain('x-openai-actor-authorization')
   })
 

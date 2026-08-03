@@ -120,10 +120,15 @@
               :class="{ 'input-error': errors.password }"
               :placeholder="t('auth.newPasswordPlaceholder')"
             />
+            <!--
+              inset-y-0 my-auto, not top-1/2 -translate-y-1/2: identical rendered
+              position, but it survives .btn's `transform: none !important` under
+              prefers-reduced-motion. See LoginView.vue for the full reasoning.
+            -->
             <button
               type="button"
               @click="showPassword = !showPassword"
-              class="btn btn-ghost btn-icon absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-dark-300"
+              class="btn btn-ghost btn-icon absolute inset-y-0 right-2 my-auto text-gray-400 hover:text-gray-600 dark:hover:text-dark-300"
             >
               <Icon v-if="showPassword" name="eyeOff" size="md" />
               <Icon v-else name="eye" size="md" />
@@ -151,10 +156,15 @@
               :class="{ 'input-error': errors.confirmPassword }"
               :placeholder="t('auth.confirmPasswordPlaceholder')"
             />
+            <!--
+              inset-y-0 my-auto, not top-1/2 -translate-y-1/2: identical rendered
+              position, but it survives .btn's `transform: none !important` under
+              prefers-reduced-motion. See LoginView.vue for the full reasoning.
+            -->
             <button
               type="button"
               @click="showConfirmPassword = !showConfirmPassword"
-              class="btn btn-ghost btn-icon absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-dark-300"
+              class="btn btn-ghost btn-icon absolute inset-y-0 right-2 my-auto text-gray-400 hover:text-gray-600 dark:hover:text-dark-300"
             >
               <Icon v-if="showConfirmPassword" name="eyeOff" size="md" />
               <Icon v-else name="eye" size="md" />

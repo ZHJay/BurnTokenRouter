@@ -21,110 +21,118 @@
       </div>
 
       <!-- Add Plan Form -->
-      <div
-        v-if="showAddForm"
-        class="rounded-xl bg-[var(--accent-tint)] p-4 shadow-[inset_0_0_0_0.5px_var(--hairline)]"
-      >
-        <div class="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
-          {{ t('admin.scheduledTests.addPlan') }}
-        </div>
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div>
-            <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-              {{ t('admin.scheduledTests.model') }}
-            </label>
-            <Select
-              v-model="newPlan.model_id"
-              :options="modelOptions"
-              :placeholder="t('admin.scheduledTests.model')"
-              :searchable="modelOptions.length > 5"
-            />
+      <!--
+        SpringCollapse animates the height on a spring, so a mid-flight toggle
+        reverses from where it visibly was instead of jumping. It needs a single
+        element child that can own a height and be overflow-clipped, which every
+        collapse in this file has (a plain block-level <div>).
+      -->
+      <SpringCollapse>
+        <div
+          v-if="showAddForm"
+          class="rounded-xl bg-[var(--accent-tint)] p-4 shadow-[inset_0_0_0_0.5px_var(--hairline)]"
+        >
+          <div class="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+            {{ t('admin.scheduledTests.addPlan') }}
           </div>
-          <div>
-            <label class="mb-1 flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400">
-              {{ t('admin.scheduledTests.cronExpression') }}
-              <HelpTooltip>
-                <template #trigger>
-                  <span class="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-gray-400/70 text-[10px] font-semibold text-gray-400 transition-colors hover:border-primary-500 hover:text-primary-600 dark:border-gray-500 dark:text-gray-500 dark:hover:border-primary-400 dark:hover:text-primary-400">
-                    ?
-                  </span>
-                </template>
-                <div class="space-y-1.5">
-                  <p class="font-medium">{{ t('admin.scheduledTests.cronTooltipTitle') }}</p>
-                  <p>{{ t('admin.scheduledTests.cronTooltipMeaning') }}</p>
-                  <p>{{ t('admin.scheduledTests.cronTooltipExampleEvery30Min') }}</p>
-                  <p>{{ t('admin.scheduledTests.cronTooltipExampleHourly') }}</p>
-                  <p>{{ t('admin.scheduledTests.cronTooltipExampleDaily') }}</p>
-                  <p>{{ t('admin.scheduledTests.cronTooltipExampleWeekly') }}</p>
-                  <p>{{ t('admin.scheduledTests.cronTooltipRange') }}</p>
-                </div>
-              </HelpTooltip>
-            </label>
-            <Input
-              v-model="newPlan.cron_expression"
-              :placeholder="'*/30 * * * *'"
-              :hint="t('admin.scheduledTests.cronHelp')"
-            />
-          </div>
-          <div>
-            <label class="mb-1 flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400">
-              {{ t('admin.scheduledTests.maxResults') }}
-              <HelpTooltip>
-                <template #trigger>
-                  <span class="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-gray-400/70 text-[10px] font-semibold text-gray-400 transition-colors hover:border-primary-500 hover:text-primary-600 dark:border-gray-500 dark:text-gray-500 dark:hover:border-primary-400 dark:hover:text-primary-400">
-                    ?
-                  </span>
-                </template>
-                <div class="space-y-1.5">
-                  <p class="font-medium">{{ t('admin.scheduledTests.maxResultsTooltipTitle') }}</p>
-                  <p>{{ t('admin.scheduledTests.maxResultsTooltipMeaning') }}</p>
-                  <p>{{ t('admin.scheduledTests.maxResultsTooltipBody') }}</p>
-                  <p>{{ t('admin.scheduledTests.maxResultsTooltipExample') }}</p>
-                  <p>{{ t('admin.scheduledTests.maxResultsTooltipRange') }}</p>
-                </div>
-              </HelpTooltip>
-            </label>
-            <Input
-              v-model="newPlan.max_results"
-              type="number"
-              placeholder="100"
-            />
-          </div>
-          <div class="flex items-end">
-            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <Toggle v-model="newPlan.enabled" />
-              {{ t('admin.scheduledTests.enabled') }}
-            </label>
-          </div>
-          <div class="flex items-end">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                <Toggle v-model="newPlan.auto_recover" />
-                {{ t('admin.scheduledTests.autoRecover') }}
+              <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                {{ t('admin.scheduledTests.model') }}
               </label>
-              <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
-                {{ t('admin.scheduledTests.autoRecoverHelp') }}
-              </p>
+              <Select
+                v-model="newPlan.model_id"
+                :options="modelOptions"
+                :placeholder="t('admin.scheduledTests.model')"
+                :searchable="modelOptions.length > 5"
+              />
+            </div>
+            <div>
+              <label class="mb-1 flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400">
+                {{ t('admin.scheduledTests.cronExpression') }}
+                <HelpTooltip>
+                  <template #trigger>
+                    <span class="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-gray-400/70 text-[10px] font-semibold text-gray-400 transition-colors hover:border-primary-500 hover:text-primary-600 dark:border-gray-500 dark:text-gray-500 dark:hover:border-primary-400 dark:hover:text-primary-400">
+                      ?
+                    </span>
+                  </template>
+                  <div class="space-y-1.5">
+                    <p class="font-medium">{{ t('admin.scheduledTests.cronTooltipTitle') }}</p>
+                    <p>{{ t('admin.scheduledTests.cronTooltipMeaning') }}</p>
+                    <p>{{ t('admin.scheduledTests.cronTooltipExampleEvery30Min') }}</p>
+                    <p>{{ t('admin.scheduledTests.cronTooltipExampleHourly') }}</p>
+                    <p>{{ t('admin.scheduledTests.cronTooltipExampleDaily') }}</p>
+                    <p>{{ t('admin.scheduledTests.cronTooltipExampleWeekly') }}</p>
+                    <p>{{ t('admin.scheduledTests.cronTooltipRange') }}</p>
+                  </div>
+                </HelpTooltip>
+              </label>
+              <Input
+                v-model="newPlan.cron_expression"
+                :placeholder="'*/30 * * * *'"
+                :hint="t('admin.scheduledTests.cronHelp')"
+              />
+            </div>
+            <div>
+              <label class="mb-1 flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400">
+                {{ t('admin.scheduledTests.maxResults') }}
+                <HelpTooltip>
+                  <template #trigger>
+                    <span class="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-gray-400/70 text-[10px] font-semibold text-gray-400 transition-colors hover:border-primary-500 hover:text-primary-600 dark:border-gray-500 dark:text-gray-500 dark:hover:border-primary-400 dark:hover:text-primary-400">
+                      ?
+                    </span>
+                  </template>
+                  <div class="space-y-1.5">
+                    <p class="font-medium">{{ t('admin.scheduledTests.maxResultsTooltipTitle') }}</p>
+                    <p>{{ t('admin.scheduledTests.maxResultsTooltipMeaning') }}</p>
+                    <p>{{ t('admin.scheduledTests.maxResultsTooltipBody') }}</p>
+                    <p>{{ t('admin.scheduledTests.maxResultsTooltipExample') }}</p>
+                    <p>{{ t('admin.scheduledTests.maxResultsTooltipRange') }}</p>
+                  </div>
+                </HelpTooltip>
+              </label>
+              <Input
+                v-model="newPlan.max_results"
+                type="number"
+                placeholder="100"
+              />
+            </div>
+            <div class="flex items-end">
+              <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <Toggle v-model="newPlan.enabled" />
+                {{ t('admin.scheduledTests.enabled') }}
+              </label>
+            </div>
+            <div class="flex items-end">
+              <div>
+                <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                  <Toggle v-model="newPlan.auto_recover" />
+                  {{ t('admin.scheduledTests.autoRecover') }}
+                </label>
+                <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                  {{ t('admin.scheduledTests.autoRecoverHelp') }}
+                </p>
+              </div>
             </div>
           </div>
+          <div class="mt-3 flex justify-end gap-2">
+            <button
+              @click="showAddForm = false; resetNewPlan()"
+              class="btn btn-secondary btn-sm"
+            >
+              {{ t('common.cancel') }}
+            </button>
+            <button
+              @click="handleCreate"
+              :disabled="!newPlan.model_id || !newPlan.cron_expression || creating"
+              class="btn btn-primary btn-sm"
+            >
+              <Icon v-if="creating" name="refresh" size="sm" class="animate-spin" :stroke-width="2" />
+              {{ t('common.save') }}
+            </button>
+          </div>
         </div>
-        <div class="mt-3 flex justify-end gap-2">
-          <button
-            @click="showAddForm = false; resetNewPlan()"
-            class="btn btn-secondary btn-sm"
-          >
-            {{ t('common.cancel') }}
-          </button>
-          <button
-            @click="handleCreate"
-            :disabled="!newPlan.model_id || !newPlan.cron_expression || creating"
-            class="btn btn-primary btn-sm"
-          >
-            <Icon v-if="creating" name="refresh" size="sm" class="animate-spin" :stroke-width="2" />
-            {{ t('common.save') }}
-          </button>
-        </div>
-      </div>
+      </SpringCollapse>
 
       <!-- Loading State -->
       <div v-if="loading" class="flex items-center justify-center py-8">
@@ -230,220 +238,239 @@
           </div>
 
           <!-- Edit Form -->
-          <div
-            v-if="editingPlanId === plan.id"
-            class="bg-[var(--accent-tint)] px-4 py-3 shadow-[inset_0_0.5px_0_var(--separator)]"
-            @click.stop
-          >
-            <div class="mb-2 text-xs font-medium text-gray-600 dark:text-gray-400">
-              {{ t('admin.scheduledTests.editPlan') }}
-            </div>
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                  {{ t('admin.scheduledTests.model') }}
-                </label>
-                <Select
-                  v-model="editForm.model_id"
-                  :options="modelOptions"
-                  :placeholder="t('admin.scheduledTests.model')"
-                  :searchable="modelOptions.length > 5"
-                />
+          <SpringCollapse>
+            <div
+              v-if="editingPlanId === plan.id"
+              class="bg-[var(--accent-tint)] px-4 py-3 shadow-[inset_0_0.5px_0_var(--separator)]"
+              @click.stop
+            >
+              <div class="mb-2 text-xs font-medium text-gray-600 dark:text-gray-400">
+                {{ t('admin.scheduledTests.editPlan') }}
               </div>
-              <div>
-                <label class="mb-1 flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400">
-                  {{ t('admin.scheduledTests.cronExpression') }}
-                  <HelpTooltip>
-                    <template #trigger>
-                      <span class="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-gray-400/70 text-[10px] font-semibold text-gray-400 transition-colors hover:border-primary-500 hover:text-primary-600 dark:border-gray-500 dark:text-gray-500 dark:hover:border-primary-400 dark:hover:text-primary-400">
-                        ?
-                      </span>
-                    </template>
-                    <div class="space-y-1.5">
-                      <p class="font-medium">{{ t('admin.scheduledTests.cronTooltipTitle') }}</p>
-                      <p>{{ t('admin.scheduledTests.cronTooltipMeaning') }}</p>
-                      <p>{{ t('admin.scheduledTests.cronTooltipExampleEvery30Min') }}</p>
-                      <p>{{ t('admin.scheduledTests.cronTooltipExampleHourly') }}</p>
-                      <p>{{ t('admin.scheduledTests.cronTooltipExampleDaily') }}</p>
-                      <p>{{ t('admin.scheduledTests.cronTooltipExampleWeekly') }}</p>
-                      <p>{{ t('admin.scheduledTests.cronTooltipRange') }}</p>
-                    </div>
-                  </HelpTooltip>
-                </label>
-                <Input
-                  v-model="editForm.cron_expression"
-                  :placeholder="'*/30 * * * *'"
-                  :hint="t('admin.scheduledTests.cronHelp')"
-                />
-              </div>
-              <div>
-                <label class="mb-1 flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400">
-                  {{ t('admin.scheduledTests.maxResults') }}
-                  <HelpTooltip>
-                    <template #trigger>
-                      <span class="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-gray-400/70 text-[10px] font-semibold text-gray-400 transition-colors hover:border-primary-500 hover:text-primary-600 dark:border-gray-500 dark:text-gray-500 dark:hover:border-primary-400 dark:hover:text-primary-400">
-                        ?
-                      </span>
-                    </template>
-                    <div class="space-y-1.5">
-                      <p class="font-medium">{{ t('admin.scheduledTests.maxResultsTooltipTitle') }}</p>
-                      <p>{{ t('admin.scheduledTests.maxResultsTooltipMeaning') }}</p>
-                      <p>{{ t('admin.scheduledTests.maxResultsTooltipBody') }}</p>
-                      <p>{{ t('admin.scheduledTests.maxResultsTooltipExample') }}</p>
-                      <p>{{ t('admin.scheduledTests.maxResultsTooltipRange') }}</p>
-                    </div>
-                  </HelpTooltip>
-                </label>
-                <Input
-                  v-model="editForm.max_results"
-                  type="number"
-                  placeholder="100"
-                />
-              </div>
-              <div class="flex items-end">
-                <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                  <Toggle v-model="editForm.enabled" />
-                  {{ t('admin.scheduledTests.enabled') }}
-                </label>
-              </div>
-              <div class="flex items-end">
+              <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                    <Toggle v-model="editForm.auto_recover" />
-                    {{ t('admin.scheduledTests.autoRecover') }}
+                  <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                    {{ t('admin.scheduledTests.model') }}
                   </label>
-                  <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
-                    {{ t('admin.scheduledTests.autoRecoverHelp') }}
-                  </p>
+                  <Select
+                    v-model="editForm.model_id"
+                    :options="modelOptions"
+                    :placeholder="t('admin.scheduledTests.model')"
+                    :searchable="modelOptions.length > 5"
+                  />
+                </div>
+                <div>
+                  <label class="mb-1 flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400">
+                    {{ t('admin.scheduledTests.cronExpression') }}
+                    <HelpTooltip>
+                      <template #trigger>
+                        <span class="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-gray-400/70 text-[10px] font-semibold text-gray-400 transition-colors hover:border-primary-500 hover:text-primary-600 dark:border-gray-500 dark:text-gray-500 dark:hover:border-primary-400 dark:hover:text-primary-400">
+                          ?
+                        </span>
+                      </template>
+                      <div class="space-y-1.5">
+                        <p class="font-medium">{{ t('admin.scheduledTests.cronTooltipTitle') }}</p>
+                        <p>{{ t('admin.scheduledTests.cronTooltipMeaning') }}</p>
+                        <p>{{ t('admin.scheduledTests.cronTooltipExampleEvery30Min') }}</p>
+                        <p>{{ t('admin.scheduledTests.cronTooltipExampleHourly') }}</p>
+                        <p>{{ t('admin.scheduledTests.cronTooltipExampleDaily') }}</p>
+                        <p>{{ t('admin.scheduledTests.cronTooltipExampleWeekly') }}</p>
+                        <p>{{ t('admin.scheduledTests.cronTooltipRange') }}</p>
+                      </div>
+                    </HelpTooltip>
+                  </label>
+                  <Input
+                    v-model="editForm.cron_expression"
+                    :placeholder="'*/30 * * * *'"
+                    :hint="t('admin.scheduledTests.cronHelp')"
+                  />
+                </div>
+                <div>
+                  <label class="mb-1 flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400">
+                    {{ t('admin.scheduledTests.maxResults') }}
+                    <HelpTooltip>
+                      <template #trigger>
+                        <span class="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-gray-400/70 text-[10px] font-semibold text-gray-400 transition-colors hover:border-primary-500 hover:text-primary-600 dark:border-gray-500 dark:text-gray-500 dark:hover:border-primary-400 dark:hover:text-primary-400">
+                          ?
+                        </span>
+                      </template>
+                      <div class="space-y-1.5">
+                        <p class="font-medium">{{ t('admin.scheduledTests.maxResultsTooltipTitle') }}</p>
+                        <p>{{ t('admin.scheduledTests.maxResultsTooltipMeaning') }}</p>
+                        <p>{{ t('admin.scheduledTests.maxResultsTooltipBody') }}</p>
+                        <p>{{ t('admin.scheduledTests.maxResultsTooltipExample') }}</p>
+                        <p>{{ t('admin.scheduledTests.maxResultsTooltipRange') }}</p>
+                      </div>
+                    </HelpTooltip>
+                  </label>
+                  <Input
+                    v-model="editForm.max_results"
+                    type="number"
+                    placeholder="100"
+                  />
+                </div>
+                <div class="flex items-end">
+                  <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <Toggle v-model="editForm.enabled" />
+                    {{ t('admin.scheduledTests.enabled') }}
+                  </label>
+                </div>
+                <div class="flex items-end">
+                  <div>
+                    <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                      <Toggle v-model="editForm.auto_recover" />
+                      {{ t('admin.scheduledTests.autoRecover') }}
+                    </label>
+                    <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                      {{ t('admin.scheduledTests.autoRecoverHelp') }}
+                    </p>
+                  </div>
                 </div>
               </div>
+              <div class="mt-3 flex justify-end gap-2">
+                <button
+                  @click="cancelEdit"
+                  class="btn btn-secondary btn-sm"
+                >
+                  {{ t('common.cancel') }}
+                </button>
+                <button
+                  @click="handleEdit"
+                  :disabled="!editForm.model_id || !editForm.cron_expression || updating"
+                  class="btn btn-primary btn-sm"
+                >
+                  <Icon v-if="updating" name="refresh" size="sm" class="animate-spin" :stroke-width="2" />
+                  {{ t('common.save') }}
+                </button>
+              </div>
             </div>
-            <div class="mt-3 flex justify-end gap-2">
-              <button
-                @click="cancelEdit"
-                class="btn btn-secondary btn-sm"
-              >
-                {{ t('common.cancel') }}
-              </button>
-              <button
-                @click="handleEdit"
-                :disabled="!editForm.model_id || !editForm.cron_expression || updating"
-                class="btn btn-primary btn-sm"
-              >
-                <Icon v-if="updating" name="refresh" size="sm" class="animate-spin" :stroke-width="2" />
-                {{ t('common.save') }}
-              </button>
-            </div>
-          </div>
+          </SpringCollapse>
 
           <!-- Expanded Results Section -->
-          <div
-            v-if="expandedPlanId === plan.id"
-            class="px-4 py-3 shadow-[inset_0_0.5px_0_var(--separator)]"
-          >
-            <div class="mb-2 text-xs font-medium text-gray-600 dark:text-gray-400">
-              {{ t('admin.scheduledTests.results') }}
-            </div>
-
-            <!-- Results Loading -->
-            <div v-if="loadingResults" class="flex items-center justify-center py-4">
-              <Icon name="refresh" size="sm" class="animate-spin text-gray-400" :stroke-width="2" />
-              <span class="ml-2 text-xs text-gray-500">{{ t('common.loading') }}...</span>
-            </div>
-
-            <!-- No Results -->
+          <SpringCollapse>
             <div
-              v-else-if="results.length === 0"
-              class="py-4 text-center text-xs text-gray-500 dark:text-gray-400"
+              v-if="expandedPlanId === plan.id"
+              class="px-4 py-3 shadow-[inset_0_0.5px_0_var(--separator)]"
             >
-              {{ t('admin.scheduledTests.noResults') }}
-            </div>
+              <div class="mb-2 text-xs font-medium text-gray-600 dark:text-gray-400">
+                {{ t('admin.scheduledTests.results') }}
+              </div>
 
-            <!-- Results List -->
-            <div v-else class="max-h-64 space-y-2 overflow-y-auto">
+              <!-- Results Loading -->
+              <div v-if="loadingResults" class="flex items-center justify-center py-4">
+                <Icon name="refresh" size="sm" class="animate-spin text-gray-400" :stroke-width="2" />
+                <span class="ml-2 text-xs text-gray-500">{{ t('common.loading') }}...</span>
+              </div>
+
+              <!-- No Results -->
               <div
-                v-for="result in results"
-                :key="result.id"
-                class="card-inset p-3"
+                v-else-if="results.length === 0"
+                class="py-4 text-center text-xs text-gray-500 dark:text-gray-400"
               >
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <!-- Status Badge -->
-                    <span
-                      :class="[
-                        'badge',
-                        result.status === 'success'
-                          ? 'badge-success'
-                          : result.status === 'running'
-                            ? 'badge-primary'
-                            : 'badge-danger'
-                      ]"
+                {{ t('admin.scheduledTests.noResults') }}
+              </div>
+
+              <!-- Results List -->
+              <div v-else class="max-h-64 space-y-2 overflow-y-auto">
+                <div
+                  v-for="result in results"
+                  :key="result.id"
+                  class="card-inset p-3"
+                >
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <!-- Status Badge -->
+                      <span
+                        :class="[
+                          'badge',
+                          result.status === 'success'
+                            ? 'badge-success'
+                            : result.status === 'running'
+                              ? 'badge-primary'
+                              : 'badge-danger'
+                        ]"
+                      >
+                        {{
+                          result.status === 'success'
+                            ? t('admin.scheduledTests.success')
+                            : result.status === 'running'
+                              ? t('admin.scheduledTests.running')
+                              : t('admin.scheduledTests.failed')
+                        }}
+                      </span>
+
+                      <!-- Latency -->
+                      <span v-if="result.latency_ms > 0" class="tabular text-xs text-gray-500 dark:text-gray-400">
+                        {{ result.latency_ms }}ms
+                      </span>
+                    </div>
+
+                    <!-- Started At -->
+                    <span class="tabular text-xs text-gray-400">
+                      {{ formatDateTime(result.started_at) }}
+                    </span>
+                  </div>
+
+                  <!-- Response / Error (collapsible) -->
+                  <div v-if="result.error_message" class="mt-2">
+                    <div
+                      class="cursor-pointer text-xs font-medium text-red-600 dark:text-red-400"
+                      @click="toggleResultDetail(result.id)"
                     >
-                      {{
-                        result.status === 'success'
-                          ? t('admin.scheduledTests.success')
-                          : result.status === 'running'
-                            ? t('admin.scheduledTests.running')
-                            : t('admin.scheduledTests.failed')
-                      }}
-                    </span>
-
-                    <!-- Latency -->
-                    <span v-if="result.latency_ms > 0" class="tabular text-xs text-gray-500 dark:text-gray-400">
-                      {{ result.latency_ms }}ms
-                    </span>
+                      {{ t('admin.scheduledTests.errorMessage') }}
+                      <Icon
+                        name="chevronDown"
+                        size="sm"
+                        :class="[
+                          'inline transition-transform duration-200',
+                          expandedResultIds.has(result.id) ? 'rotate-180' : ''
+                        ]"
+                      />
+                    </div>
+                    <!--
+                      The wrapper exists so the spring and the scroll clamp do not
+                      fight: SpringCollapse targets scrollHeight, and on a <pre>
+                      that is `max-h-32 overflow-auto` that reads the full
+                      unclamped text height. The animation would then finish its
+                      visible travel in the first ~20% of the spring and sit still
+                      for the rest. Measuring the wrapper gives the clamped height,
+                      and the <pre> keeps its own overflow.
+                    -->
+                    <SpringCollapse>
+                      <div v-if="expandedResultIds.has(result.id)">
+                        <pre
+                          class="mt-1 max-h-32 overflow-auto whitespace-pre-wrap rounded-md bg-red-50 p-2 text-xs text-red-700 dark:bg-red-900/20 dark:text-red-300"
+                        >{{ result.error_message }}</pre>
+                      </div>
+                    </SpringCollapse>
                   </div>
-
-                  <!-- Started At -->
-                  <span class="tabular text-xs text-gray-400">
-                    {{ formatDateTime(result.started_at) }}
-                  </span>
-                </div>
-
-                <!-- Response / Error (collapsible) -->
-                <div v-if="result.error_message" class="mt-2">
-                  <div
-                    class="cursor-pointer text-xs font-medium text-red-600 dark:text-red-400"
-                    @click="toggleResultDetail(result.id)"
-                  >
-                    {{ t('admin.scheduledTests.errorMessage') }}
-                    <Icon
-                      name="chevronDown"
-                      size="sm"
-                      :class="[
-                        'inline transition-transform duration-200',
-                        expandedResultIds.has(result.id) ? 'rotate-180' : ''
-                      ]"
-                    />
+                  <div v-else-if="result.response_text" class="mt-2">
+                    <div
+                      class="cursor-pointer text-xs font-medium text-gray-600 dark:text-gray-400"
+                      @click="toggleResultDetail(result.id)"
+                    >
+                      {{ t('admin.scheduledTests.responseText') }}
+                      <Icon
+                        name="chevronDown"
+                        size="sm"
+                        :class="[
+                          'inline transition-transform duration-200',
+                          expandedResultIds.has(result.id) ? 'rotate-180' : ''
+                        ]"
+                      />
+                    </div>
+                    <SpringCollapse>
+                      <div v-if="expandedResultIds.has(result.id)">
+                        <pre
+                          class="mt-1 max-h-32 overflow-auto whitespace-pre-wrap rounded-md bg-gray-100 p-2 text-xs text-gray-700 dark:bg-dark-800 dark:text-gray-300"
+                        >{{ result.response_text }}</pre>
+                      </div>
+                    </SpringCollapse>
                   </div>
-                  <pre
-                    v-if="expandedResultIds.has(result.id)"
-                    class="mt-1 max-h-32 overflow-auto whitespace-pre-wrap rounded-md bg-red-50 p-2 text-xs text-red-700 dark:bg-red-900/20 dark:text-red-300"
-                  >{{ result.error_message }}</pre>
-                </div>
-                <div v-else-if="result.response_text" class="mt-2">
-                  <div
-                    class="cursor-pointer text-xs font-medium text-gray-600 dark:text-gray-400"
-                    @click="toggleResultDetail(result.id)"
-                  >
-                    {{ t('admin.scheduledTests.responseText') }}
-                    <Icon
-                      name="chevronDown"
-                      size="sm"
-                      :class="[
-                        'inline transition-transform duration-200',
-                        expandedResultIds.has(result.id) ? 'rotate-180' : ''
-                      ]"
-                    />
-                  </div>
-                  <pre
-                    v-if="expandedResultIds.has(result.id)"
-                    class="mt-1 max-h-32 overflow-auto whitespace-pre-wrap rounded-md bg-gray-100 p-2 text-xs text-gray-700 dark:bg-dark-800 dark:text-gray-300"
-                  >{{ result.response_text }}</pre>
                 </div>
               </div>
             </div>
-          </div>
+          </SpringCollapse>
         </div>
       </div>
     </div>
@@ -467,6 +494,7 @@ import { ref, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/components/common/BaseDialog.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
+import SpringCollapse from '@/components/common/SpringCollapse.vue'
 import HelpTooltip from '@/components/common/HelpTooltip.vue'
 import Select, { type SelectOption } from '@/components/common/Select.vue'
 import Input from '@/components/common/Input.vue'

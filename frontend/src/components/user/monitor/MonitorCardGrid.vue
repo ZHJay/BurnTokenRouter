@@ -2,7 +2,7 @@
   <div>
     <div
       v-if="loading && items.length === 0"
-      class="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+      class="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
     >
       <div
         v-for="i in 6"
@@ -25,15 +25,18 @@
       </div>
     </div>
 
-    <EmptyState
-      v-else-if="items.length === 0"
-      :title="t('channelStatus.empty.title')"
-      :description="t('channelStatus.empty.description')"
-    />
+    <!-- The empty case needs a surface too, otherwise it floats on the bare
+         background while every populated state sits on a card. -->
+    <div v-else-if="items.length === 0" class="card">
+      <EmptyState
+        :title="t('channelStatus.empty.title')"
+        :description="t('channelStatus.empty.description')"
+      />
+    </div>
 
     <div
       v-else
-      class="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+      class="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
     >
       <MonitorCard
         v-for="item in items"

@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent } from 'vue'
-import { mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { defineComponent, nextTick } from 'vue'
+import { mount, type VueWrapper } from '@vue/test-utils'
 import EndpointPool from '../components/EndpointPool.vue'
 import PolicyPanel from '../components/PolicyPanel.vue'
 import EventWorkspace from '../components/EventWorkspace.vue'
@@ -16,6 +16,43 @@ vi.mock('vue-i18n', async () => {
 
 const DialogStub = defineComponent({ props: ['show', 'title'], emits: ['close'], template: '<div v-if="show" data-test="dialog"><slot /><slot name="footer" /></div>' })
 const PaginationStub = defineComponent({ props: ['total', 'page', 'pageSize'], emits: ['update:page', 'update:pageSize'], template: '<div data-test="pagination" />' })
+
+/* The decision / risk filters are real Select.vue instances, not native
+   <select>. Select renders a role="combobox" trigger and teleports its listbox
+   to document.body, so these helpers drive it the way a user does — open the
+   popover, click the option with the given label — instead of asserting on
+   component internals. Driving the real component is also what proves the
+   dark-mode fix: the option list is app-rendered markup that the theme reaches,
+   which is precisely what a native <select>'s OS-drawn dropdown never was. */
+const openSelect = async (wrapper: VueWrapper, dataTest: string) => {
+  await wrapper.get(`[data-test="${dataTest}"] button.select-trigger`).trigger('click')
+  await nextTick()
+}
+
+// Toggle shut via the trigger. Do NOT clear document.body here: these wrappers
+// are attachTo: document.body, so wiping innerHTML would take the component
+// with it.
+const closeSelect = openSelect
+
+const selectOptionLabels = () =>
+  Array.from(document.body.querySelectorAll<HTMLElement>('.select-option')).map((el) => el.textContent?.trim() ?? '')
+
+const pickSelectOption = async (wrapper: VueWrapper, dataTest: string, label: string) => {
+  await openSelect(wrapper, dataTest)
+  const option = Array.from(document.body.querySelectorAll<HTMLElement>('.select-option'))
+    .find((el) => el.textContent?.trim() === label)
+  if (!option) throw new Error(`option "${label}" not found; got: ${selectOptionLabels().join(' | ')}`)
+  option.click()
+  await nextTick()
+}
+
+const selectTriggerLabel = (wrapper: VueWrapper, dataTest: string) =>
+  wrapper.get(`[data-test="${dataTest}"] .select-value`).text()
+
+afterEach(() => {
+  // Select teleports to body; without this the next test sees a stale listbox.
+  document.body.innerHTML = ''
+})
 
 const endpoint = (): PromptAuditEndpointDraft => ({
   id: 'guard-1', name: 'Guard One', protocol: 'openai_compatible', base_url: 'http://127.0.0.1:8000',
@@ -105,6 +142,97 @@ describe('Prompt Audit components', () => {
     expect(wrapper.emitted('selection')?.at(-1)?.[0]).toEqual([1])
   })
 
+  it('filters decision and risk through Select.vue, keeping the change handlers firing', async () => {
+    const wrapper = mount(EventWorkspace, {
+      props: { events: [], total: 0, page: 1, pageSize: 20, filters: emptyEventFilters(), selectedIds: [], loading: false, error: '' },
+      attachTo: document.body,
+      global: { stubs: { Pagination: PaginationStub, transition: true } },
+    })
+
+    // No native <select> is left on the filter row: with .input's
+    // appearance: none a native one is the case style.css cannot reach.
+    expect(wrapper.findAll('select')).toHaveLength(0)
+    expect(wrapper.findAll('[role="combobox"]')).toHaveLength(2)
+
+    await openSelect(wrapper, 'filter-decision')
+    expect(selectOptionLabels()).toEqual([
+      'common.all',
+      'admin.promptAudit.decisions.pass',
+      'admin.promptAudit.decisions.flag',
+      'admin.promptAudit.decisions.critical',
+    ])
+    await closeSelect(wrapper, 'filter-decision')
+
+    await pickSelectOption(wrapper, 'filter-decision', 'admin.promptAudit.decisions.flag')
+    expect((wrapper.emitted('filters-change')?.at(-1)?.[0] as PromptEventFilters).decision).toBe('flag')
+    expect(selectTriggerLabel(wrapper, 'filter-decision')).toBe('admin.promptAudit.decisions.flag')
+
+    await pickSelectOption(wrapper, 'filter-risk', 'admin.promptAudit.riskLevels.high')
+    const afterRisk = wrapper.emitted('filters-change')?.at(-1)?.[0] as PromptEventFilters
+    expect(afterRisk.risk_level).toBe('high')
+    expect(afterRisk.decision).toBe('flag')
+
+    // The blank first option clears back to "no filter", not a literal ''
+    // decision query — eventQueryParams drops empty strings.
+    await pickSelectOption(wrapper, 'filter-decision', 'common.all')
+    expect((wrapper.emitted('filters-change')?.at(-1)?.[0] as PromptEventFilters).decision).toBe('')
+
+    // aria-label is passed through, so each combobox still has an accessible name.
+    expect(wrapper.get('[data-test="filter-decision"] button.select-trigger').attributes('aria-label'))
+      .toBe('admin.promptAudit.events.decision')
+    expect(wrapper.get('[data-test="filter-risk"] button.select-trigger').attributes('aria-label'))
+      .toBe('admin.promptAudit.events.risk')
+  })
+
+  it('keeps minute-precision datetime-local on the two list filter fields', async () => {
+    const wrapper = mount(EventWorkspace, {
+      props: { events: [], total: 0, page: 1, pageSize: 20, filters: emptyEventFilters(), selectedIds: [], loading: false, error: '' },
+      global: { stubs: { Pagination: PaginationStub } },
+    })
+    const start = wrapper.get<HTMLInputElement>('[aria-label="admin.promptAudit.events.startAt"]')
+    const end = wrapper.get<HTMLInputElement>('[aria-label="admin.promptAudit.events.endAt"]')
+    // Native datetime-local, not a date-only picker: the API compares
+    // created_at against an RFC3339 closed interval with no end-of-day
+    // expansion, so day granularity would drop the selected end day.
+    expect(start.attributes('type')).toBe('datetime-local')
+    expect(end.attributes('type')).toBe('datetime-local')
+    await start.setValue('2026-07-01T09:30')
+    expect((wrapper.emitted('filters-change')?.at(-1)?.[0] as PromptEventFilters).start_at).toBe('2026-07-01T09:30')
+  })
+
+  it('uses outline red for the dialog-opening delete and full-size buttons for the filter submits', () => {
+    const wrapper = mount(EventWorkspace, {
+      props: { events: [], total: 0, page: 1, pageSize: 20, filters: emptyEventFilters(), selectedIds: [], loading: false, error: '' },
+      global: { stubs: { Pagination: PaginationStub } },
+    })
+    // "Delete by filter" only opens a preview dialog, so it sits one rung below
+    // the solid .btn-danger that the dialog's own confirm keeps.
+    const filterDelete = wrapper.get('[data-test="filter-delete"]')
+    expect(filterDelete.classes()).toContain('btn-outline-danger')
+    expect(filterDelete.classes()).not.toContain('btn-danger')
+
+    // Search / Reset are this block's submits, not in-row table controls.
+    const search = wrapper.findAll('button').find((button) => button.text() === 'common.search')!
+    const reset = wrapper.findAll('button').find((button) => button.text() === 'common.reset')!
+    expect(search.classes()).toContain('btn')
+    expect(search.classes()).not.toContain('btn-sm')
+    expect(reset.classes()).not.toContain('btn-sm')
+
+    // Labels use the design system's field-label class, not a surface-ramp
+    // value (dark-200) pressed into service as a text colour.
+    const labels = wrapper.findAll('form label span.input-label')
+    expect(labels.length).toBeGreaterThanOrEqual(11)
+    expect(wrapper.find('form label.text-xs').exists()).toBe(false)
+    expect(wrapper.html()).not.toContain('dark:text-dark-200')
+
+    // 11 fields + 1 actions cell = 12, which tiles evenly at 2 / 3 / 6 columns.
+    const form = wrapper.get('form')
+    expect(form.classes()).toContain('sm:grid-cols-2')
+    expect(form.classes()).toContain('lg:grid-cols-3')
+    expect(form.classes()).toContain('xl:grid-cols-6')
+    expect(form.classes()).not.toContain('lg:grid-cols-4')
+  })
+
   it('resolves delete range presets to an epoch start and a cutoff end', () => {
     const now = Date.parse('2026-07-17T12:00:00.000Z')
     const sevenDays = resolveDeleteRangeFilters(emptyEventFilters(), '7d', now)
@@ -120,7 +248,8 @@ describe('Prompt Audit components', () => {
   it('drives filter deletion through presets, custom validation, preview, and confirm', async () => {
     const wrapper = mount(FilterDeleteDialog, {
       props: { show: true, initialFilters: emptyEventFilters(), preview: null, previewing: false, deleting: false },
-      global: { stubs: { BaseDialog: DialogStub } },
+      attachTo: document.body,
+      global: { stubs: { BaseDialog: DialogStub, transition: true } },
     })
     expect(wrapper.get<HTMLInputElement>('[data-test="range-preset-7d"]').element.checked).toBe(true)
     expect(wrapper.find('[data-test="custom-range"]').exists()).toBe(false)
@@ -136,7 +265,7 @@ describe('Prompt Audit components', () => {
 
     await wrapper.get('[data-test="range-preset-30d"]').setValue()
     expect(wrapper.emitted('criteria-change')?.length).toBeGreaterThan(0)
-    await wrapper.get('[data-test="delete-risk"]').setValue('high')
+    await pickSelectOption(wrapper, 'delete-risk', 'admin.promptAudit.riskLevels.high')
     await wrapper.get('[data-test="run-delete-preview"]').trigger('click')
     const presetPreview = wrapper.emitted('preview')?.at(-1)?.[0] as PromptEventFilters
     expect(presetPreview.risk_level).toBe('high')
@@ -193,12 +322,56 @@ describe('Prompt Audit components', () => {
     const initialFilters = { ...emptyEventFilters(), start_at: '2026-07-01T00:00', end_at: '2026-07-02T00:00', decision: 'critical' }
     const wrapper = mount(FilterDeleteDialog, {
       props: { show: true, initialFilters, preview: null, previewing: false, deleting: false },
-      global: { stubs: { BaseDialog: DialogStub } },
+      attachTo: document.body,
+      global: { stubs: { BaseDialog: DialogStub, transition: true } },
     })
     expect(wrapper.get<HTMLInputElement>('[data-test="range-preset-custom"]').element.checked).toBe(true)
     expect(wrapper.get<HTMLInputElement>('[data-test="custom-range"] [aria-label="admin.promptAudit.events.startAt"]').element.value).toBe('2026-07-01T00:00')
-    expect(wrapper.get<HTMLSelectElement>('[data-test="delete-decision"]').element.value).toBe('critical')
+    // Select shows the option label, not the raw value.
+    expect(selectTriggerLabel(wrapper, 'delete-decision')).toBe('admin.promptAudit.decisions.critical')
     expect(wrapper.get('[data-test="run-delete-preview"]').attributes()).not.toHaveProperty('disabled')
+  })
+
+  it('keeps explicit datetime boundaries native in the destructive dialog while its enum filters use Select', async () => {
+    const wrapper = mount(FilterDeleteDialog, {
+      props: {
+        show: true,
+        initialFilters: { ...emptyEventFilters(), start_at: '2026-07-01T09:30', end_at: '2026-07-02T09:45' },
+        preview: null,
+        previewing: false,
+        deleting: false,
+      },
+      attachTo: document.body,
+      global: { stubs: { BaseDialog: DialogStub, transition: true } },
+    })
+
+    /* The one place that deliberately keeps a native control. This dialog
+       defines the exact boundary of an irreversible bulk delete: the operator
+       should confirm the same explicit timestamps that go to the server, with
+       no preset layer that drifts with the moment the dialog opened. Precision
+       beats visual consistency at the point of no return. */
+    const start = wrapper.get<HTMLInputElement>('[data-test="custom-range"] [aria-label="admin.promptAudit.events.startAt"]')
+    const end = wrapper.get<HTMLInputElement>('[data-test="custom-range"] [aria-label="admin.promptAudit.events.endAt"]')
+    expect(start.attributes('type')).toBe('datetime-local')
+    expect(end.attributes('type')).toBe('datetime-local')
+    expect(start.classes()).toContain('input')
+    expect(start.classes()).toContain('h-9')
+
+    // The minute component survives to the emitted criteria untouched.
+    await wrapper.get('[data-test="run-delete-preview"]').trigger('click')
+    const emitted = wrapper.emitted('preview')?.at(-1)?.[0] as PromptEventFilters
+    expect(emitted.start_at).toBe('2026-07-01T09:30')
+    expect(emitted.end_at).toBe('2026-07-02T09:45')
+
+    // Enum filters, by contrast, are Select instances — no native dropdown left.
+    expect(wrapper.findAll('select')).toHaveLength(0)
+    await pickSelectOption(wrapper, 'delete-decision', 'admin.promptAudit.decisions.critical')
+    expect(wrapper.emitted('criteria-change')?.length).toBeGreaterThan(0)
+    await wrapper.get('[data-test="run-delete-preview"]').trigger('click')
+    expect((wrapper.emitted('preview')?.at(-1)?.[0] as PromptEventFilters).decision).toBe('critical')
+
+    // The dialog's own confirm keeps solid red: this one IS the irreversible commit.
+    expect(wrapper.get('[data-test="confirm-filter-delete"]').classes()).toContain('btn-danger')
   })
 
   it('shows the full unredacted prompt and structured guard return on the risks tab', async () => {

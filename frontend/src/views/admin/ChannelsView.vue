@@ -147,38 +147,23 @@
     >
       <div class="channel-dialog-body">
         <!-- Tab Bar：页面级 tab 条。项数随启用平台变化（基础设置 + 最多 6 个平台），
-             标签宽度不等，因此保留下划线样式而不收进分段控件。
-             切换的是内容面板，语义用 tablist/tab/aria-selected。 -->
+             标签宽度不等。切换的是内容面板，语义用 tablist/tab/aria-selected。 -->
         <div
           class="flex items-center border-b border-gray-200 dark:border-dark-700 flex-shrink-0 -mx-4 sm:-mx-6 px-4 sm:px-6 -mt-3 sm:-mt-4"
-          role="tablist"
-          :aria-label="t('admin.channels.form.basicSettings')"
         >
-          <!-- Basic Settings Tab -->
-          <button
-            type="button"
-            role="tab"
-            :aria-selected="activeTab === 'basic'"
-            @click="activeTab = 'basic'"
-            class="channel-tab"
-            :class="activeTab === 'basic' ? 'channel-tab-active' : 'channel-tab-inactive'"
+          <Segmented
+            v-model="activeTab"
+            :options="channelTabOptions"
+            mode="tablist"
+            :aria-label="t('admin.channels.form.basicSettings')"
           >
-            {{ t('admin.channels.form.basicSettings') }}
-          </button>
-          <!-- Platform Tabs (only enabled) -->
-          <button
-            v-for="section in form.platforms.filter(s => s.enabled)"
-            :key="section.platform"
-            type="button"
-            role="tab"
-            :aria-selected="activeTab === section.platform"
-            @click="activeTab = section.platform"
-            class="channel-tab group"
-            :class="activeTab === section.platform ? 'channel-tab-active' : 'channel-tab-inactive'"
-          >
-            <PlatformIcon :platform="section.platform" size="xs" :class="platformTextClass(section.platform)" />
-            <span :class="platformTextClass(section.platform)">{{ t('admin.groups.platforms.' + section.platform, section.platform) }}</span>
-          </button>
+            <template #option="{ option }">
+              <span class="flex items-center gap-1.5" :class="platformTextClass(option.value)">
+                <PlatformIcon v-if="asPlatform(option.value)" :platform="asPlatform(option.value)!" size="xs" />
+                {{ option.label }}
+              </span>
+            </template>
+          </Segmented>
         </div>
 
         <!-- Tab Content -->
@@ -656,6 +641,7 @@ import EmptyState from '@/components/common/EmptyState.vue'
 import Select from '@/components/common/Select.vue'
 import Icon from '@/components/icons/Icon.vue'
 import PlatformIcon from '@/components/common/PlatformIcon.vue'
+import Segmented from '@/components/common/Segmented.vue'
 import Toggle from '@/components/common/Toggle.vue'
 import PricingEntryCard from '@/components/admin/channel/PricingEntryCard.vue'
 import { getPersistedPageSize } from '@/composables/usePersistedPageSize'
@@ -747,7 +733,12 @@ const editingChannel = ref<Channel | null>(null)
 const submitting = ref(false)
 const showDeleteDialog = ref(false)
 const deletingChannel = ref<Channel | null>(null)
-const activeTab = ref<string>('basic')
+// 类型必须与 channelTabOptions 的 value 一致（'basic' | GroupPlatform）。
+// Segmented 是泛型组件 `T extends string | number`，T 同时由 modelValue 与
+// options 推断：如果这里是 ref<string>，T 会塌成 string，插槽里的
+// option.value 就变成 string，asPlatform() 只接受 'basic' | GroupPlatform，
+// 于是在模板里报 TS2345。收窄声明即可让两边一致，无需在插槽内加断言。
+const activeTab = ref<'basic' | GroupPlatform>('basic')
 
 // Groups
 const allGroups = ref<AdminGroup[]>([])
@@ -780,6 +771,24 @@ function formatDate(value: string): string {
 
 // ── Platform section helpers ──
 const activePlatforms = computed(() => form.platforms.filter(s => s.enabled).map(s => s.platform))
+
+// 基础设置 + 每个已启用平台一段。段集会随平台开关变化。
+// value 的类型是 'basic' | GroupPlatform，这样插槽里 PlatformIcon 的 platform
+// 才能不经 as 断言直接收下。
+const channelTabOptions = computed<{ value: 'basic' | GroupPlatform; label: string }[]>(() => [
+  { value: 'basic', label: t('admin.channels.form.basicSettings') },
+  ...form.platforms
+    .filter((s) => s.enabled)
+    .map((s) => ({
+      value: s.platform,
+      label: t('admin.groups.platforms.' + s.platform, s.platform),
+    })),
+])
+
+/** Narrows a tab value to a platform; 'basic' has no platform icon. */
+function asPlatform(value: 'basic' | GroupPlatform): GroupPlatform | undefined {
+  return value === 'basic' ? undefined : value
+}
 
 function addPlatformSection(platform: GroupPlatform) {
   form.platforms.push({
@@ -1639,33 +1648,5 @@ onUnmounted(() => {
   flex-direction: column;
   height: 70vh;
   min-height: 400px;
-}
-
-.channel-tab {
-  @apply flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap;
-  @apply outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)];
-  @apply active:scale-[0.96];
-  -webkit-tap-highlight-color: transparent;
-  transition:
-    color 240ms var(--ease-out),
-    border-color 240ms var(--ease-out),
-    transform 100ms var(--ease-out);
-}
-
-.channel-tab-active {
-  @apply border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400;
-}
-
-.channel-tab-inactive {
-  @apply border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300;
-}
-
-/* 与 style.css 的减弱动效分支同约定：这里的 active:scale 是裸工具类，
-   不在全局那份选择器清单里，因此本地中和位移、保留颜色反馈。 */
-@media (prefers-reduced-motion: reduce) {
-  .channel-tab {
-    transition-property: color, border-color;
-    transform: none !important;
-  }
 }
 </style>

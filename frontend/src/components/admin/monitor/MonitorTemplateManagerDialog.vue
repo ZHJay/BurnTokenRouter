@@ -7,26 +7,27 @@
   >
     <!-- provider tabs（Apple 分段控件） -->
     <div class="mb-4">
-      <div role="tablist" class="tabs flex-wrap">
-        <button
-          v-for="tab in providerTabs"
-          :key="tab.value"
-          type="button"
-          role="tab"
-          :aria-selected="activeProvider === tab.value"
-          class="tab transition-transform duration-instant ease-apple-out active:scale-[0.96]"
-          :class="tabClass(tab.value)"
-          @click="activeProvider = tab.value"
-        >
-          {{ tab.label }}
-          <span
-            v-if="countByProvider[tab.value] > 0"
-            class="tabular ml-1.5 rounded-full bg-gray-100 px-2 py-0.5 text-xs dark:bg-dark-700"
-          >
-            {{ countByProvider[tab.value] }}
+      <!-- 选中段的文字色（primary）和计数徽标都随单个 option 走，所以都在
+           option 插槽里；`tab-active` 的底色由 Segmented 的滑块接管。 -->
+      <Segmented
+        v-model="activeProvider"
+        :options="providerTabOptions"
+        mode="tablist"
+        :aria-label="t('admin.channelMonitor.template.managerTitle')"
+        class="flex-wrap"
+      >
+        <template #option="{ option, selected }">
+          <span :class="selected ? 'text-primary-600 dark:text-primary-400' : ''">
+            {{ option.label }}
+            <span
+              v-if="countByProvider[option.value] > 0"
+              class="tabular ml-1.5 rounded-full bg-gray-100 px-2 py-0.5 text-xs dark:bg-dark-700"
+            >
+              {{ countByProvider[option.value] }}
+            </span>
           </span>
-        </button>
-      </div>
+        </template>
+      </Segmented>
     </div>
 
     <!-- active provider list -->
@@ -240,6 +241,7 @@ import type {
 import type { ChannelMonitorTemplate } from '@/api/admin/channelMonitorTemplate'
 import BaseDialog from '@/components/common/BaseDialog.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
+import Segmented from '@/components/common/Segmented.vue'
 import Icon from '@/components/icons/Icon.vue'
 import MonitorAdvancedRequestConfig from '@/components/admin/monitor/MonitorAdvancedRequestConfig.vue'
 import MonitorTemplateApplyPickerDialog from '@/components/admin/monitor/MonitorTemplateApplyPickerDialog.vue'
@@ -272,6 +274,10 @@ const providerTabs = computed<{ value: Provider; label: string }[]>(() => [
 ])
 
 const activeProvider = ref<Provider>(PROVIDER_ANTHROPIC)
+
+// providerTabs 已是 { value, label }，直接复用；计数徽标在 option 插槽里渲染。
+const providerTabOptions = computed(() => providerTabs.value)
+
 const templates = ref<ChannelMonitorTemplate[]>([])
 const loading = ref(false)
 
@@ -461,12 +467,6 @@ async function doDelete() {
 }
 
 // --- misc ---
-function tabClass(value: Provider): string {
-  return activeProvider.value === value
-    ? 'tab-active text-primary-600 dark:text-primary-400'
-    : ''
-}
-
 function modeBadgeClass(mode: BodyOverrideMode): string {
   switch (mode) {
     case 'merge':

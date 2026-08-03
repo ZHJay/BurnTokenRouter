@@ -1,18 +1,6 @@
 <template>
   <AppLayout>
     <div class="mx-auto max-w-[1600px]" :class="activeTab === 'config' && draft ? 'pb-28' : 'pb-8'">
-      <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-600 dark:text-primary-400">{{ t('nav.securityAudit') }}</p>
-          <h1 class="mt-1 text-2xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ t('admin.promptAudit.title') }}</h1>
-          <p class="mt-2 max-w-3xl text-sm text-gray-500 dark:text-dark-300">{{ t('admin.promptAudit.description') }}</p>
-        </div>
-        <div v-if="draft" class="text-right text-xs text-gray-500 dark:text-dark-400">
-          <p class="tabular">{{ t('admin.promptAudit.configVersion', { version: draft.config_version }) }}</p>
-          <p v-if="draft.updated_at" class="tabular mt-1">{{ formatDate(draft.updated_at) }}</p>
-        </div>
-      </header>
-
       <div
         v-if="loadErrors.config && !draft"
         role="alert"
@@ -24,25 +12,32 @@
       </div>
 
       <template v-else>
-        <div class="mb-4" role="tablist" :aria-label="t('admin.promptAudit.title')">
-          <div class="tabs inline-flex">
-            <button
-              v-for="tab in pageTabs"
-              :key="tab.id"
-              type="button"
-              role="tab"
-              class="tab"
-              :class="{ 'tab-active': activeTab === tab.id }"
-              :aria-selected="activeTab === tab.id"
-              :data-test="`tab-${tab.id}`"
-              @click="activeTab = tab.id"
-            >
-              {{ tab.label }}
-            </button>
-          </div>
+        <!-- 页面标题 / 描述由 AppHeader 从 route.meta.titleKey + descriptionKey 渲染
+             （router/index.ts:608-609），此处不再重复。只留配置版本这一条本页独有
+             的元信息，放在 tab bar 之上。 -->
+        <div v-if="draft" class="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+          <span class="tabular">{{ t('admin.promptAudit.configVersion', { version: draft.config_version }) }}</span>
+          <span v-if="draft.updated_at" class="tabular">{{ formatDate(draft.updated_at) }}</span>
         </div>
 
-        <main class="card px-4 sm:px-6 lg:px-8">
+        <div class="mb-4">
+          <!-- 每个 option 的 `id` 既是面板 aria-labelledby 的目标，也是这一组的
+               测试钩子（原先是 data-test）。 -->
+          <Segmented
+            v-model="activeTab"
+            :options="pageTabOptions"
+            mode="tablist"
+            :aria-label="t('admin.promptAudit.title')"
+            class="inline-flex"
+          />
+        </div>
+
+        <!-- 页面骨架，不是卡片：.card 是内容承载层（不透明高程 + hairline 描边），
+             而这里的四个子块（RuntimeOverview / EndpointPool / PolicyPanel /
+             EventWorkspace）各自已经是 .card，外面再套一层就是卡中卡。
+             原来的 px-4 sm:px-6 lg:px-8 也随之去掉：AppLayout 的 <main> 已经给了
+             px-4 md:px-6 lg:px-8，这层只会把内容再往里推一次。 -->
+        <div>
           <div v-show="activeTab === 'config'" data-test="tab-panel-config">
             <RuntimeOverview :runtime="runtime" :loading="loading.runtime" :error="loadErrors.runtime" @refresh="loadRuntime" />
 
@@ -97,14 +92,23 @@
               @preview-delete="requestFilterDeletePreview"
             />
           </div>
-        </main>
+        </div>
       </template>
     </div>
 
-    <!-- 悬浮保存栏：真正漂在内容之上的工具条，玻璃材质用在这里才对 -->
+    <!-- 悬浮保存栏：真正漂在内容之上的工具条，玻璃材质用在这里才对。
+         材质档位用 glass（regular）而不是 glass-thick：按 style.css 顶部的材质层级，
+         thick 是结构层、只给侧边栏，regular 才是"浮动 chrome（顶栏 / 工具条）"。
+         这条工具条与 AppHeader 同类，因此与它同档。
+
+         padding-bottom 叠加安全区：这条是 fixed inset-x-0 bottom-0，在带 Home
+         指示器的 iPhone 上原本会压在指示器下面。index.html 已有 viewport-fit=cover，
+         env() 会真的求值；无安全区时 env() = 0px，等价于原来的 py-3。
+         用 calc() 而不是 .safe-bottom 工具类：后者直接设 padding-bottom，会把
+         py-3 的下内距整块覆盖掉（style.css 的注释也点明了这一点）。 -->
     <div
       v-if="draft && activeTab === 'config'"
-      class="fixed inset-x-0 bottom-0 z-30 glass-thick px-4 py-3 shadow-[inset_0_0.5px_0_var(--glass-specular),0_-12px_35px_-8px_rgba(0,0,0,0.12)] lg:left-64"
+      class="glass fixed inset-x-0 bottom-0 z-30 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[inset_0_0.5px_0_var(--glass-specular),0_-12px_35px_-8px_rgba(0,0,0,0.12)] lg:left-64"
     >
       <div class="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
@@ -162,6 +166,7 @@ import { computed, defineComponent, h, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
+import Segmented from '@/components/common/Segmented.vue'
 import { useAppStore } from '@/stores/app'
 import { extractApiErrorCode, extractApiErrorMessage } from '@/utils/apiError'
 import RuntimeOverview from './components/RuntimeOverview.vue'
@@ -193,6 +198,10 @@ const pageTabs = computed(() => [
   { id: 'events' as const, label: t('admin.promptAudit.tabs.events') },
   { id: 'config' as const, label: t('admin.promptAudit.tabs.config') },
 ])
+// `id` 保留 `tab-<x>` 的拼写：面板用 data-test="tab-panel-<x>"，两边成对。
+const pageTabOptions = computed(() =>
+  pageTabs.value.map((tab) => ({ value: tab.id, label: tab.label, id: `tab-${tab.id}` })),
+)
 const serverConfig = ref<PromptAuditDraft | null>(null)
 const draft = ref<PromptAuditDraft | null>(null)
 const runtime = ref<PromptAuditRuntime | null>(null)

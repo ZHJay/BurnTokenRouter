@@ -1,83 +1,96 @@
 <template>
-  <div class="space-y-3">
+  <!--
+    Controls live in an opaque `.card`, the same as /dashboard's Time Range +
+    Granularity row. Not glass: this scrolls with the content, and glass is
+    reserved for chrome that content passes under.
+
+    Every row is `flex-col` → `sm:flex-row` with the label as a plain
+    `.stat-label`, replacing the previous `w-10` fixed box. A 40px box could not
+    hold "PLATFORM" (71px of uppercase tracked text), so the label overflowed
+    *under* the adjacent chip and rendered as "PLATFO" at every width — the
+    w-10 was unconditional, so this was never a mobile-only bug. Re-tuning the
+    px width would only defer it: the same box has to hold translated labels in
+    every other locale.
+  -->
+  <div class="card space-y-3 p-4">
     <!-- 一级:平台 -->
-    <div class="flex flex-wrap items-center gap-2">
-      <span class="w-10 shrink-0 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-dark-500">
-        {{ t('modelPlaza.filters.platformLabel') }}
-      </span>
-      <button
-        v-for="p in ['all', ...platforms]"
-        :key="`platform-${p}`"
-        type="button"
-        class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition active:scale-[0.96] disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] disabled:cursor-not-allowed disabled:opacity-40 disabled:grayscale"
-        :class="p === 'all' ? chipClass(platform === 'all') : platform === p ? 'chip-tinted-active' : 'chip-tinted'"
-        :style="p === 'all' ? undefined : { '--chip-accent': platformAccentColor(p) }"
-        :disabled="p !== 'all' && !platformEnabled(p)"
-        @click="$emit('update:platform', p)"
-      >
-        <PlatformIcon v-if="p !== 'all'" :platform="p as GroupPlatform" size="xs" />
-        {{ p === 'all' ? t('modelPlaza.filters.all') : p }}
-      </button>
+    <div class="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+      <span class="stat-label">{{ t('modelPlaza.filters.platformLabel') }}</span>
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          v-for="p in ['all', ...platforms]"
+          :key="`platform-${p}`"
+          type="button"
+          class="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition active:scale-[0.96] disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] disabled:cursor-not-allowed disabled:opacity-40 disabled:grayscale"
+          :class="p === 'all' ? chipClass(platform === 'all') : platform === p ? 'chip-tinted-active' : 'chip-tinted'"
+          :style="p === 'all' ? undefined : { '--chip-accent': platformAccentColor(p) }"
+          :disabled="p !== 'all' && !platformEnabled(p)"
+          @click="$emit('update:platform', p)"
+        >
+          <PlatformIcon v-if="p !== 'all'" :platform="p as GroupPlatform" size="xs" />
+          {{ p === 'all' ? t('modelPlaza.filters.all') : p }}
+        </button>
+      </div>
     </div>
 
     <!-- 二级:分组(按所属平台着色,当前组合下无结果的置灰) -->
-    <div class="flex flex-wrap items-center gap-2">
-      <span class="w-10 shrink-0 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-dark-500">
-        {{ t('modelPlaza.filters.groupLabel') }}
-      </span>
-      <button
-        type="button"
-        class="rounded-lg px-3 py-1.5 text-sm font-medium transition active:scale-[0.96] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
-        :class="chipClass(groupId === 'all')"
-        @click="$emit('update:groupId', 'all')"
-      >
-        {{ t('modelPlaza.filters.all') }}
-      </button>
-      <button
-        v-for="g in groups"
-        :key="`group-${g.id}`"
-        type="button"
-        class="rounded-lg px-3 py-1.5 text-sm font-medium transition active:scale-[0.96] disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] disabled:cursor-not-allowed disabled:opacity-40 disabled:grayscale"
-        :class="groupId === g.id ? 'chip-tinted-active' : 'chip-tinted'"
-        :style="{ '--chip-accent': platformAccentColor(g.platform) }"
-        :disabled="!groupEnabled(g)"
-        @click="$emit('update:groupId', g.id)"
-      >
-        {{ g.name }}
-      </button>
+    <div class="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+      <span class="stat-label">{{ t('modelPlaza.filters.groupLabel') }}</span>
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          class="rounded-lg px-3.5 py-2 text-sm font-medium transition active:scale-[0.96] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
+          :class="chipClass(groupId === 'all')"
+          @click="$emit('update:groupId', 'all')"
+        >
+          {{ t('modelPlaza.filters.all') }}
+        </button>
+        <button
+          v-for="g in groups"
+          :key="`group-${g.id}`"
+          type="button"
+          class="rounded-lg px-3.5 py-2 text-sm font-medium transition active:scale-[0.96] disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] disabled:cursor-not-allowed disabled:opacity-40 disabled:grayscale"
+          :class="groupId === g.id ? 'chip-tinted-active' : 'chip-tinted'"
+          :style="{ '--chip-accent': platformAccentColor(g.platform) }"
+          :disabled="!groupEnabled(g)"
+          @click="$emit('update:groupId', g.id)"
+        >
+          {{ g.name }}
+        </button>
+      </div>
     </div>
 
     <!-- 三级:倍率(当前组合下不存在的置灰) -->
-    <div class="flex flex-wrap items-center gap-2">
-      <span class="w-10 shrink-0 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-dark-500">
-        {{ t('modelPlaza.filters.rateLabel') }}
-      </span>
-      <button
-        type="button"
-        class="rounded-lg px-3 py-1.5 text-sm font-medium transition active:scale-[0.96] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
-        :class="chipClass(rate === 'all')"
-        @click="$emit('update:rate', 'all')"
-      >
-        {{ t('modelPlaza.filters.all') }}
-      </button>
-      <button
-        v-for="r in rates"
-        :key="`rate-${r}`"
-        type="button"
-        class="rounded-lg px-3 py-1.5 font-mono text-sm font-medium transition active:scale-[0.96] disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] disabled:cursor-not-allowed disabled:opacity-40 disabled:grayscale"
-        :class="chipClass(rate === r)"
-        :disabled="!rateEnabled(r)"
-        @click="$emit('update:rate', r)"
-      >
-        {{ r }}x
-      </button>
+    <div class="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+      <span class="stat-label">{{ t('modelPlaza.filters.rateLabel') }}</span>
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          class="rounded-lg px-3.5 py-2 text-sm font-medium transition active:scale-[0.96] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
+          :class="chipClass(rate === 'all')"
+          @click="$emit('update:rate', 'all')"
+        >
+          {{ t('modelPlaza.filters.all') }}
+        </button>
+        <button
+          v-for="r in rates"
+          :key="`rate-${r}`"
+          type="button"
+          class="rounded-lg px-3.5 py-2 font-mono text-sm font-medium transition active:scale-[0.96] disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] disabled:cursor-not-allowed disabled:opacity-40 disabled:grayscale"
+          :class="chipClass(rate === r)"
+          :disabled="!rateEnabled(r)"
+          @click="$emit('update:rate', r)"
+        >
+          {{ r }}x
+        </button>
+      </div>
     </div>
 
     <!-- 四级:模型名搜索(纯前端过滤) -->
-    <div class="flex flex-wrap items-center gap-2">
-      <span class="w-10 shrink-0 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-dark-500">
-        {{ t('modelPlaza.filters.modelLabel') }}
-      </span>
+    <div class="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+      <span class="stat-label">{{ t('modelPlaza.filters.modelLabel') }}</span>
+      <!-- `.input` alone is 36px; the previous py-1.5 override pulled it off the
+           baseline and out of alignment with the chips above it. -->
       <div class="relative w-full sm:w-72">
         <Icon
           name="search"
@@ -88,7 +101,7 @@
           :value="search"
           type="text"
           :placeholder="t('modelPlaza.filters.searchPlaceholder')"
-          class="input rounded-lg py-1.5 pl-9 pr-9"
+          class="input rounded-lg pl-9 pr-9"
           @input="$emit('update:search', ($event.target as HTMLInputElement).value)"
         />
         <button

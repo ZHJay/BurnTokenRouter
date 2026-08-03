@@ -1,22 +1,29 @@
 <template>
   <AppLayout>
-    <div class="mx-auto max-w-lg space-y-6 py-8">
+    <div class="mx-auto max-w-lg space-y-4 py-8">
       <div v-if="loading" class="flex items-center justify-center py-20">
-        <div class="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent"></div>
+        <!-- .spinner 已含 rounded-full / border-2 / border-current /
+             border-t-transparent / animate-spin，且在 prefers-reduced-motion 下
+             由 style.css 统一降级；手搓的那版拿不到那条分支。颜色沿用
+             emerald（Airwallex 的品牌色，与 PaymentView 的 CTA 一致）。 -->
+        <div class="spinner h-8 w-8 border-4 text-emerald-500"></div>
       </div>
 
       <div v-else-if="errorMessage" class="card p-8 text-center">
-        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-          <Icon name="exclamationCircle" size="xl" class="text-red-500" />
+        <!-- .stat-icon + .stat-icon-danger 是系统里的语义色磁贴（含居中与配色），
+             替掉手写的 bg-red-100/dark:bg-red-900/30 明暗对 —— 深浅两套配色由
+             token 自己翻转，dark: 分支不再需要。图标颜色由磁贴的 color 继承。 -->
+        <div class="stat-icon stat-icon-danger mx-auto mb-4 h-16 w-16 rounded-full">
+          <Icon name="exclamationCircle" size="xl" />
         </div>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('payment.airwallexLoadFailed') }}</h3>
+        <h3 class="text-lg font-semibold tracking-[-0.014em] text-gray-900 dark:text-white">{{ t('payment.airwallexLoadFailed') }}</h3>
         <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ errorMessage }}</p>
         <button class="btn btn-primary mt-6" @click="router.push('/purchase')">{{ t('payment.result.backToRecharge') }}</button>
       </div>
 
       <div v-else class="card p-6">
         <div class="flex flex-col items-center space-y-4 py-4">
-          <div class="h-10 w-10 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent"></div>
+          <div class="spinner h-10 w-10 border-4 text-emerald-500"></div>
           <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('payment.qr.payInNewWindowHint') }}</p>
         </div>
       </div>

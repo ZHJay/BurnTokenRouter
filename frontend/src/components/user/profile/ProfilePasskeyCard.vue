@@ -130,49 +130,65 @@
     </div>
 
     <!-- 删除确认：吊销凭据需验证当前密码，防止被窃会话静默移除 Passkey -->
-    <div v-if="deleteTarget" class="fixed inset-0 z-50 overflow-y-auto">
-      <div class="flex min-h-full items-center justify-center p-4">
-        <div class="dialog-overlay" @click="closeDeleteDialog"></div>
-        <div
-          class="modal-content relative w-full max-w-md p-6"
-        >
-          <h3 class="text-lg font-semibold tracking-[-0.014em] text-gray-900 dark:text-white">
-            {{ t('profile.passkey.deleteTitle') }}
-          </h3>
-          <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            {{ t('profile.passkey.deleteConfirm', { name: deleteTarget.name }) }}
-          </p>
-          <form class="mt-4 space-y-4" @submit.prevent="confirmDelete">
-            <div>
-              <label for="passkey-delete-password" class="input-label">{{
-                t('profile.currentPassword')
-              }}</label>
-              <input
-                id="passkey-delete-password"
-                v-model="deletePassword"
-                type="password"
-                autocomplete="current-password"
-                class="input"
-                :placeholder="t('profile.passkey.passwordPlaceholder')"
-                autofocus
-              />
-            </div>
-            <div class="flex justify-end gap-3">
-              <button type="button" class="btn btn-secondary" :disabled="busy" @click="closeDeleteDialog">
-                {{ t('common.cancel') }}
-              </button>
-              <button
-                type="submit"
-                class="btn btn-danger"
-                :disabled="busy || deletePassword.length === 0"
-              >
-                {{ busy ? t('common.processing') : t('common.delete') }}
-              </button>
-            </div>
-          </form>
+    <!--
+      <Transition name="modal"> is required for this sheet to animate at all:
+      the motion lives on `.modal-enter-active .modal-content` in style.css, so
+      a `.modal-content` with no `modal` transition ancestor mounts with no
+      transition and pops in.
+
+      The wrapper is the transitioned element and `.modal-content` is a
+      grandchild — the descendant selector reaches it either way, and keeping the
+      wrapper as the root lets the scrim cross-fade with the panel.
+
+      Reduced motion needs nothing here: style.css already neutralises
+      `.modal-*-active`, `.modal-*-active .modal-content` and the enter/leave
+      transform under `@media (prefers-reduced-motion: reduce)`.
+    -->
+    <Transition name="modal">
+      <div v-if="deleteTarget" class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex min-h-full items-center justify-center p-4">
+          <div class="dialog-overlay" @click="closeDeleteDialog"></div>
+          <div
+            class="modal-content relative w-full max-w-md p-6"
+          >
+            <h3 class="text-lg font-semibold tracking-[-0.014em] text-gray-900 dark:text-white">
+              {{ t('profile.passkey.deleteTitle') }}
+            </h3>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              {{ t('profile.passkey.deleteConfirm', { name: deleteTarget.name }) }}
+            </p>
+            <form class="mt-4 space-y-4" @submit.prevent="confirmDelete">
+              <div>
+                <label for="passkey-delete-password" class="input-label">{{
+                  t('profile.currentPassword')
+                }}</label>
+                <input
+                  id="passkey-delete-password"
+                  v-model="deletePassword"
+                  type="password"
+                  autocomplete="current-password"
+                  class="input"
+                  :placeholder="t('profile.passkey.passwordPlaceholder')"
+                  autofocus
+                />
+              </div>
+              <div class="flex justify-end gap-3">
+                <button type="button" class="btn btn-secondary" :disabled="busy" @click="closeDeleteDialog">
+                  {{ t('common.cancel') }}
+                </button>
+                <button
+                  type="submit"
+                  class="btn btn-danger"
+                  :disabled="busy || deletePassword.length === 0"
+                >
+                  {{ busy ? t('common.processing') : t('common.delete') }}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
+    </Transition>
   </div>
 </template>
 

@@ -1,6 +1,13 @@
 /**
  * 错误请求/用量明细共享的徽章配色与列映射。
- * 配色统一 bg-X-100/text-X-800 体系,与 UsageTable 一致。
+ *
+ * 配色返回设计系统的语义徽章修饰类(.badge-*),浅/深两套取值由 style.css 统一定义,
+ * 调用点只需 `class="badge"` + 本函数的返回值。
+ *
+ * 为什么不再返回 bg-X-100/text-X-800 这类成对工具类:那套写法把浅色与深色的取值
+ * 写死在 TS 里,而它同时喂给用户端错误表与运维错误日志表——两处模板都已按 Apple
+ * Design 改造过,却因为共享的这个 helper 没改,继续渲染旧配色。改在这里,两张表
+ * 一次修好,且以后新增调用点不会再把旧配色带回来。
  */
 
 import type { UsageRequestType } from '@/types'
@@ -9,20 +16,20 @@ export type UsageRequestKind = UsageRequestType
 
 /** 状态码徽章:≥500 红、429 紫、≥400 琥珀、其余灰 */
 export function statusCodeBadgeClass(code: number): string {
-  if (code >= 500) return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-  if (code === 429) return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-  if (code >= 400) return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
-  return 'bg-gray-100 text-gray-800 dark:bg-dark-700 dark:text-gray-200'
+  if (code >= 500) return 'badge-danger'
+  if (code === 429) return 'badge-purple'
+  if (code >= 400) return 'badge-warning'
+  return 'badge-gray'
 }
 
 /** 请求类型徽章配色(cyber 红、live 绿、ws 紫、stream 蓝、sync 灰、未知琥珀) */
 export function requestTypeBadgeClass(kind: UsageRequestKind): string {
-  if (kind === 'cyber') return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-  if (kind === 'live') return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200'
-  if (kind === 'ws_v2') return 'bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200'
-  if (kind === 'stream') return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-  if (kind === 'sync') return 'bg-gray-100 text-gray-800 dark:bg-dark-700 dark:text-gray-200'
-  return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
+  if (kind === 'cyber') return 'badge-danger'
+  if (kind === 'live') return 'badge-success'
+  if (kind === 'ws_v2') return 'badge-purple'
+  if (kind === 'stream') return 'badge-primary'
+  if (kind === 'sync') return 'badge-gray'
+  return 'badge-warning'
 }
 
 /** 请求类型 i18n 键(展示方自行 t()) */

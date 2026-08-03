@@ -17,10 +17,10 @@
 
       <div
         v-if="contactInfo"
-        class="card border-primary-200 bg-primary-50 p-6 dark:bg-primary-900/20"
+        class="card bg-[var(--accent-tint)] p-6"
       >
         <div class="flex items-center gap-4">
-          <div class="rounded-xl bg-primary-100 p-3 text-primary-600">
+          <div class="stat-icon h-12 w-12 shrink-0 bg-[var(--surface)] text-primary-600 shadow-elev-1 dark:text-primary-400">
             <Icon name="chat" size="lg" />
           </div>
           <div>

@@ -48,15 +48,33 @@ const props = defineProps<{
 
 const { t } = useI18n()
 
+/* 容量档位的配色统一走 style.css 的 badge-* 语义类，与同一行的 AccountUsageCell
+   完全同源（见 d29acc29a..HEAD 的那份 diff：那里 bg-red-100/dark:bg-red-900/40
+   一类的手写对也整批换成了 badge-danger / badge-warning / badge-gray）。
+
+   为什么能直接换：badge-* 只声明 background 与 color，不带任何几何，而
+   CapacityBadge 自己提供 inline-flex / gap / rounded-md / px-1.5 / text-[10px]。
+   两层同在 components 层且属性不重叠，所以微徽章的尺寸一个像素都不变。
+   收益是 dark: 分支整体消失 —— 深色配色由 style.css 的 `.dark .badge-*` 负责，
+   不再由本文件手写维护两套十六进制。
+
+   黄档是唯一保留 Tailwind 明暗对的一档：系统里没有 --sys-yellow-text，而
+   badge-warning 已经被橙档占用。若把黄档也并进 badge-warning，「达到上限
+   （仅粘滞）」与「到 80% 预警」这两个不同状态会渲染成同一个视觉，徽章上的
+   档位信息就少了一级。四档必须四色，所以黄档按调色板已 Apple 化的既有写法
+   保留 —— 与 QuotaBadge.vue 的黄档逐字一致。 */
+const CAPACITY_WARNING_NEAR_LIMIT =
+  'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+
 // ====== 并发 ======
 const currentConcurrency = computed(() => props.account.current_concurrency || 0)
 
 const concurrencyClass = computed(() => {
   const current = currentConcurrency.value
   const max = props.account.concurrency
-  if (current >= max) return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-  if (current > 0) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-  return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+  if (current >= max) return 'badge-danger'
+  if (current > 0) return CAPACITY_WARNING_NEAR_LIMIT
+  return 'badge-gray'
 })
 
 // ====== 窗口费用 ======
@@ -78,10 +96,10 @@ const windowCostClass = computed(() => {
   const current = currentWindowCost.value
   const limit = props.account.window_cost_limit || 0
   const reserve = props.account.window_cost_sticky_reserve || 10
-  if (current >= limit + reserve) return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-  if (current >= limit) return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-  if (current >= limit * 0.8) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-  return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+  if (current >= limit + reserve) return 'badge-danger'
+  if (current >= limit) return 'badge-warning'
+  if (current >= limit * 0.8) return CAPACITY_WARNING_NEAR_LIMIT
+  return 'badge-success'
 })
 
 const windowCostTooltip = computed(() => {
@@ -107,9 +125,9 @@ const sessionLimitClass = computed(() => {
   if (!showSessionLimit.value) return ''
   const current = activeSessions.value
   const max = props.account.max_sessions || 0
-  if (current >= max) return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-  if (current >= max * 0.8) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-  return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+  if (current >= max) return 'badge-danger'
+  if (current >= max * 0.8) return CAPACITY_WARNING_NEAR_LIMIT
+  return 'badge-success'
 })
 
 const sessionLimitTooltip = computed(() => {
@@ -143,13 +161,13 @@ const rpmClass = computed(() => {
   const base = props.account.base_rpm ?? 0
   const buffer = rpmBuffer.value
   if (rpmStrategy.value === 'tiered') {
-    if (current >= base + buffer) return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-    if (current >= base) return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+    if (current >= base + buffer) return 'badge-danger'
+    if (current >= base) return 'badge-warning'
   } else {
-    if (current >= base) return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+    if (current >= base) return 'badge-warning'
   }
-  if (current >= base * 0.8) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-  return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+  if (current >= base * 0.8) return CAPACITY_WARNING_NEAR_LIMIT
+  return 'badge-success'
 })
 
 const rpmTooltip = computed(() => {

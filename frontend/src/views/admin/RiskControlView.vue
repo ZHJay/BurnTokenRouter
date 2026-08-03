@@ -1,53 +1,54 @@
 <template>
   <AppLayout>
-    <div class="space-y-6">
+    <div class="space-y-4">
       <div v-if="loading" class="flex items-center justify-center py-16">
-        <div class="h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
+        <div class="spinner h-8 w-8 text-primary-600 dark:text-primary-400"></div>
       </div>
 
       <template v-else>
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{{ t('admin.riskControl.title') }}</h1>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.description') }}</p>
-          </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <button type="button" class="btn btn-secondary inline-flex items-center gap-2" :disabled="statusLoading" @click="loadStatus(false)">
-              <Icon name="refresh" size="sm" :class="statusLoading ? 'animate-spin' : ''" />
-              {{ t('admin.riskControl.refreshStatus') }}
-            </button>
-            <button type="button" class="btn btn-primary inline-flex items-center gap-2" @click="openSettings">
-              <Icon name="cog" size="sm" />
-              {{ t('admin.riskControl.openSettings') }}
-            </button>
-          </div>
+        <!-- 页面标题与描述由 AppHeader 渲染 route.meta.titleKey / descriptionKey，
+             此处只保留操作按钮，避免同一屏出现两份页面身份。 -->
+        <div class="flex flex-wrap items-center justify-end gap-2">
+          <button type="button" class="btn btn-secondary inline-flex items-center gap-2" :disabled="statusLoading" @click="loadStatus(false)">
+            <Icon name="refresh" size="sm" :class="statusLoading ? 'animate-spin' : ''" />
+            {{ t('admin.riskControl.refreshStatus') }}
+          </button>
+          <button type="button" class="btn btn-primary inline-flex items-center gap-2" @click="openSettings">
+            <Icon name="cog" size="sm" />
+            {{ t('admin.riskControl.openSettings') }}
+          </button>
         </div>
 
-        <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div
             v-for="item in overviewItems"
             :key="item.key"
-            class="card px-4 py-3"
+            class="card p-4"
           >
-            <div class="flex min-w-0 items-center gap-3">
-              <div class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg" :class="item.iconClass">
-                <Icon :name="item.icon" size="sm" />
-              </div>
-              <div class="min-w-0 flex-1">
-                <div class="flex min-w-0 items-center justify-between gap-2">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0 flex-1 space-y-1">
+                <div class="flex min-w-0 items-center gap-2">
                   <p class="stat-label truncate">{{ item.label }}</p>
                   <span
                     v-if="item.badge"
-                    class="badge flex-shrink-0"
+                    class="badge shrink-0"
                     :class="item.badgeClass"
                   >
                     {{ item.badge }}
                   </span>
                 </div>
-                <div class="mt-1 flex min-w-0 items-baseline gap-2">
-                  <p class="stat-value truncate">{{ item.value }}</p>
-                  <p v-if="item.meta" class="truncate text-xs text-gray-500 dark:text-gray-400">{{ item.meta }}</p>
-                </div>
+                <!-- 不加 truncate：这些值是运营决策依据（"未配置" / 模型 id / 分组数），
+                     截断会静默改写它们。.stat-value 自带 overflow-wrap: break-word，
+                     卡片没有固定高度，长值折行即可。需要截断的是名称类的 meta 行。 -->
+                <p class="stat-value" data-test="overview-stat-value">{{ item.value }}</p>
+                <p
+                  v-if="item.meta"
+                  class="truncate text-xs text-gray-500 dark:text-gray-400"
+                  :title="item.meta"
+                >{{ item.meta }}</p>
+              </div>
+              <div class="stat-icon h-8 w-8 shrink-0" :class="item.iconClass">
+                <Icon :name="item.icon" size="sm" />
               </div>
             </div>
           </div>
@@ -56,12 +57,12 @@
         <div
           v-if="showPreBlockRuntimeCard"
           data-test="pre-block-runtime-cards"
-          class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,520px)_minmax(0,1fr)]"
+          class="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,520px)_minmax(0,1fr)]"
         >
           <div data-test="pre-block-sync-card" class="card">
-            <div class="flex flex-col gap-4 px-6 py-4 shadow-[inset_0_-0.5px_0_var(--separator)] lg:flex-row lg:items-center lg:justify-between">
+            <div class="card-header flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('admin.riskControl.preBlockSyncStatus') }}</h2>
+                <h2 class="text-sm font-semibold text-gray-900 dark:text-white">{{ t('admin.riskControl.preBlockSyncStatus') }}</h2>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.preBlockSyncHint') }}</p>
               </div>
               <span class="badge badge-gray w-fit px-2.5 py-1">
@@ -69,16 +70,19 @@
               </span>
             </div>
 
-            <div class="p-6">
-              <div data-test="pre-block-metric-grid" class="grid grid-cols-2 gap-3 md:grid-cols-3">
+            <div class="card-body">
+              <div data-test="pre-block-metric-grid" class="grid grid-cols-2 gap-4 md:grid-cols-3">
                 <div
                   v-for="item in preBlockMetricItems"
                   :key="item.key"
-                  class="rounded-lg p-4"
+                  class="card-inset p-4"
                   :class="item.class"
                 >
-                  <p class="text-xs text-gray-500 dark:text-gray-400">{{ item.label }}</p>
-                  <p class="tabular mt-2 truncate text-2xl font-semibold leading-8 tracking-[-0.026em]" :class="item.valueClass">{{ item.value }}</p>
+                  <p class="stat-label">{{ item.label }}</p>
+                  <!-- .stat-value 已是 24/600/-0.026em/tabular；此前手写的
+                       text-2xl font-semibold leading-8 tracking-[-0.026em] 是它的内联副本。
+                       同时去掉 truncate：这些是指标数字。 -->
+                  <p class="stat-value mt-2" :class="item.valueClass">{{ item.value }}</p>
                   <p v-if="item.meta" class="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">{{ item.meta }}</p>
                 </div>
               </div>
@@ -86,9 +90,9 @@
           </div>
 
           <div data-test="pre-block-api-key-load-card" class="card">
-            <div class="flex flex-col gap-4 px-6 py-4 shadow-[inset_0_-0.5px_0_var(--separator)] lg:flex-row lg:items-center lg:justify-between">
+            <div class="card-header flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('admin.riskControl.preBlockAPIKeyLoad') }}</h2>
+                <h2 class="text-sm font-semibold text-gray-900 dark:text-white">{{ t('admin.riskControl.preBlockAPIKeyLoad') }}</h2>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                   {{ t('admin.riskControl.preBlockAPIKeyLoadHint') }}
                 </p>
@@ -98,7 +102,7 @@
               </span>
             </div>
 
-            <div class="p-6">
+            <div class="card-body">
               <div
                 v-if="preBlockAPIKeyLoads.length > 0"
                 data-test="pre-block-api-key-load-list"
@@ -152,9 +156,9 @@
         </div>
 
         <div v-if="showWorkerRuntimeCard" class="card">
-          <div class="flex flex-col gap-4 px-6 py-4 shadow-[inset_0_-0.5px_0_var(--separator)] lg:flex-row lg:items-center lg:justify-between">
+          <div class="card-header flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('admin.riskControl.workerStatus') }}</h2>
+              <h2 class="text-sm font-semibold text-gray-900 dark:text-white">{{ t('admin.riskControl.workerStatus') }}</h2>
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.workerStatusHint') }}</p>
             </div>
             <div class="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
@@ -165,7 +169,7 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-1 gap-6 p-6 xl:grid-cols-[minmax(0,360px)_1fr]">
+          <div class="card-body grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,360px)_1fr]">
             <div class="space-y-4">
               <div class="card-inset p-4">
                 <div class="flex items-center justify-between gap-3">
@@ -182,22 +186,22 @@
                 </div>
               </div>
 
-              <div class="grid grid-cols-2 gap-3">
+              <div class="grid grid-cols-2 gap-4">
                 <div class="card-inset p-4">
-                  <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.activeWorkers') }}</p>
-                  <p class="tabular mt-2 text-2xl font-semibold tracking-[-0.026em] text-gray-900 dark:text-white">{{ status?.active_workers ?? 0 }}</p>
+                  <p class="stat-label">{{ t('admin.riskControl.activeWorkers') }}</p>
+                  <p class="stat-value mt-2 text-gray-900 dark:text-white">{{ status?.active_workers ?? 0 }}</p>
                 </div>
-                <div class="rounded-lg bg-emerald-50 p-4 dark:bg-emerald-900/10">
-                  <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.idleWorkers') }}</p>
-                  <p class="tabular mt-2 text-2xl font-semibold tracking-[-0.026em] text-emerald-700 dark:text-emerald-300">{{ status?.idle_workers ?? configForm.worker_count }}</p>
-                </div>
-                <div class="card-inset p-4">
-                  <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.processed') }}</p>
-                  <p class="tabular mt-2 text-2xl font-semibold tracking-[-0.026em] text-gray-900 dark:text-white">{{ formatNumber(status?.processed ?? 0) }}</p>
+                <div class="card-inset bg-emerald-50 p-4 dark:bg-emerald-900/10">
+                  <p class="stat-label">{{ t('admin.riskControl.idleWorkers') }}</p>
+                  <p class="stat-value mt-2 text-emerald-700 dark:text-emerald-300">{{ status?.idle_workers ?? configForm.worker_count }}</p>
                 </div>
                 <div class="card-inset p-4">
-                  <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.droppedErrors') }}</p>
-                  <p class="tabular mt-2 text-2xl font-semibold tracking-[-0.026em] text-gray-900 dark:text-white">{{ formatNumber((status?.dropped ?? 0) + (status?.errors ?? 0)) }}</p>
+                  <p class="stat-label">{{ t('admin.riskControl.processed') }}</p>
+                  <p class="stat-value mt-2 text-gray-900 dark:text-white">{{ formatNumber(status?.processed ?? 0) }}</p>
+                </div>
+                <div class="card-inset p-4">
+                  <p class="stat-label">{{ t('admin.riskControl.droppedErrors') }}</p>
+                  <p class="stat-value mt-2 text-gray-900 dark:text-white">{{ formatNumber((status?.dropped ?? 0) + (status?.errors ?? 0)) }}</p>
                 </div>
               </div>
             </div>
@@ -231,10 +235,10 @@
         </div>
 
         <div class="card">
-          <div class="flex flex-col gap-4 px-6 py-4 shadow-[inset_0_-0.5px_0_var(--separator)]">
+          <div class="card-header flex flex-col gap-4">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('admin.riskControl.records') }}</h2>
+                <h2 class="text-sm font-semibold text-gray-900 dark:text-white">{{ t('admin.riskControl.records') }}</h2>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.recordsHint') }}</p>
               </div>
               <button type="button" class="btn btn-secondary inline-flex items-center gap-2" :disabled="logsLoading" @click="loadLogs">
@@ -263,18 +267,31 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
+            <!-- 时间范围保留原生 datetime-local（分钟精度），不换 DateRangePicker：
+                 后端 parseContentModerationDate 同时接受 RFC3339 与 YYYY-MM-DD，
+                 因此 API 不要求分钟 —— 但 DateRangePicker 是纯日期控件，且它的
+                 activePreset 默认 'last24Hours'，在 from/to 为空（本页默认"不按时间过滤"）
+                 时触发器会显示"最近 24 小时"，把未生效的筛选说成已生效。修它需要改
+                 DateRangePicker 本身（本次不在可改范围内）。两个输入合并进同一个网格单元，
+                 列数因此从 6 收到 5，与替换方案一样腾出一格。 -->
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
               <Select v-model="filters.result" :options="resultOptions" @change="reloadLogsFromFirstPage" />
               <Select v-model="filters.group_id" :options="groupFilterOptions" @change="reloadLogsFromFirstPage" />
               <Select v-model="filters.endpoint" :options="endpointOptions" @change="reloadLogsFromFirstPage" />
               <input v-model.trim="filters.search" type="search" class="input" :placeholder="t('admin.riskControl.filters.search')" @keyup.enter="reloadLogsFromFirstPage" />
-              <input v-model="filters.from" type="datetime-local" class="input" :title="t('admin.riskControl.filters.from')" @change="reloadLogsFromFirstPage" />
-              <input v-model="filters.to" type="datetime-local" class="input" :title="t('admin.riskControl.filters.to')" @change="reloadLogsFromFirstPage" />
+              <div data-test="log-time-range" class="flex min-w-0 items-center gap-2">
+                <input v-model="filters.from" type="datetime-local" class="input min-w-0 flex-1" :title="t('admin.riskControl.filters.from')" :aria-label="t('admin.riskControl.filters.from')" @change="reloadLogsFromFirstPage" />
+                <span class="shrink-0 text-xs text-gray-500 dark:text-gray-400">–</span>
+                <input v-model="filters.to" type="datetime-local" class="input min-w-0 flex-1" :title="t('admin.riskControl.filters.to')" :aria-label="t('admin.riskControl.filters.to')" @change="reloadLogsFromFirstPage" />
+              </div>
             </div>
           </div>
 
           <div class="overflow-x-auto">
-            <table class="table min-w-full">
+            <!-- 10 列在 390px 下实测 866px 宽，且 .table th 的 white-space: nowrap
+                 让它无法压缩。沿用 components/channels/AvailableChannelsTable.vue 的做法：
+                 桌面走表格，窄屏换成卡片列表。 -->
+            <table data-testid="desktop-logs" class="table !hidden min-w-full lg:!table">
               <thead>
                 <tr>
                   <th>{{ t('admin.riskControl.table.time') }}</th>
@@ -359,6 +376,105 @@
                 </template>
               </tbody>
             </table>
+
+            <div data-testid="mobile-logs" class="w-full min-w-0 overflow-x-hidden lg:hidden">
+              <div v-if="logsLoading" data-testid="mobile-logs-loading" class="py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                {{ t('common.loading') }}
+              </div>
+              <div v-else-if="logs.length === 0" data-testid="mobile-logs-empty" class="py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                {{ t('admin.riskControl.emptyLogs') }}
+              </div>
+              <section
+                v-else
+                v-for="row in logs"
+                :key="`mobile-${row.id}`"
+                class="min-w-0 border-b border-gray-100 px-4 py-4 last:border-b-0 dark:border-dark-700"
+              >
+                <header class="flex min-w-0 items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <p class="tabular text-sm font-semibold text-gray-900 dark:text-white">{{ formatDateTime(row.created_at) }}</p>
+                    <p class="mt-0.5 break-words text-xs text-gray-500 dark:text-gray-400">
+                      {{ row.endpoint || '-' }} · {{ row.provider || '-' }} / {{ row.model || '-' }}
+                    </p>
+                  </div>
+                  <span class="badge shrink-0 rounded-md" :class="resultBadgeClass(row)">
+                    {{ resultLabel(row) }}
+                  </span>
+                </header>
+
+                <dl class="mt-3 grid grid-cols-2 gap-3 text-xs">
+                  <div class="min-w-0">
+                    <dt class="text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.group') }}</dt>
+                    <dd class="mt-0.5 break-words text-gray-900 dark:text-white">{{ row.group_name || '-' }}</dd>
+                  </div>
+                  <div class="min-w-0">
+                    <dt class="text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.user') }}</dt>
+                    <dd class="mt-0.5 break-words text-gray-900 dark:text-white">
+                      {{ row.user_email || '-' }}
+                      <span v-if="row.user_id" class="block text-gray-500 dark:text-gray-400">UID {{ row.user_id }}</span>
+                    </dd>
+                  </div>
+                  <div class="min-w-0">
+                    <dt class="text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.apiKey') }}</dt>
+                    <dd class="mt-0.5 break-words text-gray-900 dark:text-white">{{ row.api_key_name || '-' }}</dd>
+                  </div>
+                  <div class="min-w-0">
+                    <dt class="text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.latency') }}</dt>
+                    <dd class="tabular mt-0.5 text-gray-900 dark:text-white">
+                      {{ latencyText(row.upstream_latency_ms) }}
+                      <span v-if="row.queue_delay_ms !== null && row.queue_delay_ms !== undefined" class="block text-gray-500 dark:text-gray-400">
+                        {{ t('admin.riskControl.queueDelay', { ms: row.queue_delay_ms }) }}
+                      </span>
+                    </dd>
+                  </div>
+                  <div class="min-w-0">
+                    <dt class="text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.highest') }}</dt>
+                    <dd class="mt-0.5 break-words text-gray-900 dark:text-white">
+                      {{ row.highest_category || '-' }}
+                      <span class="tabular block text-gray-500 dark:text-gray-400">{{ percent(row.highest_score) }}</span>
+                    </dd>
+                  </div>
+                  <div class="min-w-0">
+                    <dt class="text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.actionMeta') }}</dt>
+                    <dd class="mt-0.5 break-words text-gray-900 dark:text-white">
+                      <span class="tabular">{{ violationCountText(row) }}</span>
+                      <span class="block text-gray-500 dark:text-gray-400">
+                        {{ row.email_sent ? t('admin.riskControl.emailSent') : t('admin.riskControl.emailNotSent') }}
+                        <span v-if="row.auto_banned"> / {{ t('admin.riskControl.autoBanned') }}</span>
+                      </span>
+                    </dd>
+                  </div>
+                </dl>
+
+                <p
+                  v-if="row.matched_keyword"
+                  class="mt-2 break-words text-xs font-medium text-red-600 dark:text-red-300"
+                >
+                  {{ t('admin.riskControl.matchedKeyword') }}: {{ row.matched_keyword }}
+                </p>
+
+                <button
+                  type="button"
+                  class="group mt-3 flex w-full min-w-0 items-center gap-2 rounded-lg bg-gray-50 px-2 py-2 text-left text-xs transition-transform duration-instant ease-apple-out active:scale-[0.98] dark:bg-dark-800"
+                  :title="inputSummaryText(row)"
+                  @click="openInputDetail(row)"
+                >
+                  <span class="min-w-0 flex-1 truncate">{{ inputSummaryText(row) }}</span>
+                  <Icon name="eye" size="xs" class="shrink-0 text-gray-500 dark:text-gray-400" />
+                </button>
+
+                <button
+                  v-if="canUnbanRow(row)"
+                  type="button"
+                  class="btn btn-sm mt-3 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/[0.16] dark:text-emerald-300"
+                  :disabled="unbanningUserID === row.user_id"
+                  @click="unbanUser(row)"
+                >
+                  <Icon name="checkCircle" size="xs" :class="unbanningUserID === row.user_id ? 'animate-spin' : ''" />
+                  {{ unbanningUserID === row.user_id ? t('common.processing') : t('admin.riskControl.unbanUser') }}
+                </button>
+              </section>
+            </div>
           </div>
 
           <Pagination
@@ -701,24 +817,15 @@
                 <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('admin.riskControl.groupScope') }}</h3>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.groupScopeHint') }}</p>
               </div>
-              <div class="tabs">
-                <button
-                  type="button"
-                  class="tab"
-                  :class="configForm.all_groups ? 'tab-active' : ''"
-                  @click="configForm.all_groups = true"
-                >
-                  {{ t('admin.riskControl.allGroups') }}
-                </button>
-                <button
-                  type="button"
-                  class="tab"
-                  :class="!configForm.all_groups ? 'tab-active' : ''"
-                  @click="configForm.all_groups = false"
-                >
-                  {{ t('admin.riskControl.selectedGroups') }}
-                </button>
-              </div>
+              <!-- 选作用域是「选值」而非切面板：radiogroup 模式。Segmented 的
+                   modelValue 必须能等值匹配 option，而 SegmentedOption 的值域是
+                   string | number，容不下布尔；groupScope 就是那层字符串桥。 -->
+              <Segmented
+                v-model="groupScope"
+                :options="groupScopeOptions"
+                mode="radiogroup"
+                :aria-label="t('admin.riskControl.groupScope')"
+              />
             </div>
 
             <div v-if="!configForm.all_groups" class="space-y-4">
@@ -1122,6 +1229,7 @@ import Icon from '@/components/icons/Icon.vue'
 import Select from '@/components/common/Select.vue'
 import Toggle from '@/components/common/Toggle.vue'
 import Pagination from '@/components/common/Pagination.vue'
+import Segmented from '@/components/common/Segmented.vue'
 import ModelWhitelistSelector from '@/components/account/ModelWhitelistSelector.vue'
 import { adminAPI } from '@/api/admin'
 import type {
@@ -1253,6 +1361,25 @@ const configForm = reactive({
   model_filter_type: 'all' as ContentModerationModelFilterType,
   model_filter_models: [] as string[],
 })
+
+/**
+ * 分组作用域分段控件的 modelValue 桥。
+ *
+ * `configForm.all_groups` 是布尔值，而 Segmented 的值类型是 `string | number`
+ * （它要按值比对 option）。这里做一层字符串映射，而不是把 `all_groups` 改成字符串：
+ * 那个字段是提交给后端的 payload 形状。
+ */
+const groupScope = computed<'all' | 'selected'>({
+  get: () => (configForm.all_groups ? 'all' : 'selected'),
+  set: (value) => {
+    configForm.all_groups = value === 'all'
+  },
+})
+
+const groupScopeOptions = computed(() => [
+  { value: 'all' as const, label: t('admin.riskControl.allGroups') },
+  { value: 'selected' as const, label: t('admin.riskControl.selectedGroups') },
+])
 
 const pagination = reactive({
   page: 1,

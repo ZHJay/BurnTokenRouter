@@ -69,22 +69,20 @@
         <!-- Apple 分段控件：三个对等选项就地切换下方明细面板。
              外层 border-b 是卡片内的结构分隔线（tab 栏 / 筛选区），不是 tab 下划线。 -->
         <div class="flex flex-wrap items-center border-b border-gray-200 px-2 py-2.5 dark:border-dark-700 sm:px-4">
-          <div class="tabs flex-wrap" role="tablist">
-            <button
-              v-for="tab in detailTabs"
-              :key="tab.key"
-              type="button"
-              role="tab"
-              :aria-selected="activeTab === tab.key"
-              data-testid="usage-detail-tab"
-              class="tab inline-flex items-center gap-1.5 transition-transform duration-instant ease-apple-out focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] active:scale-[0.96]"
-              :class="activeTab === tab.key && 'tab-active'"
-              @click="switchTab(tab.key)"
-            >
-              <Icon :name="tab.icon" size="sm" />
-              {{ tab.label }}
-            </button>
-          </div>
+          <Segmented
+            :model-value="activeTab"
+            :options="detailTabOptions"
+            mode="tablist"
+            :aria-label="t('admin.usage.title')"
+            class="flex-wrap"
+            item-class="inline-flex items-center gap-1.5"
+            @update:model-value="switchTab"
+          >
+            <template #option="{ option }">
+              <Icon :name="tabIcon(option.value)" size="sm" />
+              {{ option.label }}
+            </template>
+          </Segmented>
         </div>
 
         <UsageFilters v-model="filters" ref="usageFiltersRef" flat :mode="activeTab" class="border-b border-gray-100 dark:border-dark-700/50" :start-date="startDate" :end-date="endDate" :exporting="exporting" :model-options="modelNameOptions" @change="applyFilters" @refresh="refreshData" @reset="resetFilters" @cleanup="openCleanupDialog" @export="exportToExcel">
@@ -207,6 +205,7 @@ import type { OpsErrorLog } from '@/api/admin/ops'
 import ModelDistributionChart from '@/components/charts/ModelDistributionChart.vue'; import GroupDistributionChart from '@/components/charts/GroupDistributionChart.vue'; import TokenUsageTrend from '@/components/charts/TokenUsageTrend.vue'
 import EndpointDistributionChart from '@/components/charts/EndpointDistributionChart.vue'
 import Icon from '@/components/icons/Icon.vue'
+import Segmented from '@/components/common/Segmented.vue'
 import type { AdminUsageLog, TrendDataPoint, ModelStat, GroupStat, EndpointStat, AdminUser } from '@/types'; import type { AdminUsageStatsResponse, AdminUsageQueryParams } from '@/api/admin/usage'
 
 const { t } = useI18n()
@@ -773,6 +772,14 @@ const detailTabs = computed(() => [
 const usageFiltersRef = ref<InstanceType<typeof UsageFilters> | null>(null)
 const rankingMounted = ref(false)
 const rankingRef = ref<InstanceType<typeof UserTokenRanking> | null>(null)
+
+// Segmented 的 option 没有 icon 字段，图标按 value 回查 detailTabs。
+const detailTabOptions = computed(() =>
+  detailTabs.value.map((tab) => ({ value: tab.key, label: tab.label })),
+)
+
+const tabIcon = (value: DetailTab) =>
+  detailTabs.value.find((tab) => tab.key === value)?.icon ?? 'document'
 
 const switchTab = (tab: DetailTab) => {
   activeTab.value = tab
