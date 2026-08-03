@@ -7,7 +7,7 @@
       <button
         @click="goToPage(page - 1)"
         :disabled="page === 1"
-        class="btn btn-secondary btn-md"
+        class="btn btn-secondary"
       >
         {{ t('pagination.previous') }}
       </button>
@@ -17,7 +17,7 @@
       <button
         @click="goToPage(page + 1)"
         :disabled="page === totalPages"
-        class="btn btn-secondary btn-md ml-3"
+        class="btn btn-secondary ml-3"
       >
         {{ t('pagination.next') }}
       </button>

@@ -3,9 +3,13 @@
     <!-- 页头(独立形态下展示标题;后台形态 AppHeader 已有页面标题) -->
     <!-- `.page-title` is the shipped 24px scale. The old sm:text-3xl bumped it
          to 30px, which is not a step on that scale. -->
+    <!-- 描述用行内工具类:Liquid Glass 重构删掉了 .page-description(.page-title 保留),
+         留下的 class 完全无样式。行内串即该规则原本的展开值
+         (@apply mt-1 text-sm text-gray-500 dark:text-dark-400),
+         也是重构后其余视图渲染标题/描述对的写法。 -->
     <div v-if="!embedded">
       <h1 class="page-title">{{ t('modelPlaza.title') }}</h1>
-      <p class="page-description">{{ t('modelPlaza.description') }}</p>
+      <p class="mt-1 text-sm text-gray-500 dark:text-dark-400">{{ t('modelPlaza.description') }}</p>
     </div>
 
     <!-- 全局价格说明(管理员配置,Markdown) -->

@@ -143,7 +143,7 @@
                 <button
                   @click="handleUpdate"
                   :disabled="updating"
-                  class="btn btn-danger btn-md w-full"
+                  class="btn btn-danger w-full"
                 >
                   {{ t('version.retry') }}
                 </button>
@@ -185,7 +185,7 @@
                 <button
                   @click="handleRestart"
                   :disabled="restarting"
-                  class="btn btn-success btn-md w-full"
+                  class="btn btn-success w-full"
                 >
                   <svg
                     v-if="restarting"
@@ -321,7 +321,7 @@
                 <button
                   @click="handleUpdate"
                   :disabled="updating"
-                  class="btn btn-primary btn-md w-full"
+                  class="btn btn-primary w-full"
                 >
                   <svg v-if="updating" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
                     <circle
@@ -584,7 +584,7 @@
                             <button
                               @click="handleRollback"
                               :disabled="rollingBack"
-                              class="btn btn-warning btn-md w-full"
+                              class="btn btn-warning w-full"
                             >
                               <svg
                                 v-if="rollingBack"

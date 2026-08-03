@@ -139,7 +139,7 @@
         <button
           type="button"
           @click="addCustom"
-          class="btn btn-md bg-[color:var(--accent-tint)] text-[color:var(--accent)] hover:bg-[color:var(--accent-tint-strong)]"
+          class="btn bg-[color:var(--accent-tint)] text-[color:var(--accent)] hover:bg-[color:var(--accent-tint-strong)]"
         >
           {{ t('admin.accounts.addModel') }}
         </button>

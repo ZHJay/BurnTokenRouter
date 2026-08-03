@@ -1615,14 +1615,14 @@ function handleToolbarRefresh() {
         <div class="flex justify-end gap-3 pt-2">
           <button
             type="button"
-            class="btn btn-secondary btn-md"
+            class="btn btn-secondary"
             @click="handleCustomTimeRangeCancel"
           >
             {{ t('common.cancel') }}
           </button>
           <button
             type="button"
-            class="btn btn-primary btn-md"
+            class="btn btn-primary"
             @click="handleCustomTimeRangeConfirm"
           >
             {{ t('common.confirm') }}

@@ -47,12 +47,25 @@ function mountContent(props: Record<string, unknown> = {}) {
 }
 
 describe('ModelPlazaContent heading', () => {
-  it('用 .page-title / .page-description,不再把标题顶到 30px(不在已发布的字号阶上)', () => {
+  it('用 .page-title,不再把标题顶到 30px(不在已发布的字号阶上)', () => {
     const wrapper = mountContent()
     const h1 = wrapper.find('h1')
     expect(h1.classes()).toContain('page-title')
     expect(h1.classes()).not.toContain('sm:text-3xl')
-    expect(wrapper.find('p.page-description').exists()).toBe(true)
+  })
+
+  it('描述段落用行内工具类,不用已被删除的 .page-description', () => {
+    const wrapper = mountContent()
+    const p = wrapper.find('h1 + p')
+
+    expect(p.exists()).toBe(true)
+    expect(p.text()).toBe('modelPlaza.description')
+    // .page-description 在 Liquid Glass 重构中已从 style.css 删除,挂上去完全无样式。
+    expect(p.classes()).not.toContain('page-description')
+    // 该规则原本的展开值,也是重构后其余视图的标题/描述写法。
+    for (const c of ['mt-1', 'text-sm', 'text-gray-500', 'dark:text-dark-400']) {
+      expect(p.classes()).toContain(c)
+    }
   })
 
   it('内嵌形态不重复渲染页头(AppHeader 已有标题)', () => {

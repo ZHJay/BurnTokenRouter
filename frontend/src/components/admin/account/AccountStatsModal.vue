@@ -431,7 +431,7 @@
       <div class="flex justify-end">
         <button
           @click="handleClose"
-          class="btn btn-secondary btn-md"
+          class="btn btn-secondary"
         >
           {{ t('common.close') }}
         </button>

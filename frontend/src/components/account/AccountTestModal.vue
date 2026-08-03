@@ -195,7 +195,7 @@
       <div class="flex justify-end gap-3">
         <button
           @click="handleClose"
-          class="btn btn-secondary btn-md"
+          class="btn btn-secondary"
         >
           {{ t('common.close') }}
         </button>
@@ -203,7 +203,7 @@
           @click="startTest"
           :disabled="status === 'connecting' || !selectedModelId"
           :class="[
-            'btn btn-md',
+            'btn',
             status === 'success'
               ? 'btn-success'
               : status === 'error'
