@@ -725,7 +725,7 @@
                             1,
                           )
                         "
-                        class="btn btn-ghost btn-xs text-red-500 hover:text-red-700"
+                        class="btn btn-ghost btn-sm text-red-500 hover:text-red-700"
                       >
                         <svg
                           class="h-4 w-4"
@@ -745,7 +745,7 @@
                     <button
                       type="button"
                       @click="rectifierForm.apikey_signature_patterns.push('')"
-                      class="btn btn-ghost btn-xs text-primary-600 dark:text-primary-400"
+                      class="btn btn-ghost btn-sm text-primary-600 dark:text-primary-400"
                     >
                       + {{ t("admin.settings.rectifier.addPattern") }}
                     </button>

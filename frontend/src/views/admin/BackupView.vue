@@ -233,7 +233,7 @@
                     <button
                       v-if="record.status === 'completed'"
                       type="button"
-                      class="btn btn-secondary btn-xs"
+                      class="btn btn-secondary btn-sm"
                       @click="downloadBackup(record.id)"
                     >
                       {{ t('admin.backup.actions.download') }}
@@ -241,7 +241,7 @@
                     <button
                       v-if="record.status === 'completed'"
                       type="button"
-                      class="btn btn-secondary btn-xs"
+                      class="btn btn-secondary btn-sm"
                       :disabled="restoringId === record.id"
                       @click="restoreBackup(record.id)"
                     >
@@ -249,7 +249,7 @@
                     </button>
                     <button
                       type="button"
-                      class="btn btn-danger btn-xs"
+                      class="btn btn-danger btn-sm"
                       @click="removeBackup(record.id)"
                     >
                       {{ t('common.delete') }}
