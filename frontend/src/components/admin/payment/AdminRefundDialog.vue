@@ -137,7 +137,7 @@
           id="force-refund"
           v-model="form.force"
           type="checkbox"
-          class="h-4 w-4 rounded-[5px] accent-[color:var(--sys-red-text)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[rgb(255_59_48_/_0.24)]"
+          class="h-4 w-4 rounded-[5px] accent-[color:var(--sys-red-text)] focus-visible:outline-none focus-visible:shadow-[0_0_0_3.5px_rgb(255_59_48_/_0.18),0_0_0_1px_var(--sys-red-text)]"
         />
         <label for="force-refund" class="text-sm font-medium text-red-600 dark:text-red-400">
           {{ t('payment.admin.forceRefund') }}

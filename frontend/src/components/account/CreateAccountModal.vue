@@ -2699,7 +2699,7 @@
             :aria-label="t('admin.accounts.openai.flattenNamespaces')"
             @click="openaiFlattenNamespacesEnabled = !openaiFlattenNamespacesEnabled"
             :class="[
-              'switch flex-shrink-0 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]',
+              'switch flex-shrink-0 focus-visible:outline-none focus-visible:shadow-[0_0_0_3.5px_var(--accent-tint-strong),0_0_0_1px_var(--accent)]',
               openaiFlattenNamespacesEnabled && 'switch-active'
             ]"
           >

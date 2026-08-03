@@ -68,7 +68,7 @@
             type="button"
             role="switch"
             :aria-checked="openaiPassthroughEnabled"
-            aria-labelledby="bulk-edit-openai-passthrough-label"
+            :aria-label="t('common.enabled')"
             :class="[
               'switch flex-shrink-0 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]',
               openaiPassthroughEnabled && 'switch-active'
@@ -524,7 +524,7 @@
             type="button"
             role="switch"
             :aria-checked="interceptWarmupRequests"
-            aria-labelledby="bulk-edit-intercept-warmup-label"
+            :aria-label="t('common.enabled')"
             :class="[
               'switch flex-shrink-0 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]',
               interceptWarmupRequests && 'switch-active'
@@ -564,7 +564,7 @@
             type="button"
             role="switch"
             :aria-checked="headerOverrideEnabled"
-            aria-labelledby="bulk-edit-header-override-label"
+            :aria-label="t('common.enabled')"
             :class="[
               'switch flex-shrink-0 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]',
               headerOverrideEnabled && 'switch-active'
@@ -847,7 +847,7 @@
             type="button"
             role="switch"
             :aria-checked="codexCLIOnlyEnabled"
-            aria-labelledby="bulk-edit-openai-codex-cli-only-label"
+            :aria-label="t('common.enabled')"
             :class="[
               'switch flex-shrink-0 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]',
               codexCLIOnlyEnabled && 'switch-active'
@@ -889,7 +889,7 @@
             type="button"
             role="switch"
             :aria-checked="codexCLIOnlyAppServerEnabled"
-            aria-labelledby="bulk-edit-openai-codex-app-server-label"
+            :aria-label="t('common.enabled')"
             :class="[
               'switch flex-shrink-0 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]',
               codexCLIOnlyAppServerEnabled && 'switch-active'

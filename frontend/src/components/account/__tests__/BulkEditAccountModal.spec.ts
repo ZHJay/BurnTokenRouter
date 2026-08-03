@@ -338,6 +338,155 @@ describe('BulkEditAccountModal', () => {
     expect(switchEl.getAttribute('aria-checked')).toBe('false')
   })
 
+  // 与上面同一算法，抽出来给其余「复选框 + 开关」成对字段复用。
+  const computeAccessibleName = (root: Element, el: Element): string => {
+    const labelledBy = el.getAttribute('aria-labelledby')
+    if (labelledBy) {
+      return labelledBy
+        .split(/\s+/)
+        .map((id) => root.querySelector(`#${id}`)?.textContent?.trim() ?? '')
+        .filter(Boolean)
+        .join(' ')
+    }
+    const ariaLabel = el.getAttribute('aria-label')
+    if (ariaLabel) return ariaLabel.trim()
+    const id = el.getAttribute('id')
+    if (id) {
+      const label = root.querySelector(`label[for="${id}"]`)
+      if (label) return label.textContent?.trim() ?? ''
+    }
+    return el.textContent?.trim() ?? ''
+  }
+
+  it('OpenAI 透传的「包含该字段」复选框与「值」开关拥有互不相同的可访问名称', () => {
+    const wrapper = mountModal({
+      selectedPlatforms: ['openai'],
+      selectedTypes: ['oauth']
+    })
+
+    const root = wrapper.element
+    const checkbox = wrapper.get('#bulk-edit-openai-passthrough-enabled').element
+    const switchEl = wrapper.get('#bulk-edit-openai-passthrough-toggle').element
+
+    const checkboxName = computeAccessibleName(root, checkbox)
+    const switchName = computeAccessibleName(root, switchEl)
+
+    expect(checkboxName).toBe('admin.accounts.openai.oauthPassthrough')
+    expect(switchName).toBe('common.enabled')
+    expect(switchName).not.toBe(checkboxName)
+
+    expect(switchEl.getAttribute('role')).toBe('switch')
+    expect(switchEl.getAttribute('aria-checked')).toBe('false')
+
+    // role=group 的包裹层仍应由字段标签命名（本次只改开关自身的名称）。
+    expect(
+      wrapper.get('#bulk-edit-openai-passthrough-body').attributes('aria-labelledby')
+    ).toBe('bulk-edit-openai-passthrough-label')
+  })
+
+  it('Codex CLI only 的「包含该字段」复选框与「值」开关拥有互不相同的可访问名称', () => {
+    const wrapper = mountModal({
+      selectedPlatforms: ['openai'],
+      selectedTypes: ['oauth']
+    })
+
+    const root = wrapper.element
+    const checkbox = wrapper.get('#bulk-edit-openai-codex-cli-only-enabled').element
+    const switchEl = wrapper.get('#bulk-edit-openai-codex-cli-only-toggle').element
+
+    const checkboxName = computeAccessibleName(root, checkbox)
+    const switchName = computeAccessibleName(root, switchEl)
+
+    expect(checkboxName).toBe('admin.accounts.openai.codexCLIOnly')
+    expect(switchName).toBe('common.enabled')
+    expect(switchName).not.toBe(checkboxName)
+
+    expect(switchEl.getAttribute('role')).toBe('switch')
+    expect(switchEl.getAttribute('aria-checked')).toBe('false')
+  })
+
+  it('Codex app-server 的「包含该字段」复选框与「值」开关拥有互不相同的可访问名称', () => {
+    const wrapper = mountModal({
+      selectedPlatforms: ['openai'],
+      selectedTypes: ['oauth']
+    })
+
+    const root = wrapper.element
+    const checkbox = wrapper.get('#bulk-edit-openai-codex-app-server-enabled').element
+    const switchEl = wrapper.get('#bulk-edit-openai-codex-app-server-toggle').element
+
+    const checkboxName = computeAccessibleName(root, checkbox)
+    const switchName = computeAccessibleName(root, switchEl)
+
+    expect(checkboxName).toBe('admin.accounts.openai.codexCLIOnlyAppServer')
+    expect(switchName).toBe('common.enabled')
+    expect(switchName).not.toBe(checkboxName)
+
+    expect(switchEl.getAttribute('role')).toBe('switch')
+    expect(switchEl.getAttribute('aria-checked')).toBe('false')
+  })
+
+  it('拦截预热请求的「包含该字段」复选框与「值」开关拥有互不相同的可访问名称', async () => {
+    const wrapper = mountModal()
+
+    // 开关所在的 body 由复选框 v-if 控制，先纳入该字段才会渲染出开关。
+    await wrapper.get('#bulk-edit-intercept-warmup-enabled').setValue(true)
+
+    const root = wrapper.element
+    const checkbox = wrapper.get('#bulk-edit-intercept-warmup-enabled').element
+    const switchEl = wrapper.get('#bulk-edit-intercept-warmup-body [role="switch"]').element
+
+    const checkboxName = computeAccessibleName(root, checkbox)
+    const switchName = computeAccessibleName(root, switchEl)
+
+    expect(checkboxName).toBe('admin.accounts.interceptWarmupRequests')
+    expect(switchName).toBe('common.enabled')
+    expect(switchName).not.toBe(checkboxName)
+
+    expect(switchEl.getAttribute('role')).toBe('switch')
+    expect(switchEl.getAttribute('aria-checked')).toBe('false')
+  })
+
+  it('请求头覆写的「包含该字段」复选框与「值」开关拥有互不相同的可访问名称', async () => {
+    const wrapper = mountModal({
+      selectedPlatforms: ['openai'],
+      selectedTypes: ['apikey']
+    })
+
+    await wrapper.get('#bulk-edit-header-override-enabled').setValue(true)
+
+    const root = wrapper.element
+    const checkbox = wrapper.get('#bulk-edit-header-override-enabled').element
+    const switchEl = wrapper.get('#bulk-edit-header-override-body [role="switch"]').element
+
+    const checkboxName = computeAccessibleName(root, checkbox)
+    const switchName = computeAccessibleName(root, switchEl)
+
+    expect(checkboxName).toBe('admin.accounts.headerOverride.title')
+    expect(switchName).toBe('common.enabled')
+    expect(switchName).not.toBe(checkboxName)
+
+    expect(switchEl.getAttribute('role')).toBe('switch')
+    expect(switchEl.getAttribute('aria-checked')).toBe('false')
+  })
+
+  it('全部「复选框 + 开关」成对字段：没有任何 label id 同时充当两个控件的可访问名称', () => {
+    const wrapper = mountModal({
+      selectedPlatforms: ['openai'],
+      selectedTypes: ['oauth']
+    })
+
+    const root = wrapper.element
+    const switches = Array.from(root.querySelectorAll('[role="switch"]'))
+    expect(switches.length).toBeGreaterThan(0)
+
+    for (const switchEl of switches) {
+      // 开关一律自带名称，不再复用字段标签的 id。
+      expect(switchEl.getAttribute('aria-labelledby')).toBe(null)
+      expect(computeAccessibleName(root, switchEl)).toBe('common.enabled')
+    }
+  })
+
   it('OpenAI OAuth 批量编辑应提交 OAuth 专属 WS mode 字段（含 http_bridge）', async () => {
     const wrapper = mountModal({
       selectedPlatforms: ['openai'],
