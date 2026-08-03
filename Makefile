@@ -12,7 +12,10 @@ FRONTEND_CRITICAL_VITEST := \
 	src/views/admin/__tests__/ChannelsView.tabBar.spec.ts \
 	src/views/user/__tests__/PaymentView.tabBar.spec.ts \
 	src/views/user/__tests__/UsageView.tabBar.spec.ts \
-	src/design/__tests__/css-invariants.spec.ts
+	src/design/__tests__/css-invariants.spec.ts \
+	src/views/__tests__/KeyUsageView.spec.ts \
+	src/components/modelPlaza/__tests__/ModelPlazaContent.spec.ts \
+	src/components/account/__tests__/BulkEditAccountModal.spec.ts
 
 # 一键编译前后端
 build: build-backend build-frontend
