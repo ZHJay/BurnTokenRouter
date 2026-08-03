@@ -171,7 +171,7 @@ describe('PromptAuditView', () => {
     await wrapper.get('#tab-config').trigger('click')
     await flushPromises()
 
-    for (const test of ['enabled-toggle', 'blocking-toggle', 'store-pass-toggle']) {
+    for (const test of ['enabled-toggle', 'blocking-toggle', 'blocking-latest-turn-only-toggle', 'store-pass-toggle']) {
       const toggle = wrapper.get(`[data-test="${test}"]`)
       expect(toggle.attributes('role')).toBe('switch')
       expect(toggle.attributes('aria-checked')).toBeDefined()

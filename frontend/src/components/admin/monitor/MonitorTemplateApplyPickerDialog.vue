@@ -51,7 +51,7 @@
           <input
             type="checkbox"
             :checked="selectedSet.has(m.id)"
-            class="h-4 w-4 rounded border-gray-300 text-primary-600 focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)]"
+            class="h-4 w-4 rounded-[5px] accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
             @click.stop="toggle(m.id)"
           />
           <span class="font-medium text-gray-900 dark:text-white">{{ m.name }}</span>

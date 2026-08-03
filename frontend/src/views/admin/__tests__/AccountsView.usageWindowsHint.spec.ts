@@ -222,5 +222,9 @@ describe('admin AccountsView usage windows hint', () => {
     expect(wrapper.get('[data-test="account-rate"]').text()).toBe('0.065x')
     const indicator = wrapper.get('[data-testid="account-rate-sync-indicator"]')
     expect(indicator.attributes('title')).toBe('admin.accounts.upstreamBilling.syncedRateTooltip')
+    // The indicator is icon-only, so its aria-label is the sole accessible name.
+    // aria-label is ignored on a generic <span>, so the role is what exposes it.
+    expect(indicator.attributes('role')).toBe('img')
+    expect(indicator.attributes('aria-label')).toBe('admin.accounts.upstreamBilling.syncedRateTooltip')
   })
 })

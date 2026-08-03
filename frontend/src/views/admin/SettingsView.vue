@@ -2847,7 +2847,7 @@
                           v-model="form.dingtalk_connect_corp_restriction_policy"
                           type="radio"
                           value="none"
-                          class="h-4 w-4 text-primary-600"
+                          class="h-4 w-4 rounded-full accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
                         />
                         <span class="text-sm text-gray-700 dark:text-gray-300">
                           {{ t("admin.settings.dingtalk.corpPolicy.none") }}
@@ -2858,7 +2858,7 @@
                           v-model="form.dingtalk_connect_corp_restriction_policy"
                           type="radio"
                           value="internal_only"
-                          class="h-4 w-4 text-primary-600"
+                          class="h-4 w-4 rounded-full accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
                         />
                         <span class="text-sm text-gray-700 dark:text-gray-300">
                           {{ t("admin.settings.dingtalk.corpPolicy.internalOnly") }}
@@ -5975,12 +5975,14 @@
               </div>
 
               <!-- Compact Home Page -->
-              <div class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700">
+              <div
+                class="settings-divider-top flex items-center justify-between pt-4"
+              >
                 <div>
-                  <label class="font-medium text-gray-900 dark:text-white">{{
+                  <label class="settings-row-label">{{
                     t("admin.settings.site.compactHome")
                   }}</label>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.site.compactHomeHint") }}
                   </p>
                 </div>

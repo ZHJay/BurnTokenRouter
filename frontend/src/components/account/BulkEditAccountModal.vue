@@ -103,7 +103,7 @@
             id="bulk-edit-openai-flatten-namespaces-enabled"
             type="checkbox"
             aria-controls="bulk-edit-openai-flatten-namespaces-body"
-            class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+            class="rounded-[5px] accent-[color:var(--accent)] focus-visible:outline-none focus-visible:shadow-[0_0_0_3.5px_var(--accent-tint-strong),0_0_0_1px_var(--accent)]"
           />
         </div>
         <div
@@ -115,18 +115,16 @@
           <button
             id="bulk-edit-openai-flatten-namespaces-toggle"
             type="button"
+            role="switch"
+            :aria-checked="openaiFlattenNamespacesEnabled"
+            :aria-label="t('common.enabled')"
             :class="[
-              'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-              openaiFlattenNamespacesEnabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600'
+              'switch flex-shrink-0 focus-visible:outline-none focus-visible:shadow-[0_0_0_3.5px_var(--accent-tint-strong),0_0_0_1px_var(--accent)]',
+              openaiFlattenNamespacesEnabled && 'switch-active'
             ]"
             @click="openaiFlattenNamespacesEnabled = !openaiFlattenNamespacesEnabled"
           >
-            <span
-              :class="[
-                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                openaiFlattenNamespacesEnabled ? 'translate-x-5' : 'translate-x-0'
-              ]"
-            />
+            <span class="switch-thumb pointer-events-none" />
           </button>
         </div>
       </div>
@@ -746,7 +744,7 @@
           <p class="input-hint">{{ t('admin.accounts.billingRateMultiplierHint') }}</p>
           <p
             v-if="enableRateMultiplier"
-            class="mt-2 flex items-start gap-1 text-xs text-amber-700 dark:text-amber-300"
+            class="mt-2 flex items-start gap-1 text-xs text-amber-700 dark:text-amber-400"
             data-testid="bulk-rate-sync-warning"
           >
             <Icon name="exclamationTriangle" size="xs" class="mt-0.5 flex-shrink-0" />

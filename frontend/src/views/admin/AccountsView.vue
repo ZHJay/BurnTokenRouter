@@ -234,14 +234,14 @@
           <template #header-select>
             <input
               type="checkbox"
-              class="h-4 w-4 cursor-pointer rounded border-gray-300 text-primary-600 accent-[var(--accent)] focus:ring-primary-500"
+              class="h-4 w-4 cursor-pointer rounded-[5px] accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
               :checked="allVisibleSelected"
               @click.stop
               @change="toggleSelectAllVisible($event)"
             />
           </template>
           <template #cell-select="{ row }">
-            <input type="checkbox" :checked="isSelected(row.id)" @change="toggleSel(row.id)" class="h-4 w-4 cursor-pointer rounded border-gray-300 text-primary-600 accent-[var(--accent)] focus:ring-primary-500" />
+            <input type="checkbox" :checked="isSelected(row.id)" @change="toggleSel(row.id)" class="h-4 w-4 cursor-pointer rounded-[5px] accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]" />
           </template>
           <template #cell-id="{ value }">
             <span class="tabular font-mono text-xs text-gray-500 dark:text-gray-400">#{{ value }}</span>
@@ -384,6 +384,7 @@
               <span
                 v-if="row.extra?.upstream_billing_rate_sync_enabled === true"
                 class="inline-flex cursor-help text-emerald-600 dark:text-emerald-400"
+                role="img"
                 :aria-label="t('admin.accounts.upstreamBilling.syncedRateTooltip')"
                 :title="t('admin.accounts.upstreamBilling.syncedRateTooltip')"
                 data-testid="account-rate-sync-indicator"
@@ -511,7 +512,7 @@
     <ConfirmDialog :show="showCreateShadowDialog" :title="t('admin.accounts.createSparkShadow')" :message="t('admin.accounts.createSparkShadowConfirm', { name: creatingShadowAcc?.name })" @confirm="confirmCreateSparkShadow" @cancel="showCreateShadowDialog = false" />
     <ConfirmDialog :show="showExportDataDialog" :title="t('admin.accounts.dataExport')" :message="t('admin.accounts.dataExportConfirmMessage')" :confirm-text="t('admin.accounts.dataExportConfirm')" :cancel-text="t('common.cancel')" @confirm="handleExportData" @cancel="showExportDataDialog = false">
       <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-        <input type="checkbox" class="h-4 w-4 cursor-pointer rounded border-gray-300 text-primary-600 accent-[var(--accent)] focus:ring-primary-500" v-model="includeProxyOnExport" />
+        <input type="checkbox" class="h-4 w-4 cursor-pointer rounded-[5px] accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]" v-model="includeProxyOnExport" />
         <span>{{ t('admin.accounts.dataExportIncludeProxies') }}</span>
       </label>
     </ConfirmDialog>

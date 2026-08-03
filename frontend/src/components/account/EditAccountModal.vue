@@ -1411,7 +1411,7 @@
             type="number"
             min="0"
             step="0.001"
-            class="input disabled:cursor-not-allowed disabled:opacity-60"
+            class="input"
             data-testid="account-rate-multiplier"
             :disabled="upstreamBillingRateSyncEnabled"
           />
@@ -1429,7 +1429,7 @@
             class="mt-3 flex items-center justify-between gap-3"
           >
             <div class="min-w-0">
-              <p class="text-xs font-medium text-gray-700 dark:text-gray-200">
+              <p class="input-label mb-0">
                 {{ t('admin.accounts.upstreamBilling.syncRate') }}
               </p>
               <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -1479,7 +1479,7 @@
       <!-- OpenAI Codex namespace 工具摊平（兼容开关，仅 OAuth） -->
       <div
         v-if="account?.platform === 'openai' && account?.type === 'oauth'"
-        class="border-t border-gray-200 pt-4 dark:border-dark-600"
+        class="pt-4 shadow-[inset_0_0.5px_0_var(--separator)]"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -1491,18 +1491,16 @@
           <button
             type="button"
             data-testid="edit-openai-flatten-namespaces-toggle"
+            role="switch"
+            :aria-checked="openaiFlattenNamespacesEnabled"
+            :aria-label="t('admin.accounts.openai.flattenNamespaces')"
             @click="openaiFlattenNamespacesEnabled = !openaiFlattenNamespacesEnabled"
             :class="[
-              'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-              openaiFlattenNamespacesEnabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600'
+              'switch flex-shrink-0 focus-visible:outline-none focus-visible:shadow-[0_0_0_3.5px_var(--accent-tint-strong),0_0_0_1px_var(--accent)]',
+              openaiFlattenNamespacesEnabled && 'switch-active'
             ]"
           >
-            <span
-              :class="[
-                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                openaiFlattenNamespacesEnabled ? 'translate-x-5' : 'translate-x-0'
-              ]"
-            />
+            <span class="switch-thumb pointer-events-none" />
           </button>
         </div>
       </div>

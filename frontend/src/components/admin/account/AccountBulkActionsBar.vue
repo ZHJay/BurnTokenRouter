@@ -16,7 +16,7 @@
       <template v-if="selectedIds.length > 0">
         <button
           @click="$emit('select-page')"
-          class="rounded-full text-xs font-medium tracking-[0.01em] text-primary-700 transition-[color,transform] duration-fast ease-apple-out hover:text-primary-800 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)] active:scale-[0.96] dark:text-primary-300 dark:hover:text-primary-200"
+          class="rounded-full text-xs font-medium tracking-[0.01em] text-primary-700 transition-[color,transform] duration-fast ease-apple-out hover:text-primary-800 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] active:scale-[0.96] dark:text-primary-300 dark:hover:text-primary-200"
         >
           {{ t('admin.accounts.bulkActions.selectCurrentPage') }}
         </button>
@@ -26,7 +26,7 @@
         <button
           :disabled="selectingAll"
           @click="$emit('select-all-results')"
-          class="rounded-full text-xs font-medium tracking-[0.01em] text-primary-700 transition-[color,transform] duration-fast ease-apple-out hover:text-primary-800 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)] active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100 dark:text-primary-300 dark:hover:text-primary-200"
+          class="rounded-full text-xs font-medium tracking-[0.01em] text-primary-700 transition-[color,transform] duration-fast ease-apple-out hover:text-primary-800 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100 dark:text-primary-300 dark:hover:text-primary-200"
         >
           {{
             selectingAll
@@ -39,7 +39,7 @@
         <span class="text-gray-300 dark:text-primary-800">•</span>
         <button
           @click="$emit('clear')"
-          class="rounded-full text-xs font-medium tracking-[0.01em] text-primary-700 transition-[color,transform] duration-fast ease-apple-out hover:text-primary-800 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)] active:scale-[0.96] dark:text-primary-300 dark:hover:text-primary-200"
+          class="rounded-full text-xs font-medium tracking-[0.01em] text-primary-700 transition-[color,transform] duration-fast ease-apple-out hover:text-primary-800 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)] active:scale-[0.96] dark:text-primary-300 dark:hover:text-primary-200"
         >
           {{ t('admin.accounts.bulkActions.clear') }}
         </button>

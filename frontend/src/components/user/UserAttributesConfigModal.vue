@@ -197,11 +197,11 @@
       <!-- Required & Enabled -->
       <div class="flex items-center gap-6">
         <label class="flex items-center gap-2">
-          <input v-model="form.required" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600" />
+          <input v-model="form.required" type="checkbox" class="h-4 w-4 rounded-[5px] accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]" />
           <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('admin.users.attributes.required') }}</span>
         </label>
         <label class="flex items-center gap-2">
-          <input v-model="form.enabled" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600" />
+          <input v-model="form.enabled" type="checkbox" class="h-4 w-4 rounded-[5px] accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]" />
           <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('admin.users.attributes.enabled') }}</span>
         </label>
       </div>

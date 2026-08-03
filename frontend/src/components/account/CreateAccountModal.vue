@@ -853,7 +853,7 @@
           <p class="input-hint">{{ t('admin.accounts.upstream.apiKeyHint') }}</p>
         </div>
         <!-- 上游倍率自动探测：antigravity upstream 也是 API-key 账号 -->
-        <div class="flex items-center justify-between gap-4 border-t border-gray-200 pt-4 dark:border-dark-600">
+        <div class="flex items-center justify-between gap-4 pt-4 shadow-[inset_0_0.5px_0_var(--separator)]">
           <div>
             <label class="input-label mb-0">{{ t('admin.accounts.upstreamBilling.autoProbe') }}</label>
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -1058,7 +1058,7 @@
               v-model="addMethod"
               type="radio"
               value="oauth"
-              class="mr-2 text-primary-600 focus:ring-primary-500"
+              class="mr-2 rounded-full accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
             />
             <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('admin.accounts.types.oauth') }}</span>
           </label>
@@ -1067,7 +1067,7 @@
               v-model="addMethod"
               type="radio"
               value="setup-token"
-              class="mr-2 text-primary-600 focus:ring-primary-500"
+              class="mr-2 rounded-full accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
             />
             <span class="text-sm text-gray-700 dark:text-gray-300">{{
               t('admin.accounts.setupTokenLongLived')
@@ -1538,7 +1538,7 @@
                 v-model="bedrockAuthMode"
                 type="radio"
                 value="sigv4"
-                class="mr-2 text-primary-600 focus:ring-primary-500"
+                class="mr-2 rounded-full accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
               />
               <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('admin.accounts.bedrockAuthModeSigv4') }}</span>
             </label>
@@ -1547,7 +1547,7 @@
                 v-model="bedrockAuthMode"
                 type="radio"
                 value="apikey"
-                class="mr-2 text-primary-600 focus:ring-primary-500"
+                class="mr-2 rounded-full accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
               />
               <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('admin.accounts.bedrockAuthModeApikey') }}</span>
             </label>
@@ -2682,7 +2682,7 @@
       <!-- OpenAI Codex namespace 工具摊平（兼容开关，仅 OAuth） -->
       <div
         v-if="form.platform === 'openai' && form.type === 'oauth'"
-        class="border-t border-gray-200 pt-4 dark:border-dark-600"
+        class="pt-4 shadow-[inset_0_0.5px_0_var(--separator)]"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -2694,18 +2694,16 @@
           <button
             type="button"
             data-testid="create-openai-flatten-namespaces-toggle"
+            role="switch"
+            :aria-checked="openaiFlattenNamespacesEnabled"
+            :aria-label="t('admin.accounts.openai.flattenNamespaces')"
             @click="openaiFlattenNamespacesEnabled = !openaiFlattenNamespacesEnabled"
             :class="[
-              'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-              openaiFlattenNamespacesEnabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600'
+              'switch flex-shrink-0 focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]',
+              openaiFlattenNamespacesEnabled && 'switch-active'
             ]"
           >
-            <span
-              :class="[
-                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                openaiFlattenNamespacesEnabled ? 'translate-x-5' : 'translate-x-0'
-              ]"
-            />
+            <span class="switch-thumb pointer-events-none" />
           </button>
         </div>
       </div>
@@ -5611,7 +5609,7 @@ const handleOpenAIImportCodexPAT = async (accessToken: string) => {
       extra
     })
 
-    appStore.showSuccess(t('admin.accounts.messages.accountCreated'))
+    appStore.showSuccess(t('admin.accounts.accountCreated'))
     emit('created')
     handleClose()
   } catch (error: any) {

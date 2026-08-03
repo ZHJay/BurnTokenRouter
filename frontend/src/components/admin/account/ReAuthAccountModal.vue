@@ -57,7 +57,7 @@
               v-model="addMethod"
               type="radio"
               value="oauth"
-              class="mr-2 text-primary-600 focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)]"
+              class="mr-2 rounded-full accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
             />
             <span class="text-sm text-gray-700 dark:text-gray-300">{{
               t('admin.accounts.types.oauth')
@@ -68,7 +68,7 @@
               v-model="addMethod"
               type="radio"
               value="setup-token"
-              class="mr-2 text-primary-600 focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)]"
+              class="mr-2 rounded-full accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
             />
             <span class="text-sm text-gray-700 dark:text-gray-300">{{
               t('admin.accounts.setupTokenLongLived')

@@ -1150,7 +1150,7 @@
             <input
               v-model="createForm.profit_control_enabled"
               type="checkbox"
-              class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              class="rounded-[5px] accent-[color:var(--accent)] focus-visible:outline-none focus-visible:shadow-[0_0_0_3.5px_var(--accent-tint-strong),0_0_0_1px_var(--accent)]"
             />
             <span>{{ t("admin.groups.profitControl.enable") }}</span>
           </label>
@@ -2711,7 +2711,7 @@
             <input
               v-model="editForm.profit_control_enabled"
               type="checkbox"
-              class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              class="rounded-[5px] accent-[color:var(--accent)] focus-visible:outline-none focus-visible:shadow-[0_0_0_3.5px_var(--accent-tint-strong),0_0_0_1px_var(--accent)]"
             />
             <span>{{ t("admin.groups.profitControl.enable") }}</span>
           </label>

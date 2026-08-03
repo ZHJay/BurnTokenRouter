@@ -18,7 +18,7 @@
             value="all"
             :checked="mode === 'all'"
             @change="setMode('all')"
-            class="h-4 w-4 text-primary-600 focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)]"
+            class="h-4 w-4 rounded-full accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
           />
           {{ t('admin.announcements.form.targetingAll') }}
         </label>
@@ -29,7 +29,7 @@
             value="custom"
             :checked="mode === 'custom'"
             @change="setMode('custom')"
-            class="h-4 w-4 text-primary-600 focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)]"
+            class="h-4 w-4 rounded-full accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
           />
           {{ t('admin.announcements.form.targetingCustom') }}
         </label>

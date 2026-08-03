@@ -297,6 +297,47 @@ describe('BulkEditAccountModal', () => {
     expect(wrapper.find('#bulk-edit-openai-flatten-namespaces-enabled').exists()).toBe(false)
   })
 
+  it('namespace 摊平的「包含该字段」复选框与「值」开关拥有互不相同的可访问名称', () => {
+    const wrapper = mountModal({
+      selectedPlatforms: ['openai'],
+      selectedTypes: ['oauth']
+    })
+
+    // 按 accname 算法计算可访问名称：aria-labelledby > aria-label > 关联 label。
+    const accessibleName = (el: Element): string => {
+      const labelledBy = el.getAttribute('aria-labelledby')
+      if (labelledBy) {
+        return labelledBy
+          .split(/\s+/)
+          .map((id) => wrapper.element.querySelector(`#${id}`)?.textContent?.trim() ?? '')
+          .filter(Boolean)
+          .join(' ')
+      }
+      const ariaLabel = el.getAttribute('aria-label')
+      if (ariaLabel) return ariaLabel.trim()
+      const id = el.getAttribute('id')
+      if (id) {
+        const label = wrapper.element.querySelector(`label[for="${id}"]`)
+        if (label) return label.textContent?.trim() ?? ''
+      }
+      return el.textContent?.trim() ?? ''
+    }
+
+    const checkbox = wrapper.get('#bulk-edit-openai-flatten-namespaces-enabled').element
+    const switchEl = wrapper.get('#bulk-edit-openai-flatten-namespaces-toggle').element
+
+    const checkboxName = accessibleName(checkbox)
+    const switchName = accessibleName(switchEl)
+
+    expect(checkboxName).toBe('admin.accounts.openai.flattenNamespaces')
+    expect(switchName).toBe('common.enabled')
+    expect(switchName).not.toBe(checkboxName)
+
+    // 开关语义（role/aria-checked）必须保留。
+    expect(switchEl.getAttribute('role')).toBe('switch')
+    expect(switchEl.getAttribute('aria-checked')).toBe('false')
+  })
+
   it('OpenAI OAuth 批量编辑应提交 OAuth 专属 WS mode 字段（含 http_bridge）', async () => {
     const wrapper = mountModal({
       selectedPlatforms: ['openai'],

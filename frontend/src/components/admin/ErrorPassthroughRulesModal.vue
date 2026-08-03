@@ -290,7 +290,7 @@
                   type="radio"
                   :value="option.value"
                   v-model="form.match_mode"
-                  class="mt-0.5 h-3.5 w-3.5 border-gray-300 text-primary-600 focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)]"
+                  class="mt-0.5 h-3.5 w-3.5 rounded-full accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
                 />
                 <div class="flex-1">
                   <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ option.label }}</span>
@@ -312,7 +312,7 @@
                   type="checkbox"
                   :value="platform.value"
                   v-model="form.platforms"
-                  class="h-3.5 w-3.5 rounded border-gray-300 text-primary-600 focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)]"
+                  class="h-3.5 w-3.5 rounded-[5px] accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
                 />
                 <span class="text-xs text-gray-700 dark:text-gray-300">{{ platform.label }}</span>
               </label>
@@ -333,7 +333,7 @@
                 <input
                   type="checkbox"
                   v-model="form.passthrough_code"
-                  class="h-3.5 w-3.5 rounded border-gray-300 text-primary-600 focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)]"
+                  class="h-3.5 w-3.5 rounded-[5px] accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
                 />
                 <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
                   {{ t('admin.errorPassthrough.form.passthroughCode') }}
@@ -356,7 +356,7 @@
                 <input
                   type="checkbox"
                   v-model="form.passthrough_body"
-                  class="h-3.5 w-3.5 rounded border-gray-300 text-primary-600 focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)]"
+                  class="h-3.5 w-3.5 rounded-[5px] accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
                 />
                 <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
                   {{ t('admin.errorPassthrough.form.passthroughBody') }}
@@ -380,7 +380,7 @@
           <input
             type="checkbox"
             v-model="form.skip_monitoring"
-            class="h-3.5 w-3.5 rounded border-gray-300 text-yellow-600 focus-visible:ring-[3.5px] focus-visible:ring-[rgb(255_204_0_/_0.3)]"
+            class="h-3.5 w-3.5 rounded-[5px] accent-[color:var(--sys-yellow)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[rgb(255_204_0_/_0.3)]"
           />
           <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
             {{ t('admin.errorPassthrough.form.skipMonitoring') }}
@@ -393,7 +393,7 @@
           <input
             type="checkbox"
             v-model="form.enabled"
-            class="h-3.5 w-3.5 rounded border-gray-300 text-primary-600 focus-visible:ring-[3.5px] focus-visible:ring-[var(--accent-tint-strong)]"
+            class="h-3.5 w-3.5 rounded-[5px] accent-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-[3.5px] focus-visible:ring-[color:var(--accent-tint-strong)]"
           />
           <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
             {{ t('admin.errorPassthrough.form.enabled') }}
