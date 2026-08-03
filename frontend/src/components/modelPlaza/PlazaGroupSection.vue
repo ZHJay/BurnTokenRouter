@@ -1,6 +1,7 @@
 <template>
+  <!-- overflow-hidden：价格表整行出血到卡片边缘，圆角必须裁掉行底色 -->
   <section
-    class="card border"
+    class="card overflow-hidden border"
     :class="[platformBorderStrongClass(group.platform)]"
   >
     <!-- 分组头部:名称/平台/倍率徽章/专属/订阅徽章 + 描述 -->
@@ -44,8 +45,8 @@
       </p>
     </header>
 
-    <!-- 模型价格表 -->
-    <div class="px-5">
+    <!-- 模型价格表:整行(含 hover 底色/分区底色)顶到卡片边缘,左右留白由表格首列/末列的 padding 提供 -->
+    <div>
       <PlazaModelPricingTable
         v-if="group.models.length > 0"
         :models="group.models"
@@ -53,7 +54,7 @@
         :rate-multiplier="group.rate_multiplier"
         :user-rate-multiplier="group.user_rate_multiplier ?? null"
       />
-      <p v-else class="py-4 text-center text-sm text-gray-400 dark:text-dark-500">
+      <p v-else class="px-5 py-4 text-center text-sm text-gray-400 dark:text-dark-500">
         {{ t('modelPlaza.detail.noModels') }}
       </p>
     </div>
