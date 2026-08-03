@@ -66,10 +66,13 @@ onUnmounted(() => {
 .table-scroll-container {
   /* Cannot `@apply card` here: Vite hands each SFC <style> block to PostCSS as
      its own entry, so Tailwind never sees style.css's @layer components and the
-     build fails. Inline the .card properties instead. */
+     build fails. Inline the .card properties instead — and they must stay in
+     lockstep with `.card`, since this shell IS a card. The radius was 12px while
+     `.card` uses rounded-xl (16px), which made every table page read differently
+     from the dashboards. */
   @apply flex h-full flex-col overflow-hidden;
   background-color: var(--surface);
-  border-radius: 12px;
+  border-radius: 16px;
   box-shadow:
     inset 0 0 0 0.5px var(--hairline),
     var(--shadow-2);
