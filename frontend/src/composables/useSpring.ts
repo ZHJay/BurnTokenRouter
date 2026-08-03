@@ -254,6 +254,12 @@ export function useSpring(options: SpringOptions = {}): SpringController {
   }
 
   function tick(now: number): void {
+    // The scheduled frame has fired, so nothing is pending any more. Recording
+    // that before running any caller code is what lets the tail of this
+    // function tell "nobody touched the loop" apart from "a callback stopped or
+    // re-scheduled it".
+    frame = null
+
     // A negative delta (clock adjustment, or a frame timestamp older than the
     // one to() recorded) must not run the integration backwards.
     const elapsed = Math.max((now - lastTime) / 1000, 0)
@@ -296,7 +302,13 @@ export function useSpring(options: SpringOptions = {}): SpringController {
     // frame that advanced nothing has nothing to publish.
     if (stepped) emit(target + state.displacement)
 
-    frame = requestAnimationFrame(tick)
+    // onUpdate is caller code, and it is allowed to stop this spring or
+    // re-target it. Scheduling unconditionally here would hand back a loop the
+    // caller had just stopped — with isAnimating already false, so nothing
+    // reports it as running and no later stop() can reach it — or a second
+    // concurrent loop if the callback called stop() and then to(). Re-check
+    // both facts we own: still animating, and no frame booked meanwhile.
+    if (isAnimating.value && frame === null) frame = requestAnimationFrame(tick)
   }
 
   function to(nextTarget: number, initialVelocity?: number): void {

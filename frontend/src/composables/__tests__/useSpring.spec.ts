@@ -694,6 +694,73 @@ describe('useSpring · imperative control', () => {
     expect(spring.value.value).toBe(100)
     expect(onRest).toHaveBeenCalledTimes(1)
   })
+
+  it('stop() from inside onUpdate actually stops, leaving no immortal loop', () => {
+    // onUpdate is caller code running inside the frame callback, and a caller is
+    // entitled to stop the spring from it (a drag handler that hits a boundary,
+    // a component tearing down on the value it just saw). tick() used to
+    // schedule the next frame unconditionally *after* onUpdate, so stop()
+    // cancelled a frame that tick() then immediately replaced: measured 41 ticks
+    // still running past the stop, with isAnimating already false so nothing
+    // reported it as animating and no later stop() could find it.
+    const onRest = vi.fn()
+    let stops = 0
+    let updates = 0
+
+    const spring = makeSpring({
+      from: 0,
+      onRest,
+      onUpdate: () => {
+        updates += 1
+        if (updates === 2) {
+          stops += 1
+          spring.stop()
+        }
+      }
+    })
+
+    spring.to(100)
+    step(2)
+    expect(stops).toBe(1)
+
+    const halted = spring.value.value
+    expect(spring.isAnimating.value).toBe(false)
+
+    // Nothing left to run, and nothing that could re-arm itself.
+    expect(frameQueue.size).toBe(0)
+    step(60)
+    expect(updates).toBe(2)
+    expect(spring.value.value).toBe(halted)
+    expect(onRest).not.toHaveBeenCalled()
+  })
+
+  it('re-targeting from inside onUpdate keeps exactly one loop alive', () => {
+    // The other half of the same hazard: a callback that stops and immediately
+    // re-targets. to() books a frame, and tick() must not book a second one on
+    // top of it — two loops on one spring double the integration rate and make
+    // the trajectory frame-rate dependent again.
+    let updates = 0
+    const spring = makeSpring({
+      from: 0,
+      onUpdate: () => {
+        updates += 1
+        if (updates === 2) {
+          spring.stop()
+          spring.to(50)
+        }
+      }
+    })
+
+    spring.to(100)
+    step(2)
+
+    expect(spring.isAnimating.value).toBe(true)
+    expect(frameQueue.size).toBe(1)
+
+    stepToRest(spring)
+    expect(spring.value.value).toBe(50)
+    expect(frameQueue.size).toBe(0)
+  })
 })
 
 describe('useSpring · reduced motion', () => {
@@ -713,6 +780,36 @@ describe('useSpring · reduced motion', () => {
     // Reduced motion still reports the final state, it just skips the travel.
     expect(onUpdate).toHaveBeenCalledWith(100)
     expect(onRest).toHaveBeenCalledTimes(1)
+  })
+
+  it('turning reduced motion on mid-flight lands the target and rests once', () => {
+    // The path settle()'s cancelAnimationFrame guard exists for: a frame is
+    // already booked when to() takes the immediate-settle branch. Without the
+    // cancel that frame still fires, finds itself at rest and settles a second
+    // time, so onRest fires twice for one animation.
+    const onRest = vi.fn()
+    const spring = makeSpring({ from: 0, onRest })
+
+    spring.to(100)
+    step(3)
+    expect(spring.isAnimating.value).toBe(true)
+    expect(spring.value.value).toBeGreaterThan(0)
+    expect(spring.value.value).toBeLessThan(100)
+
+    // The preference flips while the spring is in flight.
+    setReducedMotion(true)
+    spring.to(200)
+
+    // Reduced motion is gentler, not absent: the target still has to arrive.
+    expect(spring.value.value).toBe(200)
+    expect(spring.isAnimating.value).toBe(false)
+    expect(frameQueue.size).toBe(0)
+    expect(onRest).toHaveBeenCalledTimes(1)
+
+    // And no straggler frame can settle it a second time.
+    step(30)
+    expect(onRest).toHaveBeenCalledTimes(1)
+    expect(spring.value.value).toBe(200)
   })
 })
 
