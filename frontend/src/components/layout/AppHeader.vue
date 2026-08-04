@@ -3,15 +3,18 @@
     Regular material, fixed so page content scrolls underneath the glass.
     `left` tracks the sidebar width; on mobile the sidebar is off-canvas so the
     bar spans the full viewport.
+
+    box-shadow 只剩底缘发丝线，没有顶部镜面高光 —— 这里曾有
+    `inset 0 1px 0 var(--glass-specular)`。高光模拟浮空面板近边缘的受光，需要那
+    条边背后有东西可折射；本元素 `top-0`，被点亮的上缘紧贴浏览器边框，外面是空
+    的，于是它在页面顶部画出一条通宽 1px 近白线（深色下合成约 rgb(123,123,124)，
+    读作边框而不是厚度）。朝向内容的是底缘，已由 --glass-edge 承担。
+    同一处修复见 style.css 的 .sidebar。
   -->
   <header
     class="app-header glass fixed right-0 top-0 z-30 left-0 transition-all duration-300"
     :class="[sidebarCollapsed ? 'lg:left-[72px]' : 'lg:left-64']"
-    style="
-      box-shadow:
-        inset 0 -0.5px 0 var(--glass-edge),
-        inset 0 1px 0 var(--glass-specular);
-    "
+    style="box-shadow: inset 0 -0.5px 0 var(--glass-edge)"
   >
     <div class="flex h-16 items-center justify-between gap-2 px-2 sm:px-4 md:px-6">
       <!--
