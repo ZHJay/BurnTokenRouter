@@ -243,9 +243,11 @@ func injectSiteFavicon(html, settingsJSON []byte) []byte {
 	replacement := []byte(`<link rel="icon" href="` + htmlpkg.EscapeString(logoURL) + `" />`)
 
 	var buf bytes.Buffer
-	buf.Write(html[:linkStart])
-	buf.Write(replacement)
-	buf.Write(html[linkEnd:])
+	// (*bytes.Buffer).Write never returns a non-nil error (it panics on OOM
+	// instead), so the results are discarded explicitly to satisfy errcheck.
+	_, _ = buf.Write(html[:linkStart])
+	_, _ = buf.Write(replacement)
+	_, _ = buf.Write(html[linkEnd:])
 	return buf.Bytes()
 }
 
@@ -287,9 +289,10 @@ func injectSiteTitle(html, settingsJSON []byte) []byte {
 
 	newTitle := []byte("<title>" + htmlpkg.EscapeString(cfg.SiteName) + " - AI API Gateway</title>")
 	var buf bytes.Buffer
-	buf.Write(html[:titleStart])
-	buf.Write(newTitle)
-	buf.Write(html[titleEnd+len("</title>"):])
+	// See injectSiteFavicon: (*bytes.Buffer).Write cannot fail with an error.
+	_, _ = buf.Write(html[:titleStart])
+	_, _ = buf.Write(newTitle)
+	_, _ = buf.Write(html[titleEnd+len("</title>"):])
 	return buf.Bytes()
 }
 

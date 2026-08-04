@@ -456,7 +456,11 @@ function cancelDelete() {
           </div>
         </div>
         <table v-else class="table min-w-full">
-          <thead class="sticky top-0 z-10">
+          <!-- 表头吸顶且数据行从其下方滚过（外层 max-h-[520px] overflow-y-auto），
+               而 .table th 是半透明材质 + backdrop-filter —— 实测行文字会透过列标签
+               读出来。按既有约定（DataTable 的 .sticky-header-cell、本文件详情表、
+               ProxiesView 等）把 th 钉成不透明。 -->
+          <thead class="sticky top-0 z-10 [&_th]:bg-[var(--surface)] [&_th]:backdrop-blur-none">
             <tr>
               <th>
                 {{ t('admin.ops.alertRules.table.name') }}

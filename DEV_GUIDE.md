@@ -47,7 +47,7 @@ npm install -g pnpm
 
 | Workflow | 触发条件 | 检查内容 |
 |----------|----------|----------|
-| **backend-ci.yml** | push, pull_request（**无路径过滤**） | 四个并行 job：`test`（单元 + 集成）、`golangci-lint` v2.9、`frontend`（`make test-frontend`）、`shell`（macos-15 上跑 `deploy/` 脚本自检） |
+| **backend-ci.yml** | push, pull_request（**无路径过滤**） | 五个并行 job：`test`（单元 + 集成）、`embed`（`pnpm run build` 出 dist 后跑 `go build -tags embed ./...` + `go test -tags embed ./internal/web/...`）、`golangci-lint` v2.9（**跑两遍：先不带 tag，再带 `--build-tags embed`，两遍互补**）、`frontend`（`make test-frontend`）、`shell`（macos-15 上跑 `deploy/` 脚本自检） |
 | **security-scan.yml** | push, pull_request, 每周一 | `backend-security`（govulncheck）+ `frontend-security`（`pnpm audit --prod --audit-level=high`，结果过 `tools/check_pnpm_audit_exceptions.py` 白名单） |
 | **release.yml** | tag `v*`、手动 dispatch | `build-frontend`（`pnpm run build`）+ 构建发布（**push / PR 不触发**） |
 
@@ -71,7 +71,8 @@ eslint。本地按同一顺序复现，别只跑 vitest。
 
 **`test-frontend-critical` 只跑一份写死的关键 spec 白名单**，不是全量 vitest：
 清单是 `Makefile` 顶部的 `FRONTEND_CRITICAL_VITEST` 变量，逐个文件路径列死，而
-`frontend/src` 下有两百多个 `.spec.ts`，量级差两个数。两个后果要记住：
+`frontend/src` 下有两百多个 `.spec.ts`（清单 15 个 vs 全量 232 个，差一个数量级）。
+两个后果要记住：
 **CI 绿不代表前端测试全过**；**新写的 spec 不会自动进 CI**，不手动加进
 `FRONTEND_CRITICAL_VITEST` 就永远不会在 CI 里执行。改动涉及关键路径时，
 顺手把对应 spec 加进这个变量。
@@ -83,7 +84,7 @@ job，而那个 workflow 只由 `push: tags: ['v*']` 和手动 dispatch 触发�
 
 ### CI 要求
 
-- Go 版本必须是 **1.26.5**（`test` 与 `golangci-lint` 两个 job 都有
+- Go 版本必须是 **1.26.5**（`test`、`embed`、`golangci-lint` 三个 job 都有
   `go version | grep -q 'go1.26.5'` 硬校验，版本不对直接失败）
 - 前端使用 `pnpm install --frozen-lockfile`，必须提交 `pnpm-lock.yaml`
 
@@ -97,7 +98,13 @@ cd backend && go test -tags=unit ./...
 cd backend && go test -tags=integration ./...
 
 # 代码质量检查
+# CI 的 golangci-lint job 跑两遍，本地也要按同样顺序跑两遍：
+#   不带 tag  → 看不到 internal/web 那四个 embed 侧文件（详见「坑 12」）
+#   带 embed  → embed_off.go（`//go:build !embed`，go run / make test-unit /
+#               make test-integration 都编它）反过来被丢掉
+# 两遍是互补关系，不是替代关系，任一单跑都覆盖不全 internal/web。
 cd backend && golangci-lint run ./...
+cd backend && golangci-lint run --build-tags embed ./...
 
 # 前端依赖安装（必须用 pnpm）
 cd frontend && pnpm install
@@ -272,11 +279,80 @@ git add ent/       # 生成的文件也要提交
 
 - [ ] `go test -tags=unit ./...` 通过
 - [ ] `go test -tags=integration ./...` 通过
-- [ ] `golangci-lint run ./...` 无新增问题
+- [ ] `golangci-lint run ./...` **和** `golangci-lint run --build-tags embed ./...`
+      两遍都无新增问题（不带 tag 漏掉 `internal/web` 那四个 embed 侧文件，带 tag 反过来
+      漏掉 `embed_off.go`，两遍互补，见「坑 12」）
 - [ ] `make test-frontend` 通过（lint:check → typecheck → 关键 spec）
 - [ ] `pnpm-lock.yaml` 已同步（如果改了 package.json）
 - [ ] 所有 test stub 补全新接口方法（如果改了 interface）
 - [ ] Ent 生成的代码已提交（如果改了 schema）
+
+### 坑 12：`internal/web` 要两遍 lint 才覆盖得全，单跑任一遍都有盲区
+
+`internal/web` 有 6 个 `.go` 文件，但**不带 build tag 时 Go 只认其中一个**
+（`embed_off.go`）。其余 5 个全部落进 `IgnoredGoFiles`，`.golangci.yml` 里
+enable 的所有 linter 一行都看不到：
+
+```bash
+cd backend
+go list -f 'GoFiles:{{.GoFiles}} Ignored:{{.IgnoredGoFiles}}' ./internal/web/
+# GoFiles:[embed_off.go]
+# Ignored:[embed_on.go embed_test.go html_cache.go static_cache.go static_cache_test.go]
+```
+
+被跳过的正是前端↔后端 serving contract 的实现（nonce 替换、`__APP_CONFIG__`
+注入、`<title>`/favicon 改写、SPA fallback、immutable 资源缓存头）。
+`static_cache.go` 的约束是 `//go:build embed || unit`，`unit` 那半只影响
+`go test -tags=unit`，**这一遍 lint 不带任何 tag，所以它同样不被 lint**——把它捞回来的
+是 `embed` 那半，不是 `unit`。
+
+第 5 个 `static_cache_test.go` 是 `//go:build unit`，**两遍都救不回来**：不带 tag 时它在
+`IgnoredGoFiles` 里，带 `embed` 时它照旧在 `IgnoredGoFiles` 里（见下方带 tag 的实测输出）。
+它属于下面那一段"同类盲区"，不是 embed 这一摊。所以上面 5 个文件里，`--build-tags embed`
+只捞回 4 个。
+
+CI 的 `golangci-lint` job 已经补上 `--build-tags embed`，但**它是加了一遍，不是换掉原来那遍**
+——workflow 里两个 step 并存，先不带 tag 再带 tag。**本地也要照这个顺序跑两遍**：
+
+```bash
+cd backend
+golangci-lint run ./...                      # 覆盖 embed_off.go
+golangci-lint run --build-tags embed ./...   # 覆盖上面那四个文件
+```
+
+只跑不带 tag 的那遍，改这四个文件时本地全绿、CI 才报错。**只跑带 tag 的那遍，方向正好反过来
+踩同一个坑**：`embed_off.go` 的约束是 `//go:build !embed`，加上 tag 它就被丢掉了。而带
+`embed` 的只有 `Dockerfile`、`.goreleaser.yaml` 和 CI 的 `embed` job 三处，其余一切
+——`go run ./cmd/server/`、`make test-unit`、`make test-integration`——编的都是它：
+
+```bash
+cd backend
+go list -tags embed -f '{{.GoFiles}} TEST:{{.TestGoFiles}} IGN:{{.IgnoredGoFiles}}' ./internal/web/
+# [embed_on.go html_cache.go static_cache.go] TEST:[embed_test.go] IGN:[embed_off.go static_cache_test.go]
+```
+
+两遍是互补关系，不是替代关系——**任何一遍单跑都覆盖不全 `internal/web`**，
+`backend-ci.yml` 里那句注释说的就是这个。
+
+带 tag 跑之前 `backend/internal/web/dist/` 必须有内容：`//go:embed all:dist` 在
+type-check 阶段就要解析，dist 为空会直接报 `pattern all:dist: no matching files
+found`（typecheck），根本轮不到 linter。CI 里由一个 placeholder step 兜底；本地
+要么已经 build 过前端，要么手动塞一个占位文件：
+
+```bash
+mkdir -p backend/internal/web/dist
+[ -f backend/internal/web/dist/index.html ] \
+  || printf '<!doctype html>\n' > backend/internal/web/dist/index.html
+```
+
+> 顺带说明 `.gitignore` 第 103 行 `!backend/internal/web/dist/.keep` 的用意就是这个
+> ——给 `//go:embed` 留个永久匹配项。但 `.keep` 从来没被创建、也没被跟踪，所以那条
+> 例外一直空转。**不要靠 commit `.keep` 来修**：`vite.config.ts` 的
+> `emptyOutDir: true` 每次 build 都会把它删掉，git status 里就会长期挂一条幽灵删除。
+
+**同类盲区还在别处**：`unit`（359 个文件）、`integration`（72 个）、`e2e`（3 个）
+这些 tag 下的文件目前都不在 lint 范围内——合计 434 个文件两遍 lint 都碰不到。
+实测把 tag 加上分别会冒出 217 / 15 / 19 条问题，所以别顺手往 CI 里加——那是独立的一摊活。
 
 ## 五、常用命令速查
 
@@ -341,8 +417,9 @@ go generate ./ent
 go test -tags=unit ./...
 go test -tags=integration ./...
 
-# Lint 检查
+# Lint 检查：必须两遍，缺一遍就有覆盖盲区（原因见「坑 12」）
 golangci-lint run ./...
+golangci-lint run --build-tags embed ./...
 ```
 
 ## 六、项目结构速览
@@ -473,15 +550,38 @@ node scripts/purge-check.mjs --static-only --dist=/tmp/btr-purge/dist
 ```
 
 > 构建务必带 `--outDir` 指到 `/tmp`。直接 `pnpm build` 会写进
-> `backend/internal/web/dist`（提交在仓库里的产物），把别人的东西改脏。
+> `backend/internal/web/dist`（`vite.config.ts` 第 107 行的 `outDir`）。那个目录被
+> `.gitignore` 第 102 行忽略，**产物不在仓库里**（`git ls-tree HEAD` 和 `git ls-files`
+> 查它都是空的），所以脏的不是仓库，而是**别人本机那份产物**：`emptyOutDir: true`
+> 会先把整个目录清空再写，而 `-tags embed` 打包时 `//go:embed all:dist` 嵌的正是这份
+> 目录。顺带一提，第 103 行那条 `!backend/internal/web/dist/.keep` 例外是空转的——
+> `.keep` 既没被跟踪也不在磁盘上，所以第 98–99 行注释里说的"留个占位让
+> `//go:embed all:dist` 在 CI/lint 里总能匹配到"并没有真的生效。
 
 > **`--static-only` 不构建任何东西**，只是不跑运行时那半；它照旧去 `--dist` 指的
 > 目录里 grep 已有的 CSS。而 `--dist` 默认是 `/tmp/s2a-purge/dist`，也就是上一次
 > 构建剩下的旧产物。拿旧产物比当前源码，等于把这一轮新加或改名的类全数报成
-> `LOST`——曾这样刷出 5 条假 `LOST`（`.btn-outline-danger`、`.w3`、`.org`、
+> `LOST`——曾这样刷出 5 条假 `LOST`。其中 3 条是真类名（`.btn-outline-danger`、
 > `.input-sm`、`.safe-bottom`），它们在新构建里都好好地在。**只有 `--dist=` 指向
 > 一份刚出的 `/tmp` 构建，`LOST` 列表才算证据**；省掉 `--dist` 的运行只能当调试
 > 输出看，**不能当验证证据**。
+>
+> 另外 2 条（`.w3`、`.org`）根本不是类，`style.css` 里没有这两个选择器
+> （`rg "^\s*\.(w3|org)\b" frontend/src/style.css` 无匹配），它们曾经是脚本自己的解析
+> 噪声：`declaredSemanticClasses()` 对不含 `{` 的行会把整行当选择器扫，而
+> `style.css` 第 632/640 行是 `background-image: url("data:image/svg+xml,…")` 里的
+> `xmlns='http://www.w3.org/2000/svg'`，于是 `www.w3.org` 被切成 `.w3` 和 `.org`。
+> **这是选择器正则的 bug，不是样式表的问题**，别去 `style.css` 里找这两个类。
+>
+> **这个 bug 本机已经修好了**：`purge-check.mjs` 里加了个 `blankUrls()`，在扫选择器之前
+> 把每个 `url(...)` 的内部逐字符涂成空格（保留换行，所以报出来的行号还是真实行号），
+> 手扫而非正则——单条 `url\(...\)` 正则会回溯吃掉同行的真选择器。它的 docstring 里点的
+> 就是 `style.css:632` / `:640` 这两行。实测拿当前 `style.css` 过一遍
+> `declaredSemanticClasses()` 的选择器扫描：接上 `blankUrls()` 之后被去掉的正好只有
+> `.w3` 和 `.org` 两个，其余 124 个真类名（含 71 个跨行选择器列表里的）一个没少。
+> **但这个修复传不出去**：`frontend/scripts/` 整个目录被 `.gitignore` 第 123 行忽略，
+> 不进仓库。别人 clone 或 CI 检出的代码里没有 `blankUrls()`，那两条假 `LOST` 照旧会冒出来
+> ——交接时得把脚本目录一起拷过去，否则对方看到的还是修之前的行为。
 
 **怎么读**：`LOST` 表示类在源码里有定义、在产物里没了；`probe failures` 是把类名
 注入真实页面后计算样式不符合预期。末尾 `VERDICT`，有问题则退出码为 1。
@@ -495,13 +595,20 @@ node scripts/visual-check.mjs
 
 **怎么读**：脚本只能证明"这个路由渲染出来了、有内容、没有报错"——它验证不了
 "好不好看"。`/tmp/s2a-visual/` 下的 PNG **必须人眼过一遍**，脚本 PASS 不等于视觉没问题。
-末尾一行汇总 8 条路由、40 张截图，数目对不上说明有路由被跳过。
+末尾一行汇总 `routes: … | failed: … | screenshots: … | distinct console errors: …`。
+默认全量跑当前是 10 条路由、50 张截图（`ROUTES` 10 项，经 `buildVariants` 按
+主题 × 玻璃层级 × 视口 展开成 16 个 context，开头 `variants` 那行会先把这两个数打出来）。
+**数目以脚本自己打的那两行为准，不要以本节为准**：往 `ROUTES` 加一条路由、或给某条加上
+`full` / `mobile` / `scrolled`，截图数就会跟着变，而文档里的数字是死的。要判断有没有
+路由被跳过，看开头 `routes` 那行列出的 id 是否齐全、末尾 `failed:` 是否为 0，别拿总数
+去对——`--fast`（只跑 default 玻璃层级）、`--only-light`（只跑浅色）、`--routes=`
+本来就会让截图数少一截。
 
 `payment` 路由（覆盖 `PaymentView`）有两处反直觉的地方，改这条路由前先看清：
 
 - **路径是 `/purchase`，不是 `/payment`。** `/payment/*` 只挂 qrcode/result/
-  stripe/airwallex 几个子页，填 `/payment` 会落到 404 catch-all；路由 id 仍叫
-  `payment`。脚本会比对落地 `pathname` 与 `path`，写错直接 FAIL。
+  stripe/airwallex/stripe-popup 五个子页，填 `/payment` 会落到 404 catch-all；路由
+  id 仍叫 `payment`。脚本会比对落地 `pathname` 与 `path`，写错直接 FAIL。
 - 它依赖 `GET /payment/checkout-info` 的完整 fixture，其中 **`balance_disabled`
   必须是 `false`**。关掉余额充值后 `tabs` 只剩一项，tab bar 的
   `v-if="tabs.length > 1"` 不成立，这条路由要验的那个控件根本不会渲染。
@@ -522,7 +629,8 @@ node scripts/sweep-scoped-style-leaks.mjs      # 查编译产物里泄漏到祖�
 比 grep 源码可靠。
 
 `scripts/style-migration/` 不是工具，是当初那次 Tailwind 类名迁移 codemod 剩下的
-库：只有 `lib/`（类名解析、pnpm store 里找 `@vue/compiler-sfc` 的兜底）和
+库：只有 `lib/`（类名解析、pnpm store 里找 `@vue/compiler-sfc` 的兜底）、
 `dictionary.json`（`text-gray-500|dark:text-gray-400` → `text-content-tertiary`
-这类映射表），驱动脚本已经不在了，没有入口可跑。查历史上某个旧类名被换成了什么，
+这类映射表），以及一个空的 `__tests__/`（里面一个文件都没有，看到它是空的不是走错
+地方）。驱动脚本已经不在了，没有入口可跑。查历史上某个旧类名被换成了什么，
 翻 `dictionary.json`。

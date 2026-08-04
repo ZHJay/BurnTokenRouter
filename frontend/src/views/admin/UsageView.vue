@@ -231,6 +231,13 @@ const upstreamEndpointStats = ref<EndpointStat[]>([])
 const endpointPathStats = ref<EndpointStat[]>([])
 const endpointStatsLoading = ref(false)
 let abortController: AbortController | null = null; let exportAbortController: AbortController | null = null
+/**
+ * onMounted 里那个 120ms 的图表延时器（错开首屏请求）。之前没留句柄：进页面就走的
+ * 用户会在卸载之后仍打出一次 loadChartData 请求 —— 白烧一次接口调用，并且回来还要
+ * 往已销毁组件的 ref 上写。loadChartData 自身的 abort 也管不到它，因为请求那时还
+ * 没发出去。
+ */
+let chartDelayTimer: ReturnType<typeof setTimeout> | null = null
 let chartReqSeq = 0
 let statsReqSeq = 0
 let modelStatsReqSeq = 0
@@ -857,14 +864,23 @@ onMounted(() => {
   loadLogs()
   loadStats()
   loadModelStats(modelDistributionSource.value, true)
-  window.setTimeout(() => {
+  chartDelayTimer = setTimeout(() => {
+    chartDelayTimer = null
     void loadChartData()
   }, 120)
   loadSavedColumns()
   loadSavedErrColumns()
   document.addEventListener('click', handleColumnClickOutside)
 })
-onUnmounted(() => { abortController?.abort(); exportAbortController?.abort(); document.removeEventListener('click', handleColumnClickOutside) })
+onUnmounted(() => {
+  if (chartDelayTimer !== null) {
+    clearTimeout(chartDelayTimer)
+    chartDelayTimer = null
+  }
+  abortController?.abort()
+  exportAbortController?.abort()
+  document.removeEventListener('click', handleColumnClickOutside)
+})
 
 watch(modelDistributionSource, (source) => {
   void loadModelStats(source)

@@ -64,6 +64,13 @@ function onAdminComplianceRequired(event: Event) {
   adminComplianceStore.requireAcknowledgement(detail)
 }
 
+/**
+ * 新登录后延迟 3s 的强制拉公告。之前没留句柄：3s 内卸载（测试里就是用例结束、
+ * 真实环境里是登录后立刻被重定向或换 app 实例）延时器照样触发，替一个已经不存在的
+ * 组件打一次公告请求，并往已 dispose 的 store 上写。
+ */
+let announcementFetchTimer: ReturnType<typeof setTimeout> | null = null
+
 watch(
   () => authStore.isAuthenticated,
   (isAuthenticated, oldValue) => {
@@ -83,7 +90,11 @@ watch(
       // Announcements: new login vs page refresh restore
       if (oldValue === false) {
         // New login: delay 3s then force fetch
-        setTimeout(() => announcementStore.fetchAnnouncements(true), 3000)
+        if (announcementFetchTimer !== null) clearTimeout(announcementFetchTimer)
+        announcementFetchTimer = setTimeout(() => {
+          announcementFetchTimer = null
+          announcementStore.fetchAnnouncements(true)
+        }, 3000)
       } else {
         // Page refresh restore (oldValue was undefined)
         announcementStore.fetchAnnouncements()
@@ -93,6 +104,11 @@ watch(
       document.addEventListener('visibilitychange', onVisibilityChange)
     } else {
       // User logged out: clear data and stop polling
+      // 退出登录时那条待发的强制拉取也要掐掉，否则 3s 后替已登出的用户再打一次。
+      if (announcementFetchTimer !== null) {
+        clearTimeout(announcementFetchTimer)
+        announcementFetchTimer = null
+      }
       subscriptionStore.clear()
       announcementStore.reset()
       adminComplianceStore.reset()
@@ -110,6 +126,10 @@ router.afterEach(() => {
 })
 
 onBeforeUnmount(() => {
+  if (announcementFetchTimer !== null) {
+    clearTimeout(announcementFetchTimer)
+    announcementFetchTimer = null
+  }
   document.removeEventListener('visibilitychange', onVisibilityChange)
   window.removeEventListener('admin-compliance-required', onAdminComplianceRequired)
 })

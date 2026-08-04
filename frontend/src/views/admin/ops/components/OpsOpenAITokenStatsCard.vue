@@ -251,7 +251,12 @@ function onNextPage() {
             </div>
           </div>
           <table v-else class="table min-w-full text-left text-xs md:text-sm">
-            <thead class="sticky top-0 z-10" :style="{ background: 'var(--surface)' }">
+            <!-- 表头吸顶且数据行从其下方滚过（外层 max-h-[420px] overflow-auto），
+                 而 .table th 是半透明材质 + backdrop-filter —— 此前只给 thead 铺了
+                 不透明底色，th 本身仍在跑 blur(34px)，行内容会糊进表头下沿，
+                 --mat-diffuse 还会把色调带离 --surface（[data-glass='clear'] 下更明显）。
+                 按既有约定把 th 自己钉成不透明。 -->
+            <thead class="sticky top-0 z-10 [&_th]:bg-[var(--surface)] [&_th]:backdrop-blur-none">
               <tr>
                 <th class="px-2 py-2 normal-case">{{ t('admin.ops.openaiTokenStats.table.model') }}</th>
                 <th class="px-2 py-2 normal-case">{{ t('admin.ops.openaiTokenStats.table.requestCount') }}</th>

@@ -35,7 +35,7 @@
               role="switch"
               :aria-checked="endpoint.enabled"
               :aria-label="t('admin.promptAudit.pool.toggleNode', { name: endpoint.name })"
-              class="switch shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--accent)]"
+              class="switch shrink-0 focus-visible:outline-none focus-visible:shadow-[0_0_0_3.5px_var(--accent-tint-strong),0_0_0_1px_var(--accent)]"
               :class="endpoint.enabled ? 'switch-active' : ''"
               @click="toggleEndpoint(endpoint.id)"
             >

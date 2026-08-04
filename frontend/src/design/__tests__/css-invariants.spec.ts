@@ -2,8 +2,8 @@
  * Static CSS invariants — a regression net for the bug *classes* that all
  * shipped undetected, because nothing in this project could see them.
  *
- * INVARIANTS A–F. No count is pinned in this comment on purpose: the net has
- * grown twice already, and a stale "four" here is the same failure mode the
+ * INVARIANTS A–H. No count is pinned in this comment on purpose: the net has
+ * grown four times already, and a stale "four" here is the same failure mode the
  * `.toast` note in `style.css` argues against.
  *
  * Read `src/style.css`'s header comment first: it documents the three-tier
@@ -38,6 +38,19 @@
  * NARROW (the six press-scale classes must still be killed). Each failure names
  * one fix, in one place; they are written so they can never both fire pointing
  * in opposite directions about the same class.
+ *
+ * G is the first invariant here that does not need `style.css` to participate at
+ * all: it audits a `.vue` class attribute on its own terms. C, D and E read
+ * `.vue` files too, but only to answer a question the stylesheet posed. G exists
+ * because the `ring-offset-2` white-band regression had no limb in `style.css`
+ * for any of the others to grab — see its own comment for why.
+ *
+ * H joins G on the call-site side, and is the first one here that guards a bug
+ * class this repo has ALREADY fixed once: the legacy 1px opaque separator came
+ * back in through an upstream merge after 395392704 had converged it. Unlike
+ * G, H cannot be a flat ban — the tree carries pre-existing debt that predates
+ * the fork — so it ledgers that debt with a site count and fails only on growth.
+ * See its own comment for why the count, not just the file, is what gets pinned.
  */
 import { readFileSync, readdirSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
@@ -1298,6 +1311,494 @@ function formatMissingKill({ className, anchor, interactionKillAt }: MissingKill
 }
 
 /* ========================================================================= */
+/* INVARIANT G — no ring-offset-* at a call site                               */
+/* ========================================================================= */
+
+/**
+ * 这个守卫防的是什么真实危害：
+ *
+ * 两个开关（switch）的焦点环曾写成
+ * `focus-visible:ring-2 focus-visible:ring-offset-2`。`ring-offset-2` 本身只
+ * 设 `--tw-ring-offset-width`，颜色则来自 Tailwind preflight 的默认值
+ * `--tw-ring-offset-color: #fff`。于是开关本体和 accent 环之间被插进一圈 2px
+ * 的**纯白**带：亮色下几乎看不出来，深色下是一条刺眼亮边（对 `--surface`
+ * 17.01:1）。它不是配色偏好问题 —— 白带是 preflight 兜底值，作者根本没写过
+ * 任何白色，所以 code review 时也看不见。
+ *
+ * 为什么 style.css 层面的检测器抓不到它（这是本守卫存在的唯一理由）：
+ *
+ *   INVARIANT A–B、F 只读 `src/style.css`；C–E 虽然会读 .vue，但它们问的是
+ *   transform / animation 的问题。而 `ring-offset-2` 这个缺陷的三个环节没有
+ *   一环落在 style.css 里：
+ *     1. 类名写在 .vue 的 class 属性上，不在任何样式表里；
+ *     2. 宽度变量 `--tw-ring-offset-width` 由 Tailwind 在构建期生成，仓库里
+ *        搜不到；
+ *     3. 白色兜底 `--tw-ring-offset-color: #fff` 来自 preflight，在
+ *        node_modules 里，也不在 style.css 里。
+ *   三个环节都不在被扫描的文件里 —— 所以调用点几何写错，CI 一声不响。这是本
+ *   文件第一个把 .vue 的 class 属性本身当作被审对象的不变量：C–E 读 .vue 是
+ *   为了回答 style.css 提出的问题，G 则不需要 style.css 参与就能独立判违规。
+ *
+ * 为什么是「一律禁止」而不是「除非显式指定了 ring-offset-color」：
+ *
+ *   把 offset 颜色钉成主题 token（`ring-offset-[var(--surface)]`）能消掉白带，
+ *   但那样的 offset 同时也**看不见**了 —— 它和背景同色，等于白写一圈，只是多
+ *   烧一个 CSS 变量。offset 真正有意义的场合是元素压在**局部**花背景上（图片
+ *   缩略图之类），此时正确颜色是那块局部背景色，全局 token 恰好是错的。也就是
+ *   说「必须配 ring-offset-color」这条契约并不能表达真正的成立条件，只会给出
+ *   虚假的安全感。本仓库另有一套现成的焦点环写法（`focus-visible:shadow-[…]`
+ *   叠两层 box-shadow，颜色全走主题 token，实测 10 处落点/7 个文件），所以
+ *   `ring-offset-*` 在这里没有站得住脚的用法，一律禁止是最稳的形态。真出现例
+ *   外，走下面的 allowlist，并在 review 里对着理由逐条看 —— 这与本文件
+ *   KNOWN_DEAD_MOTION_SELECTORS / TRANSFORM_LOAD_BEARING_CLASSES 的做法一致。
+ *
+ *   注意别把「10 处」误读成「全仓开关都已达标」：另有 72 处开关调用点用的是
+ *   单层 `focus-visible:ring-[3.5px]` + tint 色，只有半透明色晕、缺 1px 实线，
+ *   四种主题/底色组合下对比度 1.22–1.36:1，全部不满足 WCAG SC 1.4.11 的 3:1。
+ *   那 72 处是独立的待清扫项，不在 G 的判据范围内（G 只管白 offset 带）。
+ *
+ * 房屋标准写法（失败信息里会直接给出）：
+ *   `focus-visible:shadow-[0_0_0_3.5px_var(--accent-tint-strong),0_0_0_1px_var(--accent)]`
+ *
+ * LIMITATION（结构性代理，与 C–E 同一条边界）：只扫 class / :class 属性和
+ * `@apply`，不扫任意字符串。若哪天有人把工具类拼进 .ts 常量再绑上去，这里读不
+ * 到；今天全仓 .ts 里没有任何 `focus-visible:` / `ring-` 工具类字符串，这条边
+ * 界是实测过的，不是假设。反过来说，正是这条边界让注释里、文档字符串里的
+ * `ring-offset` 不会被误判 —— 它只认真正落到元素上的那两种surface。
+ */
+const RING_OFFSET_UTILITY = /^ring-offset(?:-|$)/
+
+/**
+ * 已论证过的例外。**当前故意为空**：全仓 `ring-offset` 实测 0 命中（含
+ * `ring-offset-0..8`、`ring-offset-[…]`、颜色形态、`--tw-ring-offset-*`、
+ * 以及 ringOffset 驼峰拼写），所以这条禁令今天不需要任何豁免。
+ *
+ * 要加条目，值写清楚「为什么这处 offset 是可见的、且颜色在两个主题下都对」。
+ * 下面有一个用例会检查这里的每一条都还对应着真实命中，防止豁免变成僵尸条目。
+ */
+const JUSTIFIED_RING_OFFSET = new Map<string, string>([])
+
+interface RingOffsetHit {
+  /** `src/components/common/Toggle.vue:11` 形态，失败信息要能点开。 */
+  location: string
+  /** 命中的原始类名，变体前缀保留（`focus-visible:ring-offset-2`）。 */
+  token: string
+  /** `class 属性` 还是 `@apply`，两种修法落点不同。 */
+  surface: 'class' | '@apply'
+}
+
+/**
+ * 剥掉 `!` important 前缀和所有变体前缀，露出工具类本体。
+ *
+ * 变体一律剥掉，不分是否 interaction-gated —— 这与 INVARIANT D 的
+ * `isPermanentTransformUtility` 相反，那里变体本身就是判据（按下才缩放是对
+ * 的），这里不是：白 offset 带在 `focus-visible:` 下出现，恰恰就是它最初的缺
+ * 陷形态，按变体放行等于放过原案。
+ *
+ * 三种变体形态都要吃下：具名（`focus-visible:`）、任意变体（`[&:hover]:`）、
+ * 带括号参数的具名变体（`group-[.is-on]:`）。括号段整段跳过，所以
+ * `ring-[color:var(--x)]` 里那个冒号不会被误当成变体分隔符。
+ *
+ * VARIANT_PREFIX 刻意写成「一段字符 + 可选括号段」而不是
+ * `(?:[A-Za-z0-9_-]+|\[[^\]]*\])+:` 那种带嵌套量词的形态：后者在遇到不含冒号的
+ * 长横线串时会灾难性回溯（本仓真实 token `collapsible-content--collapsed` 单独
+ * 一个就要 2.6 秒，2302 个 token 直接把 vitest 挂死）。每轮只剥一段前缀，靠外
+ * 层循环处理 `dark:focus-visible:` 这种多段变体，行为一样而复杂度是线性的。
+ */
+const VARIANT_PREFIX = /^[A-Za-z0-9_-]*(?:\[[^\]]*\])?:/
+
+function baseUtilityToken(rawToken: string): string {
+  let token = rawToken
+  for (;;) {
+    if (token.startsWith('!')) {
+      token = token.slice(1)
+      continue
+    }
+    const variant = VARIANT_PREFIX.exec(token)
+    if (!variant || variant[0] === ':') return token
+    token = token.slice(variant[0].length)
+  }
+}
+
+/** True 当 `rawToken` 是 ring-offset 家族的工具类（任意变体、任意值）。 */
+function isRingOffsetUtility(rawToken: string): boolean {
+  return RING_OFFSET_UTILITY.test(baseUtilityToken(rawToken))
+}
+
+/** SFC 的 `<style>` 块，连它在整份文件里的字符偏移一起带出来。 */
+function styleBlocksWithOffset(sfcText: string): { text: string; offset: number }[] {
+  const blocks: { text: string; offset: number }[] = []
+  const re = /<style[^>]*>([\s\S]*?)<\/style>/g
+  let match: RegExpExecArray | null
+  while ((match = re.exec(sfcText))) {
+    blocks.push({ text: match[1], offset: match.index + match[0].indexOf('>') + 1 })
+  }
+  return blocks
+}
+
+/**
+ * 所有把 ring-offset 工具类落到元素上的地方。
+ *
+ * 两种 surface，因为两种的修法落点不一样：
+ *   - CLASS：`class=` / `:class=` 属性里的 token。这是原案的形态。
+ *   - @APPLY：SFC `<style>` 块里的 `@apply`。同一危害的另一种拼法，改的是样式
+ *     表而不是模板。
+ *
+ * 两种 surface 都是**结构化**的（属性值、声明），所以注释里和普通字符串常量里
+ * 的 `ring-offset` 字样天然不会命中 —— 这是刻意的：全文本 grep 会把本文件自己
+ * 的注释也扫成违规。
+ */
+function findRingOffsetHits(files: SourceFile[]): RingOffsetHit[] {
+  const hits: RingOffsetHit[] = []
+
+  for (const file of files) {
+    if (!file.path.endsWith('.vue')) continue
+
+    ANY_CLASS_ATTR.lastIndex = 0
+    let match: RegExpExecArray | null
+    while ((match = ANY_CLASS_ATTR.exec(file.text))) {
+      // 行号要落在 token 自己那一行，而不是 `:class=` 开头那一行：本仓的条件
+      // 绑定动辄跨 4–5 行，报开头行会把人指到没有问题的一行上。游标单调前移，
+      // 所以 `ring-offset-2` 不会回头命中前一个 token 里的同名子串。
+      let cursor = match.index
+      for (const token of rawClassTokens(match[1] ?? match[2] ?? '')) {
+        const at = file.text.indexOf(token, cursor)
+        if (at !== -1) cursor = at + token.length
+        if (!isRingOffsetUtility(token)) continue
+        hits.push({
+          location: `${file.path}:${lineOf(file.text, at === -1 ? match.index : at)}`,
+          token,
+          surface: 'class'
+        })
+      }
+    }
+
+    for (const block of styleBlocksWithOffset(file.text)) {
+      const applyRe = /@apply\s+([^;{}]*)/g
+      let apply: RegExpExecArray | null
+      while ((apply = applyRe.exec(block.text))) {
+        for (const token of apply[1].split(/\s+/)) {
+          if (!token || !isRingOffsetUtility(token)) continue
+          hits.push({
+            location: `${file.path}:${lineOf(file.text, block.offset + apply.index)}`,
+            token,
+            surface: '@apply'
+          })
+        }
+      }
+    }
+  }
+
+  return hits
+}
+
+const RING_OFFSET_FIX =
+  'focus-visible:shadow-[0_0_0_3.5px_var(--accent-tint-strong),0_0_0_1px_var(--accent)]'
+
+function formatRingOffsetHit({ location, token, surface }: RingOffsetHit): string {
+  return [
+    `${location}  \`${token}\` (${surface}) sets a ring offset whose colour nobody chose.`,
+    `  ring-offset-* only writes --tw-ring-offset-width. The colour falls back to`,
+    `  Tailwind preflight's --tw-ring-offset-color: #fff, so a band of PURE WHITE is`,
+    `  inserted between the element and its ring. Near-invisible on a light surface;`,
+    `  on a dark one it is a glaring bright edge (17.01:1 against --surface). This is`,
+    `  exactly how the two switch focus rings regressed, and it was invisible in review`,
+    `  because no white is written anywhere at the call site.`,
+    `  Fix: drop the ring/ring-offset pair and use the house focus ring, which carries`,
+    `  its own colours from theme tokens and needs no offset:`,
+    `    ${RING_OFFSET_FIX}`,
+    `  (see src/components/account/BulkEditAccountModal.vue:122 for a switch using it.)`,
+    `  Pair it with focus-visible:outline-none, as the other call sites do.`,
+    `  If an offset is genuinely required — the element sits on a busy LOCAL background,`,
+    `  so a visible separator is load-bearing — add the token to JUSTIFIED_RING_OFFSET in`,
+    `  this spec with a reason, and pin ring-offset-color for BOTH themes at that site.`
+  ].join('\n')
+}
+
+/* ========================================================================= */
+/* INVARIANT H — no legacy-palette hairline at a call site                     */
+/* ========================================================================= */
+
+/**
+ * 这个守卫防的是什么真实危害：
+ *
+ * 旧设计系统的分隔线写成 `border-b border-gray-200 dark:border-dark-800` ——
+ * 一条 **1px 不透明灰**。Liquid Glass 把它换成了发丝线 token：
+ *   底边 `shadow-[inset_0_-0.5px_0_var(--separator)]`
+ *   顶边 `shadow-[inset_0_0.5px_0_var(--separator)]`
+ * 两者在三个维度上都不是一回事：粗细（1px vs 0.5px）、透明度（不透明 vs
+ * `rgba(60,60,67,0.12)`）、以及**深色适配的归属**。`--separator` 在
+ * `style.css:100` 定义、`style.css:199` 为深色重定义，所以正确写法根本不需要
+ * `dark:` 变体；旧写法则必须手写一条 `dark:border-dark-*`，而那个手写值和亮色
+ * 值是各自独立飘的 —— 这正是深色下分隔线时粗时细、时有时无的来源。
+ *
+ * 为什么必须在调用点上守（这是本守卫存在的唯一理由）：
+ *
+ *   这个 bug class **已经修过一整轮**：`395392704` 把 BulkEditAccountModal 的
+ *   19 处收敛掉了。但它又回来了 —— 上游 `739c0ff9c`（紧凑首页）把
+ *   `border-b border-gray-200 dark:border-dark-800` 重新带进 HomeView，收敛提交
+ *   `b304b4ad4` 处理了那个代码块却漏掉块内两条分隔线，直到本轮才在
+ *   `HomeView.vue:21/79` 修掉。**CI 全程一声不响**：INVARIANT A/B/F 只读
+ *   `style.css`，而这两条旧写法一个字节都不落在样式表里 —— 它们是模板里的
+ *   Tailwind 工具类，编译期才变成 CSS。上游有 606 个 open PR，其中 271 个碰到
+ *   我们改过的文件，每次同步都可能再带一批旧写法进来。守 style.css 守不住这条
+ *   路径，只能守调用点。
+ *
+ * 判据为什么是「方向类 + 旧色板」而不是「一切 border-gray-*」：
+ *
+ *   全仓 `border-(gray|dark)-*` 落在 class 属性上共 427 处。一刀切禁掉会让这个
+ *   文件一加进来就红几十处，而一个天生红的守卫会在第一次挡路时被注释掉，等于
+ *   没有。更要紧的是**大多数命中根本不是分隔线**：`border border-gray-300` 是
+ *   输入框描边、卡片描边，语义是「四边包一圈」，它的正确形态是
+ *   `shadow-[inset_0_0_0_0.5px_var(--hairline)]`，是另一条迁移路线，混在一起报
+ *   会把两种修法搅成一锅。所以本守卫只认**单边方向类**（`border-t/b/l/r`）与旧
+ *   色板同时出现的组合 —— 那是且仅是分隔线场景，127 处四边描边留给将来另一条
+ *   不变量。
+ *
+ *   宽度也刻意收窄到「裸方向类」：`border-l-2` / `border-l-4` 是 blockquote 的
+ *   装饰竖条和刻意的强调轨，2–4px 的粗度是设计意图，不是发丝线走偏 —— 把它们
+ *   报成违规只会制造噪声。`last:border-b-0` 这类重置同理不命中（剥掉变体后是
+ *   `border-b-0`，不是 `border-b`）。
+ *
+ * 为什么是「清单 + 计数」而不是纯清单：
+ *
+ *   仓内有 63 组 (文件, 类名) 共 166 处**早于本次收敛**的既有违规，逐条列进
+ *   KNOWN_LEGACY_BORDER_SITES 后守卫今天是绿的。但只记「这个文件这个类名被豁免
+ *   过」是不够的：HomeView 本来就已经欠着 `border-gray-200/50`，上游再塞一条
+ *   `border-gray-200` 进来时，纯清单会因为「这文件本来就在清单里」而放过 ——
+ *   那恰好就是本轮真实发生的复发。所以清单钉的是**处数**：多出来就是新增（报
+ *   红并指名道姓），少下去就是债还掉了（报红要求把计数改小）。这让清单变成一
+ *   把只能往下走的棘轮，而不是一张永久豁免票。
+ *
+ * LIMITATION（与 C–G 同一条边界）：只扫 class / :class 属性和 `@apply`，不扫任
+ * 意字符串。好处是注释里、`.ts` 常量里、以及本文件自己注释里的 `border-gray-`
+ * 字样天然不命中 —— 全文本 grep 做不到这一点。代价是若有人把工具类拼进 `.ts`
+ * 再绑上去，这里读不到。
+ */
+
+/** 裸单边方向类。`border-b-2` / `border-b-0` 不在内，理由见上。 */
+const HAIRLINE_EDGE_UTILITY = /^border-(?:t|b|l|r)$/
+
+/** 旧色板边框色，含 `/50` 之类透明度后缀。 */
+const LEGACY_BORDER_PALETTE = /^border-(?:gray|dark)-\d{2,3}(?:\/\d{1,3})?$/
+
+interface LegacyBorderDebt {
+  /** 当前实测处数。多于此值 = 新增；少于此值 = 债已还，要把数字改小。 */
+  sites: number
+  /** 债的归属，让 review 看见它而不是被静默容忍。 */
+  why: string
+}
+
+/**
+ * 已知的既有违规账本，key 是 `文件路径::原始类名`（保留变体前缀）。
+ *
+ * 全部早于本轮收敛：`pre-fork，<sha>` 是 fork 之前就欠下的；`上游合入 <sha>` 是
+ * fork 之后从上游带进来的；`本轮 <sha> 漏收敛` 是 Liquid Glass 改造自己写下、
+ * 还没回头收拾的。三类都不是本守卫要挡的东西 —— 它挡的是第 64 组。
+ *
+ * 用行号做 key 是不行的：这些文件天天在动，行号一漂清单就集体失效，守卫会因为
+ * 一次无关的插入而全线报红。`路径::类名` 稳定得多，`sites` 负责把「同一个类名
+ * 在同一个文件里又多了一处」这件事暴露出来。
+ *
+ * 债还完了就把整条删掉 —— 下面有一个用例会检查每条都还对应着真实命中，所以清
+ * 单只会随收敛推进变短，不会变成僵尸豁免。
+ */
+const KNOWN_LEGACY_BORDER_SITES = new Map<string, LegacyBorderDebt>([
+  ['src/components/account/AccountTestModal.vue::border-gray-700', { sites: 2, why: 'pre-fork，5deef27e1' }],
+  ['src/components/account/CreateAccountModal.vue::border-gray-200', { sites: 9, why: 'pre-fork，a07174c19 等 5 个提交' }],
+  ['src/components/account/CreateAccountModal.vue::dark:border-dark-600', { sites: 9, why: 'pre-fork，a07174c19 等 5 个提交' }],
+  ['src/components/account/EditAccountModal.vue::border-gray-200', { sites: 8, why: 'pre-fork，737942332 等 4 个提交' }],
+  ['src/components/account/EditAccountModal.vue::dark:border-dark-600', { sites: 8, why: 'pre-fork，737942332 等 4 个提交' }],
+  ['src/components/account/UpstreamBillingRateCell.vue::border-gray-300', { sites: 1, why: 'pre-fork，429c0e7e4' }],
+  ['src/components/account/UpstreamBillingRateCell.vue::dark:border-dark-600', { sites: 1, why: 'pre-fork，429c0e7e4' }],
+  ['src/components/channels/AvailableChannelsTable.vue::border-gray-100', { sites: 1, why: 'pre-fork，429c0e7e4' }],
+  ['src/components/channels/AvailableChannelsTable.vue::dark:border-dark-700', { sites: 1, why: 'pre-fork，429c0e7e4' }],
+  ['src/components/layout/AppHeader.vue::border-gray-100', { sites: 6, why: '本轮 d2a4daa1e 漏收敛等 3 个提交' }],
+  ['src/components/layout/AppHeader.vue::dark:border-dark-700', { sites: 6, why: '本轮 d2a4daa1e 漏收敛等 3 个提交' }],
+  ['src/components/layout/AppSidebar.vue::border-gray-100', { sites: 1, why: 'pre-fork，5deef27e1' }],
+  ['src/components/layout/AppSidebar.vue::border-gray-200', { sites: 1, why: 'pre-fork，0e13e06e3' }],
+  ['src/components/layout/AppSidebar.vue::dark:border-dark-600', { sites: 1, why: 'pre-fork，0e13e06e3' }],
+  ['src/components/layout/AppSidebar.vue::dark:border-dark-800', { sites: 1, why: 'pre-fork，5deef27e1' }],
+  ['src/components/modelPlaza/PlazaModelPricingTable.vue::border-gray-100', { sites: 8, why: '上游合入 3d99acb0a 等 3 个提交' }],
+  ['src/components/modelPlaza/PlazaModelPricingTable.vue::border-gray-200', { sites: 2, why: 'pre-fork，720c405e3' }],
+  ['src/components/modelPlaza/PlazaModelPricingTable.vue::dark:border-dark-600', { sites: 1, why: 'pre-fork，720c405e3' }],
+  ['src/components/modelPlaza/PlazaModelPricingTable.vue::dark:border-dark-700', { sites: 1, why: 'pre-fork，720c405e3' }],
+  ['src/components/modelPlaza/PlazaModelPricingTable.vue::dark:border-dark-700/60', { sites: 7, why: '上游合入 3d99acb0a 等 2 个提交' }],
+  ['src/components/modelPlaza/PlazaModelPricingTable.vue::dark:border-dark-800', { sites: 1, why: '本轮 cc23e8372 漏收敛' }],
+  ['src/components/user/profile/ProfileAvatarCard.vue::border-gray-100', { sites: 1, why: 'pre-fork，d5819181e' }],
+  ['src/components/user/profile/ProfileAvatarCard.vue::dark:border-dark-700', { sites: 1, why: 'pre-fork，d5819181e' }],
+  ['src/components/user/profile/ProfileBalanceNotifyCard.vue::border-gray-100', { sites: 1, why: 'pre-fork，b32d1a2c9' }],
+  ['src/components/user/profile/ProfileBalanceNotifyCard.vue::dark:border-dark-700', { sites: 1, why: 'pre-fork，b32d1a2c9' }],
+  ['src/components/user/profile/ProfileIdentityBindingsSection.vue::border-gray-100', { sites: 1, why: 'pre-fork，d5819181e' }],
+  ['src/components/user/profile/ProfileIdentityBindingsSection.vue::dark:border-dark-700', { sites: 1, why: 'pre-fork，d5819181e' }],
+  ['src/components/user/profile/ProfilePasskeyCard.vue::border-gray-100', { sites: 1, why: 'pre-fork，cc62979aa' }],
+  ['src/components/user/profile/ProfilePasskeyCard.vue::dark:border-dark-700', { sites: 1, why: 'pre-fork，cc62979aa' }],
+  ['src/views/HomeView.vue::border-gray-200/50', { sites: 1, why: 'pre-fork，5763f5ced' }],
+  ['src/views/HomeView.vue::dark:border-dark-800/50', { sites: 1, why: 'pre-fork，5763f5ced' }],
+  ['src/views/KeyUsageView.vue::border-gray-200', { sites: 4, why: 'pre-fork，d4f6ad722 等 2 个提交' }],
+  ['src/views/KeyUsageView.vue::border-gray-200/50', { sites: 1, why: 'pre-fork，d4f6ad722' }],
+  ['src/views/KeyUsageView.vue::dark:border-dark-700', { sites: 4, why: 'pre-fork，d4f6ad722 等 2 个提交' }],
+  ['src/views/KeyUsageView.vue::dark:border-dark-800/50', { sites: 1, why: 'pre-fork，d4f6ad722' }],
+  ['src/views/admin/AccountsView.vue::border-gray-300', { sites: 1, why: 'pre-fork，ed280b81f' }],
+  ['src/views/admin/AccountsView.vue::dark:border-dark-600', { sites: 1, why: 'pre-fork，ed280b81f' }],
+  ['src/views/admin/ChannelsView.vue::border-gray-200', { sites: 6, why: '本轮 dcffb79d8 漏收敛等 6 个提交' }],
+  ['src/views/admin/ChannelsView.vue::dark:border-dark-600', { sites: 3, why: 'pre-fork，889b5b4f3 等 3 个提交' }],
+  ['src/views/admin/ChannelsView.vue::dark:border-dark-700', { sites: 3, why: '本轮 dcffb79d8 漏收敛等 3 个提交' }],
+  ['src/views/admin/GroupsView.vue::border-gray-200', { sites: 15, why: 'pre-fork，de9b9c9df 等 4 个提交' }],
+  ['src/views/admin/GroupsView.vue::dark:border-dark-400', { sites: 8, why: 'pre-fork，de9b9c9df' }],
+  ['src/views/admin/GroupsView.vue::dark:border-dark-600', { sites: 3, why: 'pre-fork，f597c1581 等 2 个提交' }],
+  ['src/views/admin/GroupsView.vue::dark:border-dark-700', { sites: 4, why: 'pre-fork，89edba802' }],
+  ['src/views/admin/RiskControlView.vue::border-gray-100', { sites: 2, why: '本轮 d2a4daa1e 漏收敛等 2 个提交' }],
+  ['src/views/admin/RiskControlView.vue::dark:border-dark-700', { sites: 2, why: '本轮 d2a4daa1e 漏收敛等 2 个提交' }],
+  ['src/views/admin/SettingsView.vue::border-gray-200', { sites: 1, why: 'pre-fork，e872cbec0' }],
+  ['src/views/admin/SettingsView.vue::dark:border-dark-700', { sites: 1, why: 'pre-fork，e872cbec0' }],
+  ['src/views/admin/UsageView.vue::border-gray-100', { sites: 1, why: 'pre-fork，1a3cc2a78' }],
+  ['src/views/admin/UsageView.vue::border-gray-200', { sites: 1, why: '本轮 dcffb79d8 漏收敛' }],
+  ['src/views/admin/UsageView.vue::dark:border-dark-700', { sites: 1, why: '本轮 dcffb79d8 漏收敛' }],
+  ['src/views/admin/UsageView.vue::dark:border-dark-700/50', { sites: 1, why: 'pre-fork，1a3cc2a78' }],
+  ['src/views/admin/ops/components/OpsConcurrencyCard.vue::border-gray-200', { sites: 1, why: 'pre-fork，8ae75e7f6' }],
+  ['src/views/admin/ops/components/OpsConcurrencyCard.vue::dark:border-dark-700', { sites: 1, why: 'pre-fork，8ae75e7f6' }],
+  ['src/views/user/BatchImageGuideView.vue::border-gray-100', { sites: 1, why: 'pre-fork，8fab63699' }],
+  ['src/views/user/BatchImageGuideView.vue::border-gray-200', { sites: 1, why: 'pre-fork，8fab63699' }],
+  ['src/views/user/BatchImageGuideView.vue::dark:border-dark-700', { sites: 2, why: 'pre-fork，8fab63699' }],
+  ['src/views/user/CustomPageView.vue::border-gray-200', { sites: 3, why: 'pre-fork，4cbd4932a 等 2 个提交' }],
+  ['src/views/user/CustomPageView.vue::dark:border-dark-600', { sites: 3, why: 'pre-fork，4cbd4932a 等 2 个提交' }],
+  ['src/views/user/RedeemView.vue::border-gray-100', { sites: 1, why: 'pre-fork，5763f5ced' }],
+  ['src/views/user/RedeemView.vue::dark:border-dark-700', { sites: 1, why: 'pre-fork，5763f5ced' }],
+  ['src/views/user/UsageView.vue::border-gray-200', { sites: 1, why: '本轮 d2a4daa1e 漏收敛' }],
+  ['src/views/user/UsageView.vue::dark:border-dark-700', { sites: 1, why: '本轮 d2a4daa1e 漏收敛' }]
+])
+
+interface LegacyBorderHit {
+  /** `src/views/HomeView.vue:21` 形态，失败信息要能点开。 */
+  location: string
+  /** 命中的原始类名，变体前缀保留（`dark:border-dark-800`）。 */
+  token: string
+  /** 同一个 class 属性里出现的方向类，决定该用顶边还是底边阴影。 */
+  edges: string[]
+  /** `class 属性` 还是 `@apply`，两种修法落点不同。 */
+  surface: 'class' | '@apply'
+  /** 账本 key，`路径::类名`。 */
+  key: string
+}
+
+/**
+ * 一组 token（同一个 class 属性 / 同一条 @apply）里的旧色板分隔线命中。
+ *
+ * 变体一律用 G 的 `baseUtilityToken` 剥掉 —— 那是个**线性**剥离器，每轮只吃一
+ * 段前缀。这里必须复用它而不是另写一个 `(?:[\w-]+|\[[^\]]*\])+:` 那样的嵌套量
+ * 词正则：后者在本仓真实 token（`collapsible-content--collapsed` 这类长连字符
+ * 串）上会灾难性回溯，单个 token 就要秒级，足以把 vitest 挂死。
+ *
+ * `dark:` 变体也要剥：旧写法的深色分支正是 `dark:border-dark-800`，按变体放行
+ * 等于放过原案的一半。
+ */
+function legacyBorderTokensIn(tokens: string[]): { edges: string[]; legacy: number[] } {
+  const bases = tokens.map(baseUtilityToken)
+  const edges: string[] = []
+  const legacy: number[] = []
+  for (let i = 0; i < bases.length; i += 1) {
+    if (HAIRLINE_EDGE_UTILITY.test(bases[i])) edges.push(bases[i])
+    else if (LEGACY_BORDER_PALETTE.test(bases[i])) legacy.push(i)
+  }
+  // 方向类缺席 = 不是分隔线场景（四边描边等），整组放过。
+  return edges.length ? { edges, legacy } : { edges: [], legacy: [] }
+}
+
+/**
+ * 所有把「单边方向类 + 旧色板」落到元素上的地方。
+ *
+ * 两种 surface，与 INVARIANT G 同构：CLASS 是模板里的属性（原案形态），@APPLY
+ * 是 SFC `<style>` 块里的拼法（CustomPageView 的侧栏/头部分隔线就是这种）。两
+ * 种都是结构化位置，所以注释与字符串常量天然不命中。
+ */
+function findLegacyBorderHits(files: SourceFile[]): LegacyBorderHit[] {
+  const hits: LegacyBorderHit[] = []
+
+  for (const file of files) {
+    if (!file.path.endsWith('.vue')) continue
+
+    ANY_CLASS_ATTR.lastIndex = 0
+    let match: RegExpExecArray | null
+    while ((match = ANY_CLASS_ATTR.exec(file.text))) {
+      const tokens = rawClassTokens(match[1] ?? match[2] ?? '')
+      const { edges, legacy } = legacyBorderTokensIn(tokens)
+      if (!legacy.length) continue
+      // 行号落在 token 自己那一行，不是 `:class=` 开头那一行 —— 与 G 同理，本仓
+      // 条件绑定动辄跨 4–5 行。游标单调前移，避免回头命中同名子串。
+      let cursor = match.index
+      for (let i = 0; i < tokens.length; i += 1) {
+        const at = file.text.indexOf(tokens[i], cursor)
+        if (at !== -1) cursor = at + tokens[i].length
+        if (!legacy.includes(i)) continue
+        hits.push({
+          location: `${file.path}:${lineOf(file.text, at === -1 ? match.index : at)}`,
+          token: tokens[i],
+          edges,
+          surface: 'class',
+          key: `${file.path}::${tokens[i]}`
+        })
+      }
+    }
+
+    for (const block of styleBlocksWithOffset(file.text)) {
+      const applyRe = /@apply\s+([^;{}]*)/g
+      let apply: RegExpExecArray | null
+      while ((apply = applyRe.exec(block.text))) {
+        const tokens = apply[1].split(/\s+/).filter(Boolean)
+        const { edges, legacy } = legacyBorderTokensIn(tokens)
+        for (const i of legacy) {
+          hits.push({
+            location: `${file.path}:${lineOf(file.text, block.offset + apply.index)}`,
+            token: tokens[i],
+            edges,
+            surface: '@apply',
+            key: `${file.path}::${tokens[i]}`
+          })
+        }
+      }
+    }
+  }
+
+  return hits
+}
+
+const HAIRLINE_BOTTOM = 'shadow-[inset_0_-0.5px_0_var(--separator)]'
+const HAIRLINE_TOP = 'shadow-[inset_0_0.5px_0_var(--separator)]'
+
+/** 方向类 -> 该用哪条发丝线阴影。左右两边本仓也有现成写法。 */
+const HAIRLINE_FOR_EDGE = new Map<string, string>([
+  ['border-b', HAIRLINE_BOTTOM],
+  ['border-t', HAIRLINE_TOP],
+  ['border-r', 'shadow-[inset_-0.5px_0_0_var(--separator)]'],
+  ['border-l', 'shadow-[inset_0.5px_0_0_var(--separator)]']
+])
+
+function formatLegacyBorderHit({ location, token, edges, surface }: LegacyBorderHit): string {
+  const suggested = edges
+    .map((edge) => `${edge} -> ${HAIRLINE_FOR_EDGE.get(edge) ?? HAIRLINE_BOTTOM}`)
+    .join('\n    ')
+  return [
+    `${location}  \`${token}\` (${surface}) paints a legacy 1px opaque separator.`,
+    `  It pairs ${edges.join(' + ')} with the OLD palette. The Liquid Glass hairline is a`,
+    `  0.5px SEMI-TRANSPARENT token, so neither the weight nor the opacity lines up:`,
+    `  1px #e5e7eb vs 0.5px rgba(60,60,67,0.12) reads as a hard rule against a seam.`,
+    `  --separator also redefines itself for dark (src/style.css:100 and :199), so the`,
+    `  correct spelling needs NO dark: variant — a hand-written dark:border-dark-* drifts`,
+    `  independently of its light value, which is how dark mode ended up inconsistent.`,
+    `  Fix: drop the border utilities (both the direction class and the colour, light AND`,
+    `  dark) and put the hairline on the box-shadow instead:`,
+    `    ${suggested}`,
+    `  (see src/views/HomeView.vue:21 for the bottom edge and :79 for the top edge.)`,
+    `  This bug class was already fixed once in 395392704, then walked back in via`,
+    `  upstream 739c0ff9c — which is why it is guarded at the call site and not in`,
+    `  style.css, where none of these classes ever appear.`,
+    `  If this really is a pre-existing site rather than a new one, add it to`,
+    `  KNOWN_LEGACY_BORDER_SITES in this spec with its site count and a reason.`
+  ].join('\n')
+}
+
+/* ========================================================================= */
 /* Tests                                                                      */
 /* ========================================================================= */
 
@@ -1955,5 +2456,351 @@ describe('CSS invariants: the press-scale kill stays killed (INVARIANT F)', () =
     expect(findMissingPressScaleKills(weakened, 'planted.css').map((e) => e.className)).toEqual([
       ...PRESS_SCALE_KILL_CLASSES
     ])
+  })
+})
+
+describe('CSS invariants: no unpainted ring offset at a call site (INVARIANT G)', () => {
+  it('never lets a ring-offset-* utility reach an element', () => {
+    const hits = findRingOffsetHits(sourceFiles()).filter(
+      (hit) => !JUSTIFIED_RING_OFFSET.has(hit.token)
+    )
+    const report = hits.map(formatRingOffsetHit).join('\n\n')
+
+    expect(
+      hits,
+      hits.length === 0
+        ? ''
+        : `\n${hits.length} ring-offset utility/utilities with an unchosen colour:\n\n${report}\n`
+    ).toEqual([])
+  })
+
+  it('keeps the allowlist honest: every entry is a token that still exists', () => {
+    // 与 INVARIANT B 的 allowlist 陈旧检查同一形状：豁免一旦对应不上真实命中，
+    // 就是个僵尸条目，会让下一个人以为某处 offset 是被批准过的。
+    const live = new Set(findRingOffsetHits(sourceFiles()).map((hit) => hit.token))
+    const stale = [...JUSTIFIED_RING_OFFSET.keys()].filter((token) => !live.has(token))
+
+    expect(
+      stale,
+      `JUSTIFIED_RING_OFFSET lists token(s) that no call site uses any more: ` +
+        `${stale.join(', ')}. Delete them.`
+    ).toEqual([])
+  })
+
+  it('detects the planted regression and covers every variant form (not vacuous)', () => {
+    // 原案：两个开关的焦点环。
+    const regressed: SourceFile[] = [
+      {
+        path: 'src/components/common/Toggle.vue',
+        text: '<button class="switch focus-visible:ring-2 focus-visible:ring-offset-2" />'
+      }
+    ]
+    const hits = findRingOffsetHits(regressed)
+    expect(hits).toEqual([
+      {
+        location: 'src/components/common/Toggle.vue:1',
+        token: 'focus-visible:ring-offset-2',
+        surface: 'class'
+      }
+    ])
+    // 失败信息必须带 file:line、命中的类名、正确写法和一句为什么。
+    const message = formatRingOffsetHit(hits[0])
+    expect(message.startsWith('src/components/common/Toggle.vue:1  ')).toBe(true)
+    expect(message).toContain('focus-visible:ring-offset-2')
+    expect(message).toContain(RING_OFFSET_FIX)
+    expect(message).toContain('PURE WHITE')
+
+    // 全家族：0–8 的每一档、任意值、颜色形态、裸类名、important、以及具名/任意/
+    // 带括号参数三种变体前缀。漏掉任何一种，守卫就是能被绕过的。
+    for (const token of [
+      'ring-offset-0',
+      'ring-offset-1',
+      'ring-offset-2',
+      'ring-offset-4',
+      'ring-offset-8',
+      'ring-offset-[3px]',
+      'ring-offset-[length:var(--w)]',
+      'ring-offset-white',
+      'ring-offset-gray-100/50',
+      'ring-offset',
+      '!ring-offset-2',
+      'focus:ring-offset-2',
+      'focus-visible:ring-offset-2',
+      'dark:ring-offset-2',
+      'dark:focus-visible:!ring-offset-2',
+      'hover:ring-offset-[3px]',
+      'md:ring-offset-1',
+      '[&:focus-visible]:ring-offset-2',
+      'group-[.is-on]:ring-offset-2'
+    ]) {
+      expect(isRingOffsetUtility(token), `${token} should be flagged`).toBe(true)
+    }
+
+    // 误伤边界。`ring-[3.5px]` / `ring-[color:var(--accent)]` 是本仓通行写法，
+    // 且 `shadow-[…]` 与 `[--ring-offset:2px]` 里都含 `ring-offset` 子串 ——
+    // 锚定在工具类词首，才不会把它们扫成违规。
+    for (const token of [
+      'ring-2',
+      'ring-[3.5px]',
+      'ring-[color:var(--accent)]',
+      'focus-visible:ring-[color:var(--accent)]',
+      'shadow-[0_0_0_2px_var(--ring-offset-color)]',
+      '[--ring-offset:2px]',
+      'my-ring-offset-2',
+      'ring-offsetish-2'
+    ]) {
+      expect(isRingOffsetUtility(token), `${token} should NOT be flagged`).toBe(false)
+    }
+  })
+
+  it('reads @apply and :class object/array forms, and ignores comments and .ts strings', () => {
+    // `@apply` 是同一危害的样式表拼法，落点在 <style> 块而不是模板。
+    const applied: SourceFile[] = [
+      {
+        path: 'src/components/common/Toggle.vue',
+        text: '<template>\n  <button class="switch" />\n</template>\n<style scoped>\n.switch {\n  @apply ring-2 ring-offset-2;\n}\n</style>\n'
+      }
+    ]
+    expect(findRingOffsetHits(applied)).toEqual([
+      { location: 'src/components/common/Toggle.vue:6', token: 'ring-offset-2', surface: '@apply' }
+    ])
+
+    // 条件绑定的对象/数组形态也要读到 —— 原案里两个开关正是 :class 三元。
+    const bound: SourceFile[] = [
+      {
+        path: 'src/views/user/KeysView.vue',
+        text: '<button\n  :class="[\n    \'switch\',\n    on ? \'focus-visible:ring-offset-2\' : \'\'\n  ]"\n/>'
+      }
+    ]
+    // 行号是 token 所在的第 4 行，不是 `:class=` 开头的第 2 行。本仓的条件绑定
+    // 常跨 4–5 行，报开头行会把人指到一行没毛病的代码上 —— 这是实测发现并修掉
+    // 的一个真实缺陷，用例钉住它。
+    expect(findRingOffsetHits(bound)).toEqual([
+      {
+        location: 'src/views/user/KeysView.vue:4',
+        token: 'focus-visible:ring-offset-2',
+        surface: 'class'
+      }
+    ])
+
+    // 注释里、字符串常量里的字样不是调用点。第一条是本文件自己注释的形状：全文本
+    // grep 会把它误判成违规，按 surface 扫才不会。
+    const noise: SourceFile[] = [
+      {
+        path: 'src/components/common/Toggle.vue',
+        text: '<template>\n  <!-- never use ring-offset-2 here: it paints a white band -->\n  <button class="switch focus-visible:ring-[color:var(--accent)]" />\n</template>\n<script setup lang="ts">\nconst doc = \'ring-offset-2 is banned by INVARIANT G\'\n</script>\n'
+      },
+      {
+        path: 'src/design/tokens.ts',
+        text: 'export const BANNED = [\'ring-offset-2\']\n'
+      }
+    ]
+    expect(findRingOffsetHits(noise)).toEqual([])
+  })
+})
+
+describe('CSS invariants: no legacy-palette hairline at a call site (INVARIANT H)', () => {
+  /** 命中按账本 key 归组，便于和 `sites` 计数对照。 */
+  function groupByKey(hits: LegacyBorderHit[]): Map<string, LegacyBorderHit[]> {
+    const grouped = new Map<string, LegacyBorderHit[]>()
+    for (const hit of hits) {
+      const bucket = grouped.get(hit.key)
+      if (bucket) bucket.push(hit)
+      else grouped.set(hit.key, [hit])
+    }
+    return grouped
+  }
+
+  it('never lets a new legacy 1px separator reach an element', () => {
+    const grouped = groupByKey(findLegacyBorderHits(sourceFiles()))
+    const unlisted: LegacyBorderHit[] = []
+    const grown: string[] = []
+
+    for (const [key, hits] of grouped) {
+      const debt = KNOWN_LEGACY_BORDER_SITES.get(key)
+      if (!debt) {
+        unlisted.push(...hits)
+        continue
+      }
+      if (hits.length > debt.sites) {
+        // 同一个文件同一个类名又多出来几处 —— 这正是 HomeView 那次复发的形状：
+        // 文件本来就欠着债，纯清单会因为「已在清单里」而放过它。
+        grown.push(
+          `${key}\n  ledger says ${debt.sites} site(s) (${debt.why}), found ${hits.length}. ` +
+            `New one(s) among:\n${hits.map((hit) => `    ${hit.location}`).join('\n')}\n` +
+            `  Fix the new site(s), or bump \`sites\` to ${hits.length} with a reason if the` +
+            ` growth is genuinely pre-existing debt you are only now noticing.`
+        )
+      }
+    }
+
+    const report = [
+      ...unlisted.map(formatLegacyBorderHit),
+      ...(grown.length ? [`Existing debt grew:\n\n${grown.join('\n\n')}`] : [])
+    ].join('\n\n')
+    const total = unlisted.length + grown.length
+
+    expect(
+      total,
+      total === 0
+        ? ''
+        : `\n${total} legacy 1px separator regression(s) at a call site:\n\n${report}\n`
+    ).toBe(0)
+  })
+
+  it('keeps the debt ledger honest: no entry outlives the violation it records', () => {
+    // 与 INVARIANT B / G 的 allowlist 陈旧检查同一形状，只是这里连处数一起校
+    // 验：债还掉了清单必须跟着缩短，否则豁免就变成了永久通行证。
+    const grouped = groupByKey(findLegacyBorderHits(sourceFiles()))
+    const stale: string[] = []
+
+    for (const [key, debt] of KNOWN_LEGACY_BORDER_SITES) {
+      const found = grouped.get(key)?.length ?? 0
+      if (found === 0) stale.push(`${key} — ledger says ${debt.sites}, now 0. Delete the entry.`)
+      else if (found < debt.sites) {
+        stale.push(`${key} — ledger says ${debt.sites}, now ${found}. Lower \`sites\` to ${found}.`)
+      }
+    }
+
+    expect(
+      stale,
+      stale.length === 0
+        ? ''
+        : `\nKNOWN_LEGACY_BORDER_SITES is stale — debt was paid down but not recorded:\n` +
+          `${stale.map((line) => `  ${line}`).join('\n')}\n`
+    ).toEqual([])
+  })
+
+  it('detects the planted regression and reports the right edge (not vacuous)', () => {
+    // 原案：上游 739c0ff9c 带进 HomeView 的那条底边分隔线。
+    const regressed: SourceFile[] = [
+      {
+        path: 'src/views/HomeView.vue',
+        text: '<header class="px-4 py-4 border-b border-gray-200 dark:border-dark-800">'
+      }
+    ]
+    const hits = findLegacyBorderHits(regressed)
+    expect(hits.map((hit) => hit.token)).toEqual(['border-gray-200', 'dark:border-dark-800'])
+    expect(hits[0]).toEqual({
+      location: 'src/views/HomeView.vue:1',
+      token: 'border-gray-200',
+      edges: ['border-b'],
+      surface: 'class',
+      key: 'src/views/HomeView.vue::border-gray-200'
+    })
+
+    // 失败信息必须带 file:line、命中类名、正确写法和一句为什么。
+    const message = formatLegacyBorderHit(hits[0])
+    expect(message.startsWith('src/views/HomeView.vue:1  ')).toBe(true)
+    expect(message).toContain('border-gray-200')
+    expect(message).toContain(HAIRLINE_BOTTOM)
+    expect(message).toContain('0.5px rgba(60,60,67,0.12)')
+    expect(message).toContain('NO dark: variant')
+
+    // 顶边要给顶边的写法，不能一律推荐底边。
+    const topEdge = findLegacyBorderHits([
+      { path: 'src/views/HomeView.vue', text: '<footer class="border-t border-gray-200">' }
+    ])
+    expect(formatLegacyBorderHit(topEdge[0])).toContain(HAIRLINE_TOP)
+    expect(formatLegacyBorderHit(topEdge[0])).not.toContain(HAIRLINE_BOTTOM)
+  })
+
+  it('covers every legacy spelling and does not fire on the forms that are fine', () => {
+    // 全家族：两个色板、透明度后缀、四个方向、变体前缀、important。漏一种就能绕。
+    for (const attr of [
+      'border-b border-gray-200',
+      'border-t border-gray-100',
+      'border-l border-gray-300',
+      'border-r border-dark-700',
+      'border-b border-gray-200/50',
+      'border-b dark:border-dark-800/50',
+      'border-b dark:border-dark-600',
+      'dark:border-b dark:border-dark-700',
+      'border-b !border-gray-200',
+      'md:border-t border-gray-200',
+      '[&>li]:border-b [&>li]:border-gray-100'
+    ]) {
+      const hits = findLegacyBorderHits([{ path: 'src/x.vue', text: `<div class="${attr}">` }])
+      expect(hits.length, `${attr} should be flagged`).toBeGreaterThan(0)
+    }
+
+    // 误伤边界，每一条都是本仓真实写法：
+    //   1–2  发丝线 token 本身，以及它和方向类无关的正确形态；
+    //   3–4  四边描边（输入框/卡片），语义不同、修法不同，归另一条不变量；
+    //   5–6  2–4px 强调轨与 blockquote 竖条，粗度是设计意图；
+    //   7    `last:border-b-0` 是重置，不是边框；
+    //   8    方向类配主题 token，已经是收敛后的写法；
+    //   9    非旧色板的语义色，不在本守卫范围内。
+    for (const attr of [
+      'px-4 py-4 shadow-[inset_0_-0.5px_0_var(--separator)]',
+      'shadow-[inset_0_0.5px_0_var(--separator)] text-gray-500 dark:text-dark-400',
+      'border border-gray-300 dark:border-dark-600',
+      'rounded-xl border border-gray-200',
+      'border-l-2 border-gray-200 pl-4',
+      'border-l-4 border-gray-300 pl-4 italic',
+      'border-b-2 border-gray-200 last:border-b-0',
+      'border-b border-[color:var(--separator)]',
+      'border-b border-red-500 dark:border-red-400'
+    ]) {
+      const hits = findLegacyBorderHits([{ path: 'src/x.vue', text: `<div class="${attr}">` }])
+      expect(hits.map((hit) => hit.token), `${attr} should NOT be flagged`).toEqual([])
+    }
+  })
+
+  it('reads @apply and :class forms, and ignores comments and .ts strings', () => {
+    // `@apply` 是同一危害的样式表拼法 —— CustomPageView 的侧栏分隔线正是这种。
+    const applied: SourceFile[] = [
+      {
+        path: 'src/views/user/CustomPageView.vue',
+        text: '<style scoped>\n.page-sidebar {\n  @apply flex flex-col border-r border-gray-200 dark:border-dark-600;\n}\n</style>\n'
+      }
+    ]
+    expect(findLegacyBorderHits(applied)).toEqual([
+      {
+        location: 'src/views/user/CustomPageView.vue:3',
+        token: 'border-gray-200',
+        edges: ['border-r'],
+        surface: '@apply',
+        key: 'src/views/user/CustomPageView.vue::border-gray-200'
+      },
+      {
+        location: 'src/views/user/CustomPageView.vue:3',
+        token: 'dark:border-dark-600',
+        edges: ['border-r'],
+        surface: '@apply',
+        key: 'src/views/user/CustomPageView.vue::dark:border-dark-600'
+      }
+    ])
+
+    // 条件绑定的数组形态，行号要落在 token 自己那一行。
+    const bound: SourceFile[] = [
+      {
+        path: 'src/views/admin/UsageView.vue',
+        text: '<tr\n  :class="[\n    \'border-b\',\n    dense ? \'border-gray-200\' : \'\'\n  ]"\n/>'
+      }
+    ]
+    expect(findLegacyBorderHits(bound)).toEqual([
+      {
+        location: 'src/views/admin/UsageView.vue:4',
+        token: 'border-gray-200',
+        edges: ['border-b'],
+        surface: 'class',
+        key: 'src/views/admin/UsageView.vue::border-gray-200'
+      }
+    ])
+
+    // 注释里、字符串常量里的字样不是调用点。第一条正是本文件自己注释的形状 ——
+    // 全文本 grep 会把 INVARIANT H 的注释本身扫成违规，按 surface 扫才不会。
+    const noise: SourceFile[] = [
+      {
+        path: 'src/views/HomeView.vue',
+        text: '<template>\n  <!-- was border-b border-gray-200 dark:border-dark-800, now a hairline -->\n  <header class="shadow-[inset_0_-0.5px_0_var(--separator)]" />\n</template>\n<script setup lang="ts">\nconst legacy = \'border-b border-gray-200\'\n</script>\n'
+      },
+      {
+        path: 'src/design/tokens.ts',
+        text: 'export const LEGACY = [\'border-b\', \'border-gray-200\']\n'
+      }
+    ]
+    expect(findLegacyBorderHits(noise)).toEqual([])
   })
 })

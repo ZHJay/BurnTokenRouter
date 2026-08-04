@@ -6367,4 +6367,37 @@ onUnmounted(() => {
 .tip-inset {
   @apply rounded-md bg-white/[0.08] p-2;
 }
+
+/* 为什么需要这个本地块：style.css 的减弱动效分支用
+   `[class*='active:scale']:active` 匹配 class 属性，只在模板里裸写工具类时生效。
+   .row-action 的按压缩放是 `@apply active:scale-[0.96]`，编译后落在
+   `.row-action:active` 上，元素 class 属性里没有 `active:scale` 这个串，全局那条
+   匹配不到 —— 已用 compileStyleAsync + 本仓 tailwind 配置编译核对。
+
+   收窄 transition-property：上面的 transition 里显式列了 transform 100ms，
+   这里去掉它，只留颜色两项。
+
+   补的是全局规则的形状，不是 SettingsView / CustomPageView 的形状：全局那条把
+   scale-kill 与 filter: brightness(0.94) 成对使用（style.css:1718），这里沿用同
+   一个配对与同一个值。transform: none 在这里等价于全局那份变量中和：这些按钮上没有
+   任何承重的 translate（class 属性只有 hover 变色）。与本仓另外两种形状的差别是有意
+   的，不要照着它们改这里：
+   - SettingsView:12202 / :12355 与 CustomPageView:488 只写 transform: none，
+     不带 brightness；
+   - .btn 的按压缩放同样来自 @apply（style.css:386）、同样躲开上面那个属性选择器，
+     它落在 style.css:1734 的 `transform: none !important`，也不带 brightness。
+   即减弱动效下的按压反馈在本仓共有三种形状，这里取带 brightness 的那一种。
+
+   为什么这里要带 brightness：这些行内按钮除缩放外只有 hover 反馈，hover 在触屏上
+   不触发，缩放是唯一的按压通道。 */
+@media (prefers-reduced-motion: reduce) {
+  .row-action {
+    transition-property: background-color, color;
+  }
+
+  .row-action:active {
+    transform: none;
+    filter: brightness(0.94);
+  }
+}
 </style>

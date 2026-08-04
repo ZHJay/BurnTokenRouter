@@ -1289,6 +1289,28 @@ const loading = ref(false)
 const submitting = ref(false)
 const now = ref(new Date())
 let resetTimer: ReturnType<typeof setInterval> | null = null
+
+/**
+ * 卸载后仍会触发的两个延时器。
+ *
+ * copyToClipboard 排的 800ms 是往已销毁组件写 ref（良性，最多一条 Vue 警告）；
+ * executeCcsImport 排的 100ms 会调用 appStore.showError —— 那是全局 store，用户
+ * 已经离开这个页面之后再弹一条错误 toast 是能看见的错行为。两者都没留句柄，
+ * onUnmounted 里取消不掉，所以这里自持句柄统一清理。
+ */
+let copiedResetTimer: ReturnType<typeof setTimeout> | null = null
+let ccsProbeTimer: ReturnType<typeof setTimeout> | null = null
+
+function cancelPendingTimers() {
+  if (copiedResetTimer !== null) {
+    clearTimeout(copiedResetTimer)
+    copiedResetTimer = null
+  }
+  if (ccsProbeTimer !== null) {
+    clearTimeout(ccsProbeTimer)
+    ccsProbeTimer = null
+  }
+}
 const usageStats = ref<Record<string, BatchApiKeyUsageStats>>({})
 const userGroupRates = ref<Record<number, number>>({})
 
@@ -1453,7 +1475,10 @@ const copyToClipboard = async (text: string, keyId: number) => {
   const success = await clipboardCopy(text, t('keys.copied'))
   if (success) {
     copiedKeyId.value = keyId
-    setTimeout(() => {
+    // 连点多行时先掐掉上一轮，否则前一个 800ms 会提前把新行的对勾清掉。
+    if (copiedResetTimer !== null) clearTimeout(copiedResetTimer)
+    copiedResetTimer = setTimeout(() => {
+      copiedResetTimer = null
       copiedKeyId.value = null
     }, 800)
   }
@@ -1931,7 +1956,9 @@ const executeCcsImport = (row: ApiKey, clientType: CcSwitchClientType) => {
     window.open(deeplink, '_self')
 
     // Check if the protocol handler worked by detecting if we're still focused
-    setTimeout(() => {
+    if (ccsProbeTimer !== null) clearTimeout(ccsProbeTimer)
+    ccsProbeTimer = setTimeout(() => {
+      ccsProbeTimer = null
       if (document.hasFocus()) {
         // Still focused means the protocol handler likely failed
         appStore.showError(t('keys.ccSwitchNotInstalled'))
@@ -1980,5 +2007,6 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('click', closeGroupSelector)
   if (resetTimer) clearInterval(resetTimer)
+  cancelPendingTimers()
 })
 </script>

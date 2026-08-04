@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { afterEach, describe, expect, it, vi, beforeEach } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import AccountUsageCell from '../AccountUsageCell.vue'
 import type { Account } from '@/types'
@@ -54,22 +54,30 @@ function makeAccount(overrides: Partial<Account>): Account {
   }
 }
 
+/**
+ * 把视口钉在桌面分支。移动端下单元格会把 usage 拉取压进 IntersectionObserver 等进屏，
+ * 而测试环境里的 observer 是永不回调的假实现，账号就永远等不到 usage 响应。
+ */
+function stubDesktopViewport() {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation(() => ({
+      matches: true,
+      media: '(min-width: 768px)',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }))
+  })
+}
+
 describe('AccountUsageCell', () => {
   beforeEach(() => {
     getUsage.mockReset()
-    Object.defineProperty(window, 'matchMedia', {
-      writable: true,
-      value: vi.fn().mockImplementation(() => ({
-        matches: true,
-        media: '(min-width: 768px)',
-        onchange: null,
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-      }))
-    })
+    stubDesktopViewport()
   })
 
   it('renders eligible Ollama Cloud state inside the unified usage cell', () => {
@@ -1479,5 +1487,133 @@ describe('AccountUsageCell', () => {
     expect(wrapper.text()).toContain('7d|56')
     expect(wrapper.text()).not.toContain('7d S')
     expect(wrapper.text()).not.toContain('7d F')
+  })
+})
+
+describe('AccountUsageCell pending timer cleanup', () => {
+  // 复制按钮的 title 是稳定的行为锚点：linkCopied 只改按钮文案，不动 title。
+  const COPY_BUTTON = 'button[title="admin.accounts.copyLink"]'
+  const VALIDATION_URL = 'https://example.com/verify'
+
+  const writeText = vi.fn()
+  let originalClipboard: PropertyDescriptor | undefined
+
+  beforeEach(() => {
+    getUsage.mockReset()
+    writeText.mockReset()
+    writeText.mockResolvedValue(undefined)
+    stubDesktopViewport()
+
+    // jsdom 不实现 Clipboard API，而 copyValidationURL() 要 await writeText 成功才排延时器。
+    originalClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard')
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText }
+    })
+
+    // 只假造 setTimeout/clearTimeout：flushPromises 走 setImmediate，别处的 setInterval
+    // 也留给真实计时器，于是 getTimerCount() 数到的就只有被测的那个复位延时器。
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    if (originalClipboard) {
+      Object.defineProperty(navigator, 'clipboard', originalClipboard)
+    } else {
+      delete (navigator as any).clipboard
+    }
+  })
+
+  /**
+   * forbidden + validation_url 是「复制校验链接」按钮出现的唯一入口：validationURL 只从
+   * usage 响应的 validation_url 算出来，为空时 copyValidationURL() 开头就 return，压根排不上延时器。
+   * account id 每个用例单独一个，避开组件模块级 usage 缓存的串味。
+   */
+  const mountForbiddenCell = async (accountId: number) => {
+    getUsage.mockResolvedValue({
+      is_forbidden: true,
+      forbidden_type: 'validation',
+      validation_url: VALIDATION_URL
+    })
+
+    const wrapper = mount(AccountUsageCell, {
+      props: {
+        account: makeAccount({
+          id: accountId,
+          platform: 'antigravity',
+          type: 'oauth',
+          extra: {}
+        })
+      },
+      global: {
+        stubs: {
+          UsageProgressBar: true,
+          AccountQuotaInfo: true
+        }
+      }
+    })
+
+    await flushPromises()
+
+    expect(wrapper.find(COPY_BUTTON).exists()).toBe(true)
+    // 干净基线：挂载本身不排延时器，后面 getTimerCount() 的变化才只归因于复制按钮。
+    expect(vi.getTimerCount()).toBe(0)
+    return wrapper
+  }
+
+  it('卸载时会取消待发的复制状态复位延时器', async () => {
+    const wrapper = await mountForbiddenCell(5001)
+    const setupState = wrapper.vm.$.setupState as { linkCopied: boolean }
+
+    await wrapper.get(COPY_BUTTON).trigger('click')
+    await flushPromises()
+
+    expect(writeText).toHaveBeenCalledWith(VALIDATION_URL)
+    expect(setupState.linkCopied).toBe(true)
+    // 复制成功排下 2000ms 的复位延时器。
+    expect(vi.getTimerCount()).toBe(1)
+
+    wrapper.unmount()
+
+    // 卸载即取消。这个单元格在账号列表里成百上千地挂载/卸载，留下的孤儿延时器
+    // 会把组件闭包连着整份 usage 响应一起钉在内存里。
+    expect(vi.getTimerCount()).toBe(0)
+    expect(() => vi.advanceTimersByTime(2000)).not.toThrow()
+    // 回调没跑过的证据：它唯一的副作用（把 linkCopied 复位）没有发生。
+    expect(setupState.linkCopied).toBe(true)
+  })
+
+  it('连续复制不会攒下多个复位延时器', async () => {
+    const wrapper = await mountForbiddenCell(5002)
+
+    await wrapper.get(COPY_BUTTON).trigger('click')
+    await flushPromises()
+    await wrapper.get(COPY_BUTTON).trigger('click')
+    await flushPromises()
+
+    expect(writeText).toHaveBeenCalledTimes(2)
+    // 同一个单元格连点几次只能有一个在飞：句柄被覆盖前先掐掉上一轮。
+    expect(vi.getTimerCount()).toBe(1)
+
+    wrapper.unmount()
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it('组件仍挂载时 2s 后照旧把复制状态复位', async () => {
+    const wrapper = await mountForbiddenCell(5003)
+
+    await wrapper.get(COPY_BUTTON).trigger('click')
+    await flushPromises()
+    expect(wrapper.get(COPY_BUTTON).text()).toBe('admin.accounts.linkCopied')
+
+    vi.advanceTimersByTime(2000)
+    await wrapper.vm.$nextTick()
+
+    // 清理不许把功能一起清掉：挂载期间的「已复制」提示仍要自己退回去。
+    expect(wrapper.get(COPY_BUTTON).text()).toBe('admin.accounts.copyLink')
+    expect(vi.getTimerCount()).toBe(0)
+
+    wrapper.unmount()
   })
 })

@@ -226,7 +226,6 @@ const kindBadgeClass = (kind: string) => {
                      此前只给 thead 铺了不透明底色，th 本身仍在跑 backdrop-filter。 -->
                 <thead
                   class="sticky top-0 z-10 [&_th]:bg-[var(--surface-secondary)] [&_th]:backdrop-blur-none"
-                  :style="{ background: 'var(--surface-secondary)' }"
                 >
                 <tr>
                   <th class="px-4 py-3 text-[11px]">

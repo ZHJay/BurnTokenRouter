@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 
@@ -437,5 +437,182 @@ describe('user KeysView column settings', () => {
       },
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     )
+  })
+})
+
+/**
+ * 两个卸载后仍会触发的延时器。
+ *
+ * - 复制成功后 800ms 复位 copiedKeyId：良性，卸载后触发只是往已销毁组件写 ref。
+ * - importToCcswitch 里 100ms 的协议探测：回调打 appStore.showError，是全局 store。
+ *   用户已经离开这个页面之后再弹一条「没装 CC Switch」的 toast 是能看见的错行为，
+ *   所以这里最要紧的断言是「卸载后 showError 一次都不许再被调用」。
+ *
+ * 上面那个 describe 的 DataTable stub 不渲染 cell-key / cell-actions，这里用一个
+ * 带这两个槽的本地 stub，避免改动既有用例依赖的那个。
+ */
+const CellSlotsDataTableStub = {
+  name: 'DataTable',
+  props: ['columns', 'data'],
+  template: `
+    <div>
+      <div v-for="row in data" :key="row.id">
+        <div data-test="cell-key">
+          <slot name="cell-key" :value="row.key" :row="row" />
+        </div>
+        <div data-test="cell-actions">
+          <slot name="cell-actions" :value="row.id" :row="row" />
+        </div>
+      </div>
+    </div>
+  `,
+}
+
+describe('user KeysView pending timer cleanup', () => {
+  beforeEach(() => {
+    localStorage.clear()
+
+    listKeys.mockReset()
+    getPublicSettings.mockReset()
+    getDashboardApiKeysUsage.mockReset()
+    getAvailableGroups.mockReset()
+    getUserGroupRates.mockReset()
+    showError.mockReset()
+    showSuccess.mockReset()
+    copyToClipboard.mockReset()
+    isCurrentStep.mockReset()
+    nextStep.mockReset()
+
+    listKeys.mockResolvedValue({
+      items: [createApiKey()],
+      total: 1,
+      page: 1,
+      page_size: 20,
+      pages: 1,
+    })
+    getPublicSettings.mockResolvedValue({})
+    getDashboardApiKeysUsage.mockResolvedValue({ stats: {} })
+    getAvailableGroups.mockResolvedValue([])
+    getUserGroupRates.mockResolvedValue({})
+    isCurrentStep.mockReturnValue(false)
+    copyToClipboard.mockResolvedValue(true)
+
+    // 只假造 setTimeout/clearTimeout：flushPromises 走 setImmediate，60s 的 resetTimer
+    // 是 setInterval，都留给真实计时器，于是 getTimerCount() 数到的就是被测的那两个。
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  const mountWithCellSlots = async () => {
+    const wrapper = mount(KeysView, {
+      global: {
+        stubs: {
+          AppLayout: AppLayoutStub,
+          TablePageLayout: TablePageLayoutStub,
+          DataTable: CellSlotsDataTableStub,
+          Pagination: PaginationStub,
+          BaseDialog: true,
+          ConfirmDialog: true,
+          EmptyState: true,
+          Select: SelectStub,
+          SearchInput: SearchInputStub,
+          Icon: IconStub,
+          UseKeyModal: true,
+          EndpointPopover: true,
+          GroupBadge: true,
+          GroupOptionItem: true,
+          Teleport: true,
+        },
+      },
+    })
+    await flushPromises()
+    await nextTick()
+    // jsdom 的 localStorage.setItem 内部会排一个 0ms 延时器去派发 storage 事件，
+    // loadSavedColumns 写列配置时就会带出来一个。它不是组件的泄漏、也没法取消，
+    // 先把 0 延时的排干，后面 getTimerCount() 数到的就只有被测的那个延时器。
+    vi.advanceTimersByTime(0)
+    expect(vi.getTimerCount()).toBe(0)
+    return wrapper
+  }
+
+  it('cancels the pending copied-flag reset timer on unmount', async () => {
+    const wrapper = await mountWithCellSlots()
+
+    await wrapper.get('[data-test="cell-key"] button').trigger('click')
+    await flushPromises()
+
+    // 复制成功排下 800ms 复位延时器。
+    expect(vi.getTimerCount()).toBe(1)
+
+    wrapper.unmount()
+    expect(vi.getTimerCount()).toBe(0)
+    expect(() => vi.advanceTimersByTime(2000)).not.toThrow()
+  })
+
+  it('reuses a single copied-flag timer when several rows are copied in a row', async () => {
+    const wrapper = await mountWithCellSlots()
+
+    await wrapper.get('[data-test="cell-key"] button').trigger('click')
+    await flushPromises()
+    await wrapper.get('[data-test="cell-key"] button').trigger('click')
+    await flushPromises()
+
+    // 连点不许攒延时器：上一轮先被掐掉。
+    expect(vi.getTimerCount()).toBe(1)
+
+    wrapper.unmount()
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it('does not call appStore.showError from the cc-switch probe after unmount', async () => {
+    vi.stubGlobal('open', vi.fn())
+    // 探测靠 document.hasFocus()：让它返回 true，即「协议没接手」，回调就会走到
+    // showError 那一支 —— 这正是卸载后不该发生的事。
+    vi.spyOn(document, 'hasFocus').mockReturnValue(true)
+
+    const wrapper = await mountWithCellSlots()
+
+    const importButton = wrapper
+      .findAll('[data-test="cell-actions"] button')
+      .find((button) => button.text().includes('keys.importToCcSwitch'))
+    expect(importButton).toBeDefined()
+
+    await importButton!.trigger('click')
+    await flushPromises()
+
+    expect(vi.getTimerCount()).toBe(1)
+    expect(showError).not.toHaveBeenCalled()
+
+    // 100ms 到点之前离开页面。
+    wrapper.unmount()
+
+    expect(() => vi.advanceTimersByTime(1000)).not.toThrow()
+    // 真正要紧的断言：卸载后不许再往全局 store 里塞 toast。
+    expect(showError).not.toHaveBeenCalled()
+    // 顺带确认句柄真的被取消了，而不是靠回调里补一层判断绕过去。
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it('still reports a failed cc-switch handoff while the view is mounted', async () => {
+    vi.stubGlobal('open', vi.fn())
+    vi.spyOn(document, 'hasFocus').mockReturnValue(true)
+
+    const wrapper = await mountWithCellSlots()
+
+    const importButton = wrapper
+      .findAll('[data-test="cell-actions"] button')
+      .find((button) => button.text().includes('keys.importToCcSwitch'))
+    await importButton!.trigger('click')
+    await flushPromises()
+
+    vi.advanceTimersByTime(100)
+
+    expect(showError).toHaveBeenCalledWith('keys.ccSwitchNotInstalled')
+
+    wrapper.unmount()
   })
 })

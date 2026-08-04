@@ -2376,4 +2376,43 @@ onUnmounted(() => {
   background-color: rgb(255 59 48 / 0.1);
   color: var(--sys-red);
 }
+
+/* 注意上面 2312 行那个减弱动效块只覆盖 .dropdown-* 入场过渡，这两个按压缩放在它
+   之外，此前没有任何覆盖。
+
+   style.css 的减弱动效分支用 `[class*='active:scale']:active` 匹配 class 属性，
+   只在模板里裸写工具类时生效。这两处写的是 `@apply active:scale-*`，编译后落在
+   `.account-tools-menu-item:active` / `.row-action:active` 上，元素 class 属性里
+   没有 `active:scale` 这个串，全局那条匹配不到 —— 已用 compileStyleAsync + 本仓
+   tailwind 配置编译核对。
+
+   两个类的 transition 列表不同，所以收窄分开写：菜单项只过渡 background-color，
+   行内按钮还过渡 color。
+
+   补的是全局规则的形状，不是 SettingsView / CustomPageView 的形状：全局那条把
+   scale-kill 与 filter: brightness(0.94) 成对使用（style.css:1718），这里沿用同
+   一个配对与同一个值。与本仓另外两种形状的差别是有意的，不要照着它们改这里：
+   - SettingsView:12202 / :12355 与 CustomPageView:488 只写 transform: none，
+     不带 brightness；
+   - .btn 的按压缩放同样来自 @apply（style.css:386）、同样躲开上面那个属性选择器，
+     它落在 style.css:1734 的 `transform: none !important`，也不带 brightness。
+   即减弱动效下的按压反馈在本仓共有三种形状，这里取带 brightness 的那一种。
+
+   为什么这里要带 brightness：两者除缩放外只有 hover 反馈，hover 在触屏上不触发，
+   缩放是唯一的按压通道。 */
+@media (prefers-reduced-motion: reduce) {
+  .account-tools-menu-item {
+    transition-property: background-color;
+  }
+
+  .row-action {
+    transition-property: background-color, color;
+  }
+
+  .account-tools-menu-item:active,
+  .row-action:active {
+    transform: none;
+    filter: brightness(0.94);
+  }
+}
 </style>

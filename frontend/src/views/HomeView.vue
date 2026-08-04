@@ -18,7 +18,7 @@
     data-testid="compact-home"
     class="flex min-h-screen flex-col bg-[color:var(--bg-base)] text-gray-900 dark:text-white"
   >
-    <header class="border-b border-gray-200 px-4 py-4 sm:px-6 dark:border-dark-800">
+    <header class="px-4 py-4 shadow-[inset_0_-0.5px_0_var(--separator)] sm:px-6">
       <nav class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 sm:gap-4">
         <div class="flex min-w-0 flex-1 items-center gap-3">
           <img
@@ -76,7 +76,7 @@
       </div>
     </main>
 
-    <footer class="min-w-0 border-t border-gray-200 px-4 py-5 text-center text-sm text-gray-500 [overflow-wrap:anywhere] sm:px-6 dark:border-dark-800 dark:text-dark-400">
+    <footer class="min-w-0 px-4 py-5 text-center text-sm text-gray-500 shadow-[inset_0_0.5px_0_var(--separator)] [overflow-wrap:anywhere] sm:px-6 dark:text-dark-400">
       &copy; {{ currentYear }} {{ siteName }}
     </footer>
   </div>

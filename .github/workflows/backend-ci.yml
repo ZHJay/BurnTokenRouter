@@ -60,6 +60,67 @@ jobs:
       - name: Frontend typecheck and critical vitest
         run: make test-frontend
 
+  # Guards the frontend<->backend serving contract. Everything that implements it
+  # (embed_on.go, embed_test.go, html_cache.go, static_cache.go) sits behind
+  # `//go:build embed`, so the `test` job above never compiles a single line of it:
+  # -tags=unit/-tags=integration exclude the whole file set. Before this job the tag
+  # was built only by .goreleaser.yaml and the Dockerfile, i.e. at release time,
+  # which is far too late to learn that nonce substitution, __APP_CONFIG__
+  # injection, <title>/favicon rewriting, SPA fallback or immutable-asset caching
+  # regressed.
+  #
+  # The frontend build is a hard prerequisite, not a convenience: vite writes to
+  # ../backend/internal/web/dist (see frontend/vite.config.ts), which is exactly the
+  # directory `//go:embed all:dist` reads. With no dist present the package does not
+  # merely skip its tests, it fails to compile with
+  # "pattern all:dist: no matching files found".
+  embed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          check-latest: false
+          cache: true
+          cache-dependency-path: backend/go.sum
+      - name: Verify Go version
+        run: |
+          go version | grep -q 'go1.26.5'
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 9
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+      # Same command the Dockerfile and release.yml use, so the dist layout under
+      # test is the layout that actually ships.
+      - name: Build frontend into backend/internal/web/dist
+        working-directory: frontend
+        run: pnpm run build
+      - name: Assert dist landed where go:embed expects it
+        run: |
+          test -f backend/internal/web/dist/index.html
+          test -d backend/internal/web/dist/assets
+      - name: Build with embed tag
+        working-directory: backend
+        run: go build -tags embed ./...
+      # Scoped to ./internal/web/... on purpose: internal/web holds the only
+      # embed-tagged test file in the tree, and `-tags embed ./...` would re-run the
+      # ~596 untagged test files that `make test-unit` already covers -- measured at
+      # 2m05s locally versus 4s here, for zero extra contract coverage. The build
+      # step above still type-checks every package under the tag.
+      - name: Test embed-tagged frontend serving contract
+        working-directory: backend
+        run: go test -tags embed ./internal/web/...
+
   golangci-lint:
     runs-on: ubuntu-latest
     steps:
@@ -73,9 +134,40 @@ jobs:
       - name: Verify Go version
         run: |
           go version | grep -q 'go1.26.5'
+      # Untagged pass. Keep it: `embed_off.go` is built by `//go:build !embed`, so
+      # the tagged pass below drops it. The two passes are complements, not
+      # substitutes -- neither one alone covers all of internal/web.
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
           version: v2.9
           args: --timeout=30m
+          working-directory: backend
+      # `//go:embed all:dist` is resolved at type-check time, before any linter
+      # runs, and dist/ contents are gitignored (.gitignore un-ignores the
+      # directory, not its contents). Without this the tagged pass below reports
+      # "pattern all:dist: no matching files found" (typecheck) instead of real
+      # findings. A placeholder is deliberately enough: linters read Go source,
+      # not dist payloads, and the `embed` job above is what exercises the real
+      # vite output. Not `.keep`, even though .gitignore reserves it: vite runs
+      # with emptyOutDir: true and would delete a committed placeholder on every
+      # local build.
+      - name: Provide a dist placeholder so //go:embed all:dist resolves
+        run: |
+          mkdir -p backend/internal/web/dist
+          [ -f backend/internal/web/dist/index.html ] \
+            || printf '<!doctype html>\n' > backend/internal/web/dist/index.html
+      # Tagged pass. Without it `go list ./internal/web/` returns exactly one file
+      # (embed_off.go) and drops embed_on.go, html_cache.go, static_cache.go and
+      # embed_test.go as IgnoredGoFiles, so every linter enabled in
+      # backend/.golangci.yml skips the entire frontend<->backend serving contract:
+      # nonce substitution, __APP_CONFIG__ injection, <title>/favicon rewriting,
+      # SPA fallback and immutable-asset cache headers. static_cache.go is
+      # `embed || unit`, and since lint passes no tags at all, the `unit` half
+      # never rescued it either.
+      - name: golangci-lint (embed build tag)
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.9
+          args: --timeout=30m --build-tags embed
           working-directory: backend

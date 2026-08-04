@@ -1258,12 +1258,22 @@ const forbiddenBadgeClass = computed(() => {
 })
 
 const linkCopied = ref(false)
+/**
+ * 复制成功后 2s 把按钮状态复位。句柄必须留住：卸载后触发只是往已销毁组件写 ref
+ * （良性泄漏），但这个单元格在账号列表里成百上千地挂载/卸载，攒下来的孤儿延时器
+ * 会一直把组件闭包钉在内存里。
+ */
+let linkCopiedResetTimer: ReturnType<typeof setTimeout> | null = null
 const copyValidationURL = async () => {
   if (!validationURL.value) return
   try {
     await navigator.clipboard.writeText(validationURL.value)
     linkCopied.value = true
-    setTimeout(() => { linkCopied.value = false }, 2000)
+    if (linkCopiedResetTimer !== null) clearTimeout(linkCopiedResetTimer)
+    linkCopiedResetTimer = setTimeout(() => {
+      linkCopiedResetTimer = null
+      linkCopied.value = false
+    }, 2000)
   } catch {
     // fallback: ignore
   }
@@ -1585,6 +1595,10 @@ watch(isDesktopViewport, (isDesktop) => {
 
 onUnmounted(() => {
   detachVisibilityObserver()
+  if (linkCopiedResetTimer !== null) {
+    clearTimeout(linkCopiedResetTimer)
+    linkCopiedResetTimer = null
+  }
   if (desktopViewportMediaQuery && desktopViewportListener) {
     if (typeof desktopViewportMediaQuery.removeEventListener === 'function') {
       desktopViewportMediaQuery.removeEventListener('change', desktopViewportListener)

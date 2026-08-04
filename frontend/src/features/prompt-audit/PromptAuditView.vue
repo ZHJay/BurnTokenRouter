@@ -238,7 +238,7 @@ const SaveToggle = defineComponent({
         'aria-label': props.label,
         disabled: props.disabled,
         class: [
-          'switch shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--accent)]',
+          'switch shrink-0 focus-visible:outline-none focus-visible:shadow-[0_0_0_3.5px_var(--accent-tint-strong),0_0_0_1px_var(--accent)]',
           props.modelValue ? 'switch-active' : '',
           props.disabled ? 'cursor-not-allowed' : 'cursor-pointer',
         ],

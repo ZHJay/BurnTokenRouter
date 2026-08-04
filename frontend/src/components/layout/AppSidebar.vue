@@ -1141,9 +1141,18 @@ if (mobileOpen.value) {
   appStore.setMobileOpen(false)
 }
 
+/**
+ * 移动端点导航项后 150ms 关抽屉（让点击态先被看见）。之前没留句柄，而回调打的是
+ * appStore.setMobileOpen —— 那是全局 store：AppLayout 是按视图挂载的，路由一变这个
+ * 组件就重挂，卸载后触发的孤儿延时器会把新实例刚打开的抽屉又关掉。
+ */
+let closeDrawerTimer: ReturnType<typeof setTimeout> | null = null
+
 function handleMenuItemClick(itemPath: string) {
   if (mobileOpen.value) {
-    setTimeout(() => {
+    if (closeDrawerTimer !== null) clearTimeout(closeDrawerTimer)
+    closeDrawerTimer = setTimeout(() => {
+      closeDrawerTimer = null
       appStore.setMobileOpen(false)
     }, 150)
   }
@@ -1261,6 +1270,11 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (sidebarNavRef.value) {
     appStore.sidebarScrollTop = sidebarNavRef.value.scrollTop
+  }
+
+  if (closeDrawerTimer !== null) {
+    clearTimeout(closeDrawerTimer)
+    closeDrawerTimer = null
   }
 
   document.removeEventListener('keydown', handleDrawerKeydown)

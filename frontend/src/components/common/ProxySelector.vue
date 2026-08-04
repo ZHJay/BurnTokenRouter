@@ -460,4 +460,42 @@ onUnmounted(() => {
   opacity: 0;
   transform: scale(0.96) translateY(-6px);
 }
+
+/* 为什么需要这个本地块：style.css 的减弱动效分支用
+   `[class*='active:scale']:active` 匹配 class 属性，只在模板里裸写工具类时生效。
+   这两个按钮的按压缩放是 `@apply active:scale-[0.96]`，编译后落在
+   `.batch-test-btn:active` 上，元素的 class 属性里没有 `active:scale` 这个串，
+   全局那条匹配不到 —— 已用 compileStyleAsync + 本仓 tailwind 配置编译核对。
+
+   补的是全局规则的形状，不是 SettingsView / CustomPageView 的形状：全局那条把
+   scale-kill 与 filter: brightness(0.94) 成对使用（style.css:1718），这里沿用同
+   一个配对与同一个值，不新造颜色。与本仓另外两种形状的差别是有意的，不要照着它们
+   改这里：
+   - SettingsView:12202 / :12355 与 CustomPageView:488 只写 transform: none，
+     不带 brightness；
+   - .btn 的按压缩放同样来自 @apply（style.css:386）、同样躲开上面那个属性选择器，
+     它落在 style.css:1734 的 `transform: none !important`，也不带 brightness。
+   即减弱动效下的按压反馈在本仓共有三种形状，这里取带 brightness 的那一种。
+
+   为什么这里要带 brightness：这两个按钮除缩放外只有 hover 反馈，而 hover 在触屏上
+   不触发，缩放是唯一的按压通道，去掉后必须补一个不引发前庭反应的替代通道。
+
+   不动 transition-property：这两处走的是 `transition-colors`，编译产物为
+   color/background-color/border-color/text-decoration-color/fill/stroke，
+   本就不含 transform；写一行收窄只会顺手删掉 fill/stroke 过渡。
+
+   `:not(:disabled)` 是这两处独有的：禁用按钮实测仍然匹配 :active，而上面两条 @apply
+   显式写了 `disabled:active:scale-100`，即禁用态本就不给按压反馈；brightness 是按压
+   反馈的替代通道，禁用态补上就等于凭空造出一个「按下去有反应」的假象。
+   判据是有没有那条 `disabled:active:scale-100`，不是有没有禁用态：GroupsView 的
+   .row-action 带禁用态（GroupsView:376 的 :disabled + disabled:opacity-50）却没写它，
+   禁用态照样吃 active:scale-[0.96]，那边补 brightness 只是平移既有反馈，故不需要这
+   一层；.toc-toggle-btn / .settings-tab 连禁用态都没有。 */
+@media (prefers-reduced-motion: reduce) {
+  .batch-test-btn:active:not(:disabled),
+  .test-btn:active:not(:disabled) {
+    transform: none;
+    filter: brightness(0.94);
+  }
+}
 </style>

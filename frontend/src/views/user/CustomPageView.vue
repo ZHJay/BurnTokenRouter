@@ -309,6 +309,24 @@ function onContentScroll() {
   })
 }
 
+/**
+ * 复制按钮的 2s 文案复位延时器。
+ *
+ * 按钮是 injectCopyButtons 建出来的游离 DOM，每次点击都排一个延时器；组件卸载后
+ * 触发只是往已脱离文档的节点写 textContent（良性），但那个闭包会把节点、i18n 的 t
+ * 和整个组件作用域一起钉住。一次渲染里可以有多个代码块、每个都能点，所以句柄按
+ * Set 收集，卸载时一次清空。
+ */
+const copyResetTimers = new Set<ReturnType<typeof setTimeout>>()
+
+function scheduleCopyLabelReset(btn: HTMLButtonElement) {
+  const timer = setTimeout(() => {
+    copyResetTimers.delete(timer)
+    btn.textContent = t('customPage.copyCode')
+  }, 2000)
+  copyResetTimers.add(timer)
+}
+
 function injectCopyButtons() {
   const container = markdownContainer.value
   if (!container) return
@@ -323,10 +341,10 @@ function injectCopyButtons() {
       try {
         await navigator.clipboard.writeText(code)
         btn.textContent = t('customPage.copiedCode')
-        setTimeout(() => { btn.textContent = t('customPage.copyCode') }, 2000)
+        scheduleCopyLabelReset(btn)
       } catch {
         btn.textContent = t('customPage.copyCodeFailed')
-        setTimeout(() => { btn.textContent = t('customPage.copyCode') }, 2000)
+        scheduleCopyLabelReset(btn)
       }
     })
     pre.style.position = 'relative'
@@ -366,6 +384,16 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  // scrollRafId 一直有记录，却从来没人取消：滚动到一半卸载，那一帧回调仍会跑，
+  // 去读 markdownContainer 并往 activeHeadingId 上写。
+  if (scrollRafId) {
+    cancelAnimationFrame(scrollRafId)
+    scrollRafId = 0
+  }
+  for (const timer of copyResetTimers) {
+    clearTimeout(timer)
+  }
+  copyResetTimers.clear()
   if (themeObserver) {
     themeObserver.disconnect()
     themeObserver = null
