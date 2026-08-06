@@ -4,6 +4,9 @@
    用法：<link rel="stylesheet" href="apple-theme.css" />
          <script src="apple-theme.js"></script>（head 内同步引入）
          <body data-nav="user|admin|none" data-active="...">
+   注意：display:flex/grid 的组件类（如 .today-cell/.acct-cell/.row-actions）
+   禁止直接挂在 <td>/<th> 上——会破坏表格单元格的 table-cell 布局导致错位，
+   必须在单元格内包一层 <div> 再挂类。
    ========================================================================= */
 
 :root {
@@ -34,7 +37,7 @@
 
   /* Liquid Glass 材质 */
   --glass-bg: rgba(255, 255, 255, 0.72);
-  --glass-bg-strong: rgba(255, 255, 255, 0.9);
+  --glass-bg-strong: rgba(255, 255, 255, 0.94);
   --glass-border: rgba(255, 255, 255, 0.6);
   --glass-blur: saturate(180%) blur(20px);
   --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.45);
@@ -73,7 +76,7 @@ html.dark {
   --fill: rgba(120, 120, 128, 0.24);
   --fill-hover: rgba(120, 120, 128, 0.36);
   --glass-bg: rgba(28, 28, 30, 0.72);
-  --glass-bg-strong: rgba(28, 28, 30, 0.93);
+  --glass-bg-strong: rgba(28, 28, 30, 0.95);
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.5);
