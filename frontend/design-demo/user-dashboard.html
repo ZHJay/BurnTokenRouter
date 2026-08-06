@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>仪表盘 · Sub2API</title>
+<link rel="stylesheet" href="apple-theme.css" />
+<script src="apple-theme.js"></script>
+<style>
+  /* ===== 页面级样式（仅本页） ===== */
+  .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+  .grid-2 { display: grid; grid-template-columns: 1.65fr 1fr; gap: 16px; margin-bottom: 22px; }
+
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+  .card-title { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }
+
+  .chart-summary { font-size: 12.5px; color: var(--text-tertiary); margin-bottom: 6px; line-height: 1.6; }
+  .chart-summary b { color: var(--text-secondary); font-weight: 600; }
+
+  /* 柱状图高度过渡（分段切换时平滑缩放） */
+  .bars .bar { transition: height 0.55s var(--ease), opacity 0.15s var(--ease), transform 0.2s var(--ease); }
+  .bar-scale { display: flex; gap: 6px; padding: 6px 2px 0; }
+  .bar-scale span { flex: 1; text-align: center; font-size: 10px; color: var(--text-tertiary); white-space: nowrap; }
+
+  /* 订阅卡 */
+  .sub-name { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; margin-top: 10px; }
+  .sub-meta { font-size: 12.5px; color: var(--text-secondary); margin: 4px 0 14px; }
+  .sub-extra { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .sub-actions { display: flex; gap: 8px; margin-top: 18px; }
+
+  /* 表格 */
+  .toolbar-title { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+  .keys-table { min-width: 780px; }
+  .cell-main { font-weight: 600; color: var(--text-primary); }
+  .cell-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+  .icon-btn.copied { color: var(--green); }
+
+  @media (max-width: 900px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px) {
+    .bar-scale span:nth-child(even) { visibility: hidden; }
+    .toolbar .search { min-width: 0; flex: 1 1 100%; order: 3; }
+  }
+</style>
+</head>
+<body data-nav="user" data-active="dashboard">
+
+<main class="page">
+
+  <!-- 页头 -->
+  <div class="page-head fade-up">
+    <div>
+      <h1 class="page-title">仪表盘</h1>
+      <p class="page-sub">下午好，8 老师，这是你的用量概览 · 8 月 6 日 星期四</p>
+    </div>
+    <button class="btn btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/></svg>
+      充值
+    </button>
+  </div>
+
+  <!-- 统计卡 -->
+  <div class="stat-row fade-up fade-up-1">
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-icon tint-green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/></svg>
+        </div>
+      </div>
+      <div class="stat-label">账户余额</div>
+      <div class="stat-value">¥128.50</div>
+      <div class="stat-trend" style="color:var(--text-tertiary);font-weight:500">含返利余额 ¥12.00</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-icon tint-orange">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>
+        </div>
+      </div>
+      <div class="stat-label">今日消耗</div>
+      <div class="stat-value">$3.42</div>
+      <div class="stat-trend trend-down">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 9 7 7 7-7"/></svg>
+        较昨日 -12.4%
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-icon tint-blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4.5"/><path d="m11 12 9-9m-4 4 3 3"/></svg>
+        </div>
+      </div>
+      <div class="stat-label">API 密钥</div>
+      <div class="stat-value">4</div>
+      <div class="stat-trend" style="color:var(--text-tertiary);font-weight:500">3 个今日活跃</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-icon tint-purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18h18M4 18 2.5 9 8 12l4-7 4 7 5.5-3L20 18"/></svg>
+        </div>
+      </div>
+      <div class="stat-label">有效订阅</div>
+      <div class="stat-value">2</div>
+      <div class="stat-trend" style="color:var(--text-tertiary);font-weight:500">最近到期 09-15</div>
+    </div>
+  </div>
+
+  <!-- 图表 + 订阅 -->
+  <div class="grid-2 fade-up fade-up-2">
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">近 14 天用量</span>
+        <div class="segmented" id="chartSeg">
+          <button class="active" data-mode="t">按 Token</button>
+          <button data-mode="c">按费用</button>
+        </div>
+      </div>
+      <div class="chart-summary" id="chartSummary">总计 <b>660.5 万</b> tokens · 日均 <b>48.7 万</b> · 峰值 <b>8 月 5 日 81.2 万</b></div>
+      <div class="bars" id="usageBars">
+        <div class="bar" style="height:38%" title="7月24日 · 31.2 万 tokens"></div>
+        <div class="bar" style="height:53%" title="7月25日 · 42.8 万 tokens"></div>
+        <div class="bar" style="height:33%" title="7月26日 · 26.5 万 tokens"></div>
+        <div class="bar" style="height:62%" title="7月27日 · 50.2 万 tokens"></div>
+        <div class="bar" style="height:76%" title="7月28日 · 61.8 万 tokens"></div>
+        <div class="bar" style="height:42%" title="7月29日 · 34.4 万 tokens"></div>
+        <div class="bar" style="height:48%" title="7月30日 · 38.9 万 tokens"></div>
+        <div class="bar" style="height:86%" title="7月31日 · 70.2 万 tokens"></div>
+        <div class="bar" style="height:72%" title="8月1日 · 58.1 万 tokens"></div>
+        <div class="bar" style="height:36%" title="8月2日 · 29.6 万 tokens"></div>
+        <div class="bar" style="height:53%" title="8月3日 · 43.3 万 tokens"></div>
+        <div class="bar" style="height:81%" title="8月4日 · 65.5 万 tokens"></div>
+        <div class="bar" style="height:100%" title="8月5日 · 81.2 万 tokens"></div>
+        <div class="bar dim" style="height:33%" title="8月6日（今天）· 进行中"></div>
+      </div>
+      <div class="bar-scale">
+        <span>7/24</span><span>25</span><span>26</span><span>27</span><span>28</span><span>29</span><span>30</span><span>31</span><span>8/1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>今天</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">当前订阅</span>
+        <span class="badge b-blue">生效中</span>
+      </div>
+      <div class="sub-name">Pro 套餐</div>
+      <div class="sub-meta">到期时间 2026-09-15 · 剩余 40 天</div>
+      <div class="meter" style="width:100%">
+        <div class="label"><span>本月配额</span><span>¥310.20 / ¥500 · 62%</span></div>
+        <div class="track"><div class="fill" style="width:62%"></div></div>
+      </div>
+      <hr class="hr" />
+      <div class="sub-extra">
+        <div>
+          <div style="font-size:13.5px;font-weight:600">Claude 专项包 <span class="badge b-purple" style="margin-left:2px">加购</span></div>
+          <div class="muted" style="font-size:12px;margin-top:3px">8 月 30 日到期 · 已用 34%</div>
+        </div>
+      </div>
+      <div class="sub-actions">
+        <button class="btn btn-secondary btn-sm">管理订阅</button>
+        <button class="btn btn-ghost btn-sm">续费</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- API 密钥 -->
+  <div class="toolbar fade-up fade-up-3">
+    <span class="toolbar-title">API 密钥</span>
+    <div class="grow"></div>
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="keySearch" placeholder="搜索密钥名称…" aria-label="搜索密钥" />
+    </div>
+    <button class="btn btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      创建密钥
+    </button>
+  </div>
+
+  <div class="table-card fade-up fade-up-3">
+    <div class="table-scroll">
+      <table class="keys-table">
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>密钥</th>
+            <th>状态</th>
+            <th>今日用量</th>
+            <th>创建时间</th>
+            <th style="text-align:right">操作</th>
+          </tr>
+        </thead>
+        <tbody id="keyTbody">
+          <tr>
+            <td><div class="cell-main">生产环境主密钥</div><div class="cell-sub">Claude Code 专用</div></td>
+            <td><span class="mono">sk-****...Kx8F</span></td>
+            <td><button class="switch on" aria-label="启用或停用"><span class="knob"></span></button></td>
+            <td>
+              <div class="meter">
+                <div class="label"><span>$2.31</span><span>68%</span></div>
+                <div class="track"><div class="fill" style="width:68%"></div></div>
+              </div>
+            </td>
+            <td class="muted">2026-03-12</td>
+            <td>
+              <div class="row-actions" style="justify-content:flex-end">
+                <button class="icon-btn copy-btn" data-key="sk-live-9f3Kx8F2-prod" aria-label="复制密钥" title="复制">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                </button>
+                <button class="icon-btn" aria-label="编辑" title="编辑">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                </button>
+                <button class="icon-btn danger" aria-label="删除" title="删除">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M10 11v6M14 11v6"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="cell-main">Cursor 编辑器</div><div class="cell-sub">个人开发日常调用</div></td>
+            <td><span class="mono">sk-****...m3Lq</span></td>
+            <td><button class="switch on" aria-label="启用或停用"><span class="knob"></span></button></td>
+            <td>
+              <div class="meter">
+                <div class="label"><span>$0.84</span><span>87%</span></div>
+                <div class="track"><div class="fill warn" style="width:87%"></div></div>
+              </div>
+            </td>
+            <td class="muted">2026-05-28</td>
+            <td>
+              <div class="row-actions" style="justify-content:flex-end">
+                <button class="icon-btn copy-btn" data-key="sk-live-71m3Lq-cursor" aria-label="复制密钥" title="复制">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                </button>
+                <button class="icon-btn" aria-label="编辑" title="编辑">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                </button>
+                <button class="icon-btn danger" aria-label="删除" title="删除">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M10 11v6M14 11v6"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="cell-main">CI 流水线</div><div class="cell-sub">每周回归测试</div></td>
+            <td><span class="mono">sk-****...Q7pW</span></td>
+            <td><button class="switch" aria-label="启用或停用"><span class="knob"></span></button></td>
+            <td>
+              <div class="meter">
+                <div class="label"><span>$0.21</span><span>12%</span></div>
+                <div class="track"><div class="fill" style="width:12%"></div></div>
+              </div>
+            </td>
+            <td class="muted">2026-06-19</td>
+            <td>
+              <div class="row-actions" style="justify-content:flex-end">
+                <button class="icon-btn copy-btn" data-key="sk-live-55Q7pW-ci" aria-label="复制密钥" title="复制">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                </button>
+                <button class="icon-btn" aria-label="编辑" title="编辑">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                </button>
+                <button class="icon-btn danger" aria-label="删除" title="删除">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M10 11v6M14 11v6"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="cell-main">临时调试密钥</div><div class="cell-sub">7 天后自动过期</div></td>
+            <td><span class="mono">sk-****...z2Vn</span></td>
+            <td><button class="switch" aria-label="启用或停用"><span class="knob"></span></button></td>
+            <td>
+              <div class="meter">
+                <div class="label"><span>$0.06</span><span>96%</span></div>
+                <div class="track"><div class="fill high" style="width:96%"></div></div>
+              </div>
+            </td>
+            <td class="muted">2026-07-30</td>
+            <td>
+              <div class="row-actions" style="justify-content:flex-end">
+                <button class="icon-btn copy-btn" data-key="sk-temp-02z2Vn-debug" aria-label="复制密钥" title="复制">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                </button>
+                <button class="icon-btn" aria-label="编辑" title="编辑">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                </button>
+                <button class="icon-btn danger" aria-label="删除" title="删除">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M10 11v6M14 11v6"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  /* ---------- iOS 开关 ---------- */
+  document.querySelectorAll('.switch').forEach(function (s) {
+    s.addEventListener('click', function () { s.classList.toggle('on'); });
+  });
+
+  /* ---------- 用量图：Token / 费用 双数据集 ---------- */
+  var DAYS = ['7月24日','7月25日','7月26日','7月27日','7月28日','7月29日','7月30日','7月31日','8月1日','8月2日','8月3日','8月4日','8月5日','8月6日（今天）'];
+  var DATA = {
+    t: { v: [312,428,265,502,618,344,389,702,581,296,433,655,812,268],
+         fmt: function (v) { return (v / 10).toFixed(1).replace(/\.0$/, '') + ' 万 tokens'; },
+         summary: '总计 <b>660.5 万</b> tokens · 日均 <b>48.7 万</b> · 峰值 <b>8 月 5 日 81.2 万</b>' },
+    c: { v: [1.85,2.62,1.58,3.05,3.72,2.06,2.31,4.28,3.51,1.76,2.58,3.94,4.96,1.62],
+         fmt: function (v) { return '$' + v.toFixed(2); },
+         summary: '总计 <b>$39.84</b> · 日均 <b>$2.95</b> · 峰值 <b>8 月 5 日 $4.96</b>' }
+  };
+  var bars = Array.prototype.slice.call(document.querySelectorAll('#usageBars .bar'));
+  var summaryEl = document.getElementById('chartSummary');
+
+  function renderChart(mode) {
+    var d = DATA[mode];
+    var max = Math.max.apply(null, d.v);
+    bars.forEach(function (b, i) {
+      b.style.height = Math.max(4, (d.v[i] / max) * 100) + '%';
+      b.title = DAYS[i] + ' · ' + (i === bars.length - 1 ? '进行中 · ' : '') + d.fmt(d.v[i]);
+    });
+    summaryEl.innerHTML = d.summary;
+  }
+
+  var seg = document.getElementById('chartSeg');
+  seg.querySelectorAll('button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (btn.classList.contains('active')) return;
+      seg.querySelectorAll('button').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      renderChart(btn.getAttribute('data-mode'));
+    });
+  });
+
+  /* ---------- 复制密钥：图标短暂变 ✓ ---------- */
+  var CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m4 12.5 5 5L20 6.5"/></svg>';
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    var original = btn.innerHTML;
+    btn.addEventListener('click', function () {
+      var text = btn.getAttribute('data-key');
+      if (navigator.clipboard) { navigator.clipboard.writeText(text).catch(function () {}); }
+      btn.innerHTML = CHECK;
+      btn.classList.add('copied');
+      setTimeout(function () {
+        btn.innerHTML = original;
+        btn.classList.remove('copied');
+      }, 1200);
+    });
+  });
+
+  /* ---------- 密钥搜索过滤 ---------- */
+  var searchInput = document.getElementById('keySearch');
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#keyTbody tr'));
+  searchInput.addEventListener('input', function () {
+    var q = searchInput.value.trim().toLowerCase();
+    rows.forEach(function (tr) {
+      tr.style.display = !q || tr.textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none';
+    });
+  });
+</script>
+</body>
+</html>
