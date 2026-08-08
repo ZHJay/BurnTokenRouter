@@ -2,15 +2,12 @@
   <button
     type="button"
     @click="toggle"
-    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-800"
-    :class="[modelValue ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600']"
+    class="switch"
+    :class="{ on: modelValue }"
     role="switch"
     :aria-checked="modelValue"
   >
-    <span
-      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-      :class="[modelValue ? 'translate-x-5' : 'translate-x-0']"
-    />
+    <span class="knob" aria-hidden="true" />
   </button>
 </template>
 
@@ -27,3 +24,53 @@ function toggle() {
   emit('update:modelValue', !props.modelValue)
 }
 </script>
+
+<style scoped>
+/* 契约镜像：apple-theme.css 的 iOS .switch */
+.switch {
+  width: 40px;
+  height: 24px;
+  border-radius: var(--r-pill);
+  background: var(--fill-hover);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.28s var(--ease);
+  border: none;
+  flex-shrink: 0;
+  padding: 0;
+  display: inline-block;
+}
+
+.switch.on {
+  background: var(--green);
+}
+
+.switch .knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.28s var(--ease);
+}
+
+.switch.on .knob {
+  transform: translateX(16px);
+}
+
+/* 无障碍：键盘焦点使用房子风格 4px 蓝环 */
+.switch:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--blue-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switch,
+  .switch .knob {
+    transition-duration: 0.01ms;
+  }
+}
+</style>

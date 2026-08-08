@@ -1,21 +1,21 @@
 <template>
   <div v-if="!isDesktopViewport" class="space-y-3">
     <template v-if="loading">
-      <div v-for="i in 5" :key="i" class="rounded-lg border border-gray-200 bg-white p-4 dark:border-dark-700 dark:bg-dark-900">
+      <div v-for="i in 5" :key="i" class="mobile-card">
         <div class="space-y-3">
           <div v-for="column in dataColumns" :key="column.key" class="flex justify-between">
-            <div class="h-4 w-20 animate-pulse rounded bg-gray-200 dark:bg-dark-700"></div>
-            <div class="h-4 w-32 animate-pulse rounded bg-gray-200 dark:bg-dark-700"></div>
+            <div class="skel h-4 w-20"></div>
+            <div class="skel h-4 w-32"></div>
           </div>
           <div v-if="hasActionsColumn" class="border-t border-gray-200 pt-3 dark:border-dark-700">
-            <div class="h-8 w-full animate-pulse rounded bg-gray-200 dark:bg-dark-700"></div>
+            <div class="skel h-8 w-full"></div>
           </div>
         </div>
       </div>
     </template>
 
     <template v-else-if="!data || data.length === 0">
-      <div class="rounded-lg border border-gray-200 bg-white p-12 text-center dark:border-dark-700 dark:bg-dark-900">
+      <div class="mobile-card mobile-empty">
         <slot name="empty">
           <div class="flex flex-col items-center">
             <Icon
@@ -48,7 +48,7 @@
       <div
         v-for="(row, index) in sortedData"
         :key="resolveRowKey(row, index)"
-        class="rounded-lg border border-gray-200 bg-white p-4 dark:border-dark-700 dark:bg-dark-900"
+        class="mobile-card"
         :class="{
           'cursor-pointer': clickableRows,
           'border-primary-300 bg-primary-50/40 dark:border-primary-700 dark:bg-primary-900/10': selectable && isRowSelected(row, index)
@@ -93,14 +93,14 @@
   <div
     v-else
     ref="tableWrapperRef"
-    class="table-wrapper"
+    class="table-wrapper table-card table-scroll"
     :class="{
       'actions-expanded': actionsExpanded,
       'is-scrollable': isScrollable
     }"
   >
-    <table class="w-full min-w-max divide-y divide-gray-200 dark:divide-dark-700">
-      <thead class="table-header bg-gray-50 dark:bg-dark-800">
+    <table class="w-full min-w-max">
+      <thead class="table-header">
         <tr>
           <th
             v-if="selectable"
@@ -123,7 +123,7 @@
             scope="col"
             :aria-sort="column.sortable ? getColumnAriaSort(column.key) : undefined"
             :class="[
-              'sticky-header-cell py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-dark-400',
+              'sticky-header-cell text-left tracking-wider',
               getAdaptivePaddingClass(),
               { 'cursor-pointer hover:bg-gray-100 dark:hover:bg-dark-700': column.sortable },
               getStickyColumnClass(column, index),
@@ -166,16 +166,14 @@
           </th>
         </tr>
       </thead>
-      <tbody class="table-body divide-y divide-gray-200 bg-white dark:divide-dark-700 dark:bg-dark-900">
+      <tbody class="table-body">
         <!-- Loading skeleton -->
         <tr v-if="loading" v-for="i in 5" :key="i">
           <td v-if="selectable" class="w-11 min-w-11 px-3 py-4">
-            <div class="mx-auto h-4 w-4 animate-pulse rounded bg-gray-200 dark:bg-dark-700"></div>
+            <div class="skel mx-auto h-4 w-4"></div>
           </td>
           <td v-for="column in columns" :key="column.key" :class="['whitespace-nowrap py-4', getAdaptivePaddingClass()]">
-            <div class="animate-pulse">
-              <div class="h-4 w-3/4 rounded bg-gray-200 dark:bg-dark-700"></div>
-            </div>
+            <div class="skel h-4 w-3/4"></div>
           </td>
         </tr>
 
@@ -183,20 +181,22 @@
         <tr v-else-if="!data || data.length === 0">
           <td
             :colspan="tableColumnCount"
-            :class="['py-12 text-center text-gray-500 dark:text-dark-400', getAdaptivePaddingClass()]"
+            :class="['text-gray-500 dark:text-dark-400', getAdaptivePaddingClass()]"
           >
-            <slot name="empty">
-              <div class="flex flex-col items-center">
-                <Icon
-                  name="inbox"
-                  size="xl"
-                  class="mb-4 h-12 w-12 text-gray-400 dark:text-dark-500"
-                />
-                <p class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                  {{ t('empty.noData') }}
-                </p>
-              </div>
-            </slot>
+            <div class="empty">
+              <slot name="empty">
+                <div class="flex flex-col items-center">
+                  <Icon
+                    name="inbox"
+                    size="xl"
+                    class="mb-4 h-12 w-12 text-gray-400 dark:text-dark-500"
+                  />
+                  <p class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                    {{ t('empty.noData') }}
+                  </p>
+                </div>
+              </slot>
+            </div>
           </td>
         </tr>
 
@@ -213,7 +213,6 @@
             :data-row-id="resolveRowKey(item.row, item.index)"
             :data-index="item.index"
             :ref="item.measure ? measureElement : undefined"
-            class="hover:bg-gray-50 dark:hover:bg-dark-800"
             :class="{
               'cursor-pointer': clickableRows,
               'bg-primary-50/40 dark:bg-primary-900/10': selectable && isRowSelected(item.row, item.index)
@@ -235,7 +234,7 @@
               v-for="(column, colIndex) in columns"
               :key="column.key"
               :class="[
-                'whitespace-nowrap py-4 text-sm text-gray-900 dark:text-gray-100',
+                'whitespace-nowrap text-gray-900 dark:text-gray-100',
                 getAdaptivePaddingClass(),
                 getStickyColumnClass(column, colIndex),
                 column.class
@@ -960,6 +959,11 @@ defineExpose({
   flex: 1;
   min-height: 0;
   isolation: isolate;
+  /* 契约镜像：apple-theme.css 的 .table-card（B1 全局类落地前的本地回退） */
+  background: var(--bg-elevated);
+  border: 0.5px solid var(--separator);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-card), var(--glass-highlight);
 }
 
 /* 表头容器，确保在滚动时覆盖表体内容 */
@@ -967,11 +971,7 @@ defineExpose({
   position: sticky;
   top: 0;
   z-index: 200;
-  background-color: rgb(249 250 251);
-}
-
-.dark .table-wrapper .table-header {
-  background-color: rgb(31 41 55);
+  background-color: var(--bg-elevated);
 }
 
 /* 表体保持在表头下方 */
@@ -980,16 +980,46 @@ defineExpose({
   z-index: 0;
 }
 
+/* 契约镜像：apple-theme.css 表头样式（12px 次级色标签 + 发丝分隔线） */
+.table-wrapper thead th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  padding-top: 13px;
+  padding-bottom: 13px;
+  border-bottom: 0.5px solid var(--separator);
+  text-align: left;
+}
+
+/* 契约镜像：apple-theme.css 表体单元格（发丝行分隔线 + 末行无底线） */
+.table-wrapper tbody td {
+  font-size: 13.5px;
+  vertical-align: middle;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  border-bottom: 0.5px solid var(--separator);
+}
+
+.table-wrapper tbody tr {
+  transition: background 0.14s var(--ease);
+}
+
+.table-wrapper tbody tr:hover {
+  background: var(--fill);
+}
+
+.table-wrapper tbody tr:last-child td {
+  border-bottom: none;
+}
+
 /* 所有表头单元格固定在顶部 */
 .sticky-header-cell {
   position: sticky;
   top: 0;
   z-index: 210; /* 必须高于所有表体内容 */
-  background-color: rgb(249 250 251);
-}
-
-.dark .sticky-header-cell {
-  background-color: rgb(31 41 55);
+  background-color: var(--bg-elevated);
 }
 
 /* Sticky 列基础样式 */
@@ -1025,20 +1055,12 @@ defineExpose({
 
 /* 表体 sticky 列背景 */
 tbody .sticky-col {
-  background-color: white;
-}
-
-.dark tbody .sticky-col {
-  background-color: rgb(17 24 39);
+  background-color: var(--bg-elevated);
 }
 
 /* hover 状态保持 */
 tbody tr:hover .sticky-col {
-  background-color: rgb(249 250 251);
-}
-
-.dark tbody tr:hover .sticky-col {
-  background-color: rgb(31 41 55);
+  background-color: var(--fill);
 }
 
 /* 阴影只在可滚动时显示 */
@@ -1090,9 +1112,63 @@ tbody tr:hover .sticky-col {
 .dark .is-scrollable .sticky-col-right::before {
   background: linear-gradient(to left, rgba(0, 0, 0, 0.2), transparent);
 }
+
+/* 移动端卡片（契约风格：浮起卡片 + 发丝线） */
+.mobile-card {
+  background: var(--bg-elevated);
+  border: 0.5px solid var(--separator);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card), var(--glass-highlight);
+  padding: 16px;
+}
+
+.mobile-empty {
+  padding: 48px 20px;
+  text-align: center;
+}
+
+/* 契约镜像：apple-theme.css 的 .empty */
+.empty {
+  padding: 48px 20px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 14px;
+}
+
+/* 骨架屏：neutral shimmer（尊重 prefers-reduced-motion） */
+.skel {
+  background: var(--fill);
+  border-radius: 6px;
+  animation: skel-pulse 1.6s var(--ease) infinite;
+}
+
+@keyframes skel-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skel {
+    animation: none;
+  }
+}
 </style>
 
 <style>
+/* 在 TablePageLayout 的 .table-scroll-container 内时，卡片 chrome 由外层容器提供，
+   避免出现双重边框（DataTable 单独使用时保留 .table-card 完整外观） */
+.table-scroll-container > .table-wrapper.table-card {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 /* ==========================================================================
    终极悬浮滚动条防丢器 (Sledgehammer Override)
    绕过 style.css 中 `* { scrollbar-color: transparent }` 的全局悬停隐身诅咒！

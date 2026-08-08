@@ -3,7 +3,7 @@
     <button
       @click="toggleDropdown"
       :disabled="switching"
-      class="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-700"
+      class="locale-trigger"
       :title="currentLocale?.name"
     >
       <span class="text-base">{{ currentLocale?.flag }}</span>
@@ -11,7 +11,7 @@
       <Icon
         name="chevronDown"
         size="xs"
-        class="text-gray-400 transition-transform duration-200"
+        class="locale-chevron"
         :class="{ 'rotate-180': isOpen }"
       />
     </button>
@@ -19,22 +19,21 @@
     <transition name="dropdown">
       <div
         v-if="isOpen"
-        class="absolute right-0 z-50 mt-1 w-32 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-dark-700 dark:bg-dark-800"
+        class="locale-pop"
       >
         <button
           v-for="locale in availableLocales"
           :key="locale.code"
           :disabled="switching"
           @click="selectLocale(locale.code)"
-          class="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-dark-700"
+          class="locale-item"
           :class="{
-            'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400':
-              locale.code === currentLocaleCode
+            'locale-item-active': locale.code === currentLocaleCode
           }"
         >
           <span class="text-base">{{ locale.flag }}</span>
           <span>{{ locale.name }}</span>
-          <Icon v-if="locale.code === currentLocaleCode" name="check" size="sm" class="ml-auto text-primary-500" />
+          <Icon v-if="locale.code === currentLocaleCode" name="check" size="sm" class="ml-auto locale-check" />
         </button>
       </div>
     </transition>
@@ -90,14 +89,100 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.locale-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  border: none;
+  background: var(--fill);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.18s var(--ease), color 0.18s var(--ease);
+}
+
+.locale-trigger:hover:not(:disabled) {
+  background: var(--fill-hover);
+  color: var(--text-primary);
+}
+
+.locale-trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.locale-trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--blue-soft);
+}
+
+.locale-chevron {
+  color: var(--text-tertiary);
+  transition: transform 0.2s var(--ease);
+}
+
+.locale-pop {
+  /* 契约镜像：不透明浮出面板 */
+  position: absolute;
+  right: 0;
+  z-index: 50;
+  margin-top: 6px;
+  width: 128px;
+  overflow: hidden;
+  background: var(--glass-bg-strong);
+  border: 0.5px solid var(--separator);
+  border-radius: var(--r-lg);
+  box-shadow: var(--glass-highlight), var(--shadow-pop);
+  padding: 6px;
+}
+
+.locale-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.15s var(--ease);
+}
+
+.locale-item:hover {
+  background: var(--fill);
+}
+
+.locale-item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--blue-soft);
+}
+
+.locale-item-active {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+.locale-check {
+  color: var(--blue);
+}
+
 .dropdown-enter-active,
 .dropdown-leave-active {
-  transition: all 0.15s ease;
+  transition: opacity 0.15s var(--ease), transform 0.15s var(--ease);
 }
 
 .dropdown-enter-from,
 .dropdown-leave-to {
   opacity: 0;
-  transform: scale(0.95) translateY(-4px);
+  transform: scale(0.97) translateY(-4px);
 }
 </style>
