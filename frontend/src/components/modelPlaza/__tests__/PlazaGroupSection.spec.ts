@@ -1,5 +1,6 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { setActivePinia, createPinia } from 'pinia'
 import PlazaGroupSection from '../PlazaGroupSection.vue'
 import PlazaModelPricingTable from '../PlazaModelPricingTable.vue'
 import type { ModelPlazaGroup, PlazaModel } from '@/api/modelPlaza'
@@ -74,15 +75,11 @@ function group(overrides: Partial<ModelPlazaGroup> = {}): ModelPlazaGroup {
   }
 }
 
-function mountSection(g: ModelPlazaGroup) {
+function mountSection(view: 'cards' | 'table', g: ModelPlazaGroup = group()) {
   return mount(PlazaGroupSection, {
-    props: { group: g },
+    props: { group: g, view },
     global: {
-      stubs: {
-        GroupBadge: true,
-        Icon: true,
-        PlazaModelPricingTable: true
-      }
+      stubs: { GroupBadge: true, Icon: true }
     }
   })
 }
@@ -91,17 +88,17 @@ const NOTE = 'modelPlaza.detail.longContextDisabledNote'
 
 describe('PlazaGroupSection 长上下文说明', () => {
   it('分组关闭阶梯且组内有官方阶梯模型时显示说明', () => {
-    const wrapper = mountSection(group({ long_context_pricing_enabled: false }))
+    const wrapper = mountSection('table', group({ long_context_pricing_enabled: false }))
     expect(wrapper.text()).toContain(NOTE)
   })
 
   it('分组开启阶梯时不显示', () => {
-    const wrapper = mountSection(group({ long_context_pricing_enabled: true }))
+    const wrapper = mountSection('table', group({ long_context_pricing_enabled: true }))
     expect(wrapper.text()).not.toContain(NOTE)
   })
 
   it('分组关闭但没有官方阶梯模型时不显示', () => {
-    const wrapper = mountSection(
+    const wrapper = mountSection('table',
       group({ long_context_pricing_enabled: false, models: [ladderModel(1)] })
     )
     expect(wrapper.text()).not.toContain(NOTE)
@@ -110,14 +107,14 @@ describe('PlazaGroupSection 长上下文说明', () => {
   it('旧后端缺少开关字段时不显示', () => {
     const g = group()
     delete (g as Partial<ModelPlazaGroup>).long_context_pricing_enabled
-    const wrapper = mountSection(g)
+    const wrapper = mountSection('table', g)
     expect(wrapper.text()).not.toContain(NOTE)
   })
 })
 
 describe('PlazaGroupSection 高峰配置传递', () => {
   it('分组启用高峰时把窗口描述与倍率传给价格表', () => {
-    const wrapper = mountSection(
+    const wrapper = mountSection('table',
       group({
         subscription_type: 'subscription',
         peak_rate_enabled: true,
@@ -133,7 +130,42 @@ describe('PlazaGroupSection 高峰配置传递', () => {
   })
 
   it('分组未启用高峰时窗口描述为空串', () => {
-    const wrapper = mountSection(group())
+    const wrapper = mountSection('table', group())
     expect(wrapper.findComponent(PlazaModelPricingTable).props('peakWindow')).toBe('')
+  })
+})
+
+describe('PlazaGroupSection 视图切换', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('view=cards 渲染卡片网格,不渲染表格', () => {
+    const wrapper = mountSection('cards')
+    expect(wrapper.find('.plaza-card-grid').exists()).toBe(true)
+    expect(wrapper.find('table').exists()).toBe(false)
+  })
+
+  it('view=table 渲染密集定价表,不渲染卡片网格', () => {
+    const wrapper = mountSection('table')
+    expect(wrapper.find('table').exists()).toBe(true)
+    expect(wrapper.find('.plaza-card-grid').exists()).toBe(false)
+  })
+
+  it('两种视图都保留分组卡容器(发丝线 + 分组头)', () => {
+    for (const view of ['cards', 'table'] as const) {
+      const wrapper = mountSection(view)
+      expect(wrapper.find('.plaza-group').exists()).toBe(true)
+      expect(wrapper.find('.plaza-group-head').exists()).toBe(true)
+    }
+  })
+
+  it('分组无模型时两种视图都显示空态,不渲染空网格/空表格', () => {
+    for (const view of ['cards', 'table'] as const) {
+      const wrapper = mountSection(view, group({ models: [] }))
+      expect(wrapper.find('.plaza-group-empty').exists()).toBe(true)
+      expect(wrapper.find('.plaza-card-grid').exists()).toBe(false)
+      expect(wrapper.find('table').exists()).toBe(false)
+    }
   })
 })

@@ -64,8 +64,10 @@ describe('PlazaModelPricingTable', () => {
     // 缓存写 / 读(超过 2 位小数原样保留)
     expect(text).toContain('$3.75')
     expect(text).toContain('$0.30')
-    // 倍率列
-    expect(text).toContain('1x')
+    // 倍率列。写作 `1.00x` 而非 `1x`:倍率列与卡片右上角均使用 tabular figures
+    // 定宽数字对齐,逐位对齐的前提是小数位数一致 —— `1x` 混在 `0.50x` 中间会破坏对齐。
+    // 故三处倍率渲染统一走 formatMultiplier()(至少保留 2 位小数)。
+    expect(text).toContain('1.00x')
   })
 
   it('倍率 ≠ 1 时价格列为折后实付价,官方价列保持原价', () => {
@@ -77,7 +79,8 @@ describe('PlazaModelPricingTable', () => {
     // 官方价原值仍在(官方列不乘倍率)
     expect(text).toContain('$3.00')
     expect(text).toContain('$15.00')
-    expect(text).toContain('0.5x')
+    // formatMultiplier(0.5) === '0.50'(见上一用例注释)
+    expect(text).toContain('0.50x')
   })
 
   it('用户专属倍率覆盖分组倍率,并划线展示原倍率', () => {
@@ -89,8 +92,9 @@ describe('PlazaModelPricingTable', () => {
     // 倍率列:原倍率划线 + 专属倍率
     const struck = wrapper.find('td .line-through')
     expect(struck.exists()).toBe(true)
-    expect(struck.text()).toBe('1x')
-    expect(text).toContain('0.8x')
+    // 划线原倍率与生效倍率都走 formatMultiplier():小数位一致才能定宽对齐
+    expect(struck.text()).toBe('1.00x')
+    expect(text).toContain('0.80x')
   })
 
   it('模型按官方输出价从高到低排序,无官方价的排最后', () => {
@@ -320,9 +324,10 @@ describe('PlazaModelPricingTable', () => {
     // 0.02 × 1(独立倍率),而非 0.02 × 0.1
     expect(text).toContain('$0.02')
     expect(text).not.toContain('$0.002')
-    // 倍率列展示独立倍率 1x,而非分组倍率 0.1x
+    // 倍率列展示独立倍率 1.00x,而非分组倍率 0.10x
+    // (formatMultiplier 统一补足 2 位小数,见首个用例注释)
     const rateCell = wrapper.findAll('tbody tr td').at(-1)!
-    expect(rateCell.text()).toBe('1x')
+    expect(rateCell.text()).toBe('1.00x')
   })
 
   it('生图独立倍率关闭时,按图价格仍乘分组/专属生效倍率', () => {
@@ -345,7 +350,7 @@ describe('PlazaModelPricingTable', () => {
     const text = wrapper.text()
     expect(text).toContain('$0.02')
     const rateCell = wrapper.findAll('tbody tr td').at(-1)!
-    expect(rateCell.text()).toBe('0.1x')
+    expect(rateCell.text()).toBe('0.10x')
   })
 
   it('按图模型主行展示阶梯芯片,不把 image_output_price(每 token)当按次价', () => {

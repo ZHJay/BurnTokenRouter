@@ -51,20 +51,36 @@
       </p>
     </header>
 
-    <!-- 模型价格表:整行(含 hover 底色/分区底色)顶到卡片边缘,左右留白由表格首列/末列的 padding 提供 -->
+    <!--
+      两种呈现共用同一份 group.models 与同一套定价函数(./pricing):
+      - cards:Apple 产品网格式模型卡(默认)
+      - table:密集定价表,跨模型比价时信息密度更高
+      表格整行(含 hover 底色/分区底色)顶到卡片边缘,左右留白由表格首列/末列的 padding 提供。
+    -->
     <div>
-      <PlazaModelPricingTable
-        v-if="group.models.length > 0"
-        :models="group.models"
-        :platform="group.platform"
-        :rate-multiplier="group.rate_multiplier"
-        :user-rate-multiplier="group.user_rate_multiplier ?? null"
-        :image-rate-independent="group.image_rate_independent"
-        :image-rate-multiplier="group.image_rate_multiplier"
-        :peak-window="peakWindow"
-        :peak-rate-multiplier="group.peak_rate_multiplier"
-      />
-      <p v-else class="px-5 py-4 text-center text-sm text-gray-400 dark:text-dark-500">
+      <template v-if="group.models.length > 0">
+        <PlazaModelCardGrid
+          v-if="view === 'cards'"
+          :models="group.models"
+          :platform="group.platform"
+          :rate-multiplier="group.rate_multiplier"
+          :user-rate-multiplier="group.user_rate_multiplier ?? null"
+          :image-rate-independent="group.image_rate_independent"
+          :image-rate-multiplier="group.image_rate_multiplier"
+        />
+        <PlazaModelPricingTable
+          v-else
+          :models="group.models"
+          :platform="group.platform"
+          :rate-multiplier="group.rate_multiplier"
+          :user-rate-multiplier="group.user_rate_multiplier ?? null"
+          :image-rate-independent="group.image_rate_independent"
+          :image-rate-multiplier="group.image_rate_multiplier"
+          :peak-window="peakWindow"
+          :peak-rate-multiplier="group.peak_rate_multiplier"
+        />
+      </template>
+      <p v-else class="plaza-group-empty">
         {{ t('modelPlaza.detail.noModels') }}
       </p>
     </div>
@@ -77,6 +93,8 @@ import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
 import GroupBadge from '@/components/common/GroupBadge.vue'
 import PlazaModelPricingTable from './PlazaModelPricingTable.vue'
+import PlazaModelCardGrid from './PlazaModelCardGrid.vue'
+import type { PlazaViewMode } from './viewMode'
 import type { ModelPlazaGroup } from '@/api/modelPlaza'
 import type { GroupPlatform, SubscriptionType } from '@/types'
 import { platformBorderStrongClass } from '@/utils/platformColors'
@@ -85,6 +103,8 @@ import { useAppStore } from '@/stores/app'
 
 const props = defineProps<{
   group: ModelPlazaGroup
+  /** 呈现形态:卡片网格 / 密集表格。 */
+  view: PlazaViewMode
 }>()
 
 const { t } = useI18n()
@@ -121,23 +141,28 @@ const longContextNote = computed(() => {
 </script>
 
 <style scoped>
-/* 分组卡:发丝线 + 悬停上浮(与全站 .card-hover 同语言) */
+/*
+ * 分组卡:发丝线容器。
+ * 刻意不做容器级 hover 上浮——卡片视图里每张模型卡自己会上浮 2px,
+ * 容器同时上浮会变成双重位移(悬停一张卡,整组跟着动)。
+ */
 .plaza-group {
   background: var(--bg-elevated);
   border-radius: var(--r-lg);
   border: 0.5px solid var(--separator);
   box-shadow: var(--shadow-card), var(--glass-highlight);
   overflow: hidden;
-  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
-}
-
-.plaza-group:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-pop), var(--glass-highlight);
 }
 
 .plaza-group-head {
   padding: 16px 20px;
   border-bottom: 0.5px solid var(--separator);
+}
+
+.plaza-group-empty {
+  padding: 16px 20px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-tertiary);
 }
 </style>

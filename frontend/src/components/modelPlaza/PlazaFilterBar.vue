@@ -1,8 +1,35 @@
 <template>
   <div class="space-y-3">
+    <!-- 工具条:模型名搜索 + 视图切换(对标 demo 的 .toolbar) -->
+    <div class="toolbar plaza-toolbar">
+      <div class="search plaza-search">
+        <Icon name="search" size="sm" />
+        <input
+          :value="search"
+          type="text"
+          :placeholder="t('modelPlaza.filters.searchPlaceholder')"
+          :aria-label="t('modelPlaza.filters.searchPlaceholder')"
+          @input="$emit('update:search', ($event.target as HTMLInputElement).value)"
+        />
+        <button
+          v-if="search"
+          type="button"
+          class="plaza-search-clear"
+          :aria-label="t('modelPlaza.filters.clearSearch')"
+          @click="$emit('update:search', '')"
+        >
+          <Icon name="x" size="xs" class="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <PlazaViewToggle
+        :model-value="view"
+        @update:model-value="$emit('update:view', $event)"
+      />
+    </div>
+
     <!-- 一级:平台 -->
-    <div class="flex items-start gap-2">
-      <span class="w-10 shrink-0 pt-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-dark-500">
+    <div class="plaza-filter-row">
+      <span class="plaza-filter-label">
         {{ t('modelPlaza.filters.platformLabel') }}
       </span>
       <div class="flex flex-wrap items-center gap-2">
@@ -23,8 +50,8 @@
     </div>
 
     <!-- 二级:分组(按所属平台着色,当前组合下无结果的置灰) -->
-    <div class="flex items-start gap-2">
-      <span class="w-10 shrink-0 pt-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-dark-500">
+    <div class="plaza-filter-row">
+      <span class="plaza-filter-label">
         {{ t('modelPlaza.filters.groupLabel') }}
       </span>
       <div class="flex flex-wrap items-center gap-2">
@@ -52,8 +79,8 @@
     </div>
 
     <!-- 三级:倍率(当前组合下不存在的置灰) -->
-    <div class="flex items-start gap-2">
-      <span class="w-10 shrink-0 pt-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-dark-500">
+    <div class="plaza-filter-row">
+      <span class="plaza-filter-label">
         {{ t('modelPlaza.filters.rateLabel') }}
       </span>
       <div class="flex flex-wrap items-center gap-2">
@@ -78,30 +105,6 @@
         </button>
       </div>
     </div>
-
-    <!-- 四级:模型名搜索(纯前端过滤) -->
-    <div class="flex flex-wrap items-start gap-2">
-      <span class="w-10 shrink-0 pt-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-dark-500">
-        {{ t('modelPlaza.filters.modelLabel') }}
-      </span>
-      <div class="search w-full sm:w-72">
-        <Icon name="search" size="sm" />
-        <input
-          :value="search"
-          type="text"
-          :placeholder="t('modelPlaza.filters.searchPlaceholder')"
-          @input="$emit('update:search', ($event.target as HTMLInputElement).value)"
-        />
-        <button
-          v-if="search"
-          type="button"
-          class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-dark-500 dark:hover:bg-dark-700 dark:hover:text-gray-300"
-          @click="$emit('update:search', '')"
-        >
-          <Icon name="x" size="xs" class="h-3.5 w-3.5" />
-        </button>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -109,6 +112,8 @@
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
 import PlatformIcon from '@/components/common/PlatformIcon.vue'
+import PlazaViewToggle from './PlazaViewToggle.vue'
+import type { PlazaViewMode } from './viewMode'
 import { platformAccentColor } from '@/utils/platformColors'
 import type { GroupPlatform } from '@/types'
 
@@ -124,6 +129,8 @@ const props = defineProps<{
   rate: number | 'all'
   /** 模型名搜索词(纯前端过滤)。 */
   search: string
+  /** 当前呈现形态:卡片网格 / 密集表格。 */
+  view: PlazaViewMode
 }>()
 
 defineEmits<{
@@ -131,6 +138,7 @@ defineEmits<{
   'update:groupId': [value: number | 'all']
   'update:rate': [value: number | 'all']
   'update:search': [value: string]
+  'update:view': [value: PlazaViewMode]
 }>()
 
 const { t } = useI18n()
@@ -172,6 +180,86 @@ function chipClass(active: boolean): string {
 </script>
 
 <style scoped>
+/*
+ * 筛选行的标签列。
+ *
+ * 原实现是 `w-10 shrink-0`(40px)固定列:中文「平台」放得下,英文
+ * "PLATFORM" 需要约 73px —— 文字溢出 40px 盒子后,紧随其后的 chip 容器
+ * (自带背景的药丸)直接盖在上面,375/768px 下实测出现「PLATFO」被截断
+ * 且被蓝色 All 药丸压住。标签宽度不能由某一种语言的字长决定。
+ *
+ * 改法:窄视口标签独占一行(iOS 设置分组风格),sm 起才与 chip 同排,
+ * 并给足 min-width 让三行标签仍然对齐。颜色改为消费 --text-tertiary,
+ * 不再硬编码 gray/dark 阶。
+ */
+.plaza-filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.plaza-filter-label {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .plaza-filter-row {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .plaza-filter-label {
+    min-width: 76px;
+    padding-top: 9px;
+  }
+}
+
+/* 工具条:.toolbar 自带 margin-bottom,这里由外层 space-y-3 统一管间距 */
+.plaza-toolbar {
+  margin-bottom: 0;
+}
+
+/*
+ * 搜索框可增长但保底 240px(全站 .search 的 min-width)。
+ * 375px 视口装不下「搜索 + 分段控件」时由 .toolbar 的 flex-wrap 换行承接,
+ * 不让任何一方被压成溢出源。
+ */
+.plaza-search {
+  flex: 1 1 240px;
+}
+
+.plaza-search-clear {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background 0.18s var(--ease), color 0.18s var(--ease), transform 0.18s var(--ease);
+}
+
+.plaza-search-clear:hover {
+  background: var(--fill-hover);
+  color: var(--text-primary);
+}
+
+.plaza-search-clear:active {
+  transform: scale(0.97);
+}
+
 /* 平台/分组 chip 统一为药丸形(尺寸与全站 .filter-chip 一致) */
 .chip-tinted,
 .chip-tinted-active {
