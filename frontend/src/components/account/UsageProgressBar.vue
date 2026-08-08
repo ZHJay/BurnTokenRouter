@@ -6,18 +6,18 @@
       class="mb-0.5 flex items-center"
     >
       <div class="flex items-center gap-1.5 text-[9px] text-gray-500 dark:text-gray-400">
-        <span class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800">
+        <span class="rounded-full bg-[color:var(--fill)] px-1.5 py-0.5">
           {{ formatRequests }} req
         </span>
-        <span class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800">
+        <span class="rounded-full bg-[color:var(--fill)] px-1.5 py-0.5">
           {{ formatTokens }}
         </span>
-        <span class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800" :title="t('usage.accountBilled')">
+        <span class="rounded-full bg-[color:var(--fill)] px-1.5 py-0.5" :title="t('usage.accountBilled')">
           A ${{ formatAccountCost }}
         </span>
         <span
           v-if="windowStats?.user_cost != null"
-          class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800"
+          class="rounded-full bg-[color:var(--fill)] px-1.5 py-0.5"
           :title="t('usage.userBilled')"
         >
           U ${{ formatUserCost }}
@@ -29,13 +29,13 @@
     <div class="flex items-center gap-1">
       <!-- Label badge (fixed width for alignment) -->
       <span
-        :class="['w-[32px] shrink-0 rounded px-1 text-center text-[10px] font-medium', labelClass]"
+        :class="['w-[34px] shrink-0 rounded-full px-1 py-0.5 text-center text-[10px] font-medium', labelClass]"
       >
         {{ label }}
       </span>
 
       <!-- Progress bar container -->
-      <div class="h-1.5 w-8 shrink-0 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+      <div class="h-1.5 w-10 shrink-0 overflow-hidden rounded-full bg-[color:var(--fill)]">
         <div
           :class="['h-full transition-all duration-300', barClass]"
           :style="{ width: barWidth }"

@@ -17,13 +17,15 @@
       <button
         v-if="isTempUnschedulable"
         type="button"
-        :class="['badge text-xs', statusClass, 'cursor-pointer']"
+        class="status cursor-pointer"
         :title="t('admin.accounts.status.viewTempUnschedDetails')"
         @click="handleTempUnschedClick"
       >
+        <span :class="['dot', dotClass]"></span>
         {{ statusText }}
       </button>
-      <span v-else :class="['badge text-xs', statusClass]">
+      <span v-else class="status">
+        <span :class="['dot', dotClass]"></span>
         {{ statusText }}
       </span>
     </template>
@@ -320,6 +322,20 @@ const statusClass = computed(() => {
     return 'badge-gray'
   }
   return 'badge-success'
+})
+
+// Computed: status dot class (status is never conveyed by color alone — dot pairs with text)
+const dotClass = computed(() => {
+  switch (statusClass.value) {
+    case 'badge-danger':
+      return 'dot-error'
+    case 'badge-warning':
+      return 'dot-cooldown'
+    case 'badge-gray':
+      return 'dot-paused'
+    default:
+      return 'dot-active'
+  }
 })
 
 // Computed: status text
