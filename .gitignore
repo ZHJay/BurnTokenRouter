@@ -38,6 +38,8 @@ frontend/dist/
 *.tsbuildinfo
 vite.config.d.ts
 vite.config.js.timestamp-*
+# Phase B QA harnesses: Python bytecode cache (scripts live in tracked tree)
+frontend/design-demo/phase-b-qa/__pycache__/
 
 # 日志
 npm-debug.log*
@@ -143,3 +145,4 @@ docs/*
 frontend/coverage/
 aicodex
 output/
+.playwright-cli/
