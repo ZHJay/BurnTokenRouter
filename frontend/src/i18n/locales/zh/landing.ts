@@ -121,6 +121,8 @@ export default {
     placeholder: 'sk-ant-mirror-xxxxxxxxxxxx',
     query: '查询',
     querying: '查询中...',
+    showKey: '显示密钥',
+    hideKey: '隐藏密钥',
     privacyNote: '您的 Key 仅在浏览器本地处理，不会被存储',
     dateRange: '统计范围:',
     dateRangeToday: '今日',
