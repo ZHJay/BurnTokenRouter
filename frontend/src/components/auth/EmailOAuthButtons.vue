@@ -1,11 +1,11 @@
 <template>
   <div v-if="hasProviders" class="space-y-4">
     <div v-if="showDivider" class="flex items-center gap-3">
-      <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
-      <span class="text-xs text-gray-500 dark:text-dark-400">
+      <div class="h-[0.5px] flex-1 bg-[var(--separator)]"></div>
+      <span class="text-xs text-[var(--text-tertiary)]">
         {{ t('auth.oauthOrContinue') }}
       </span>
-      <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
+      <div class="h-[0.5px] flex-1 bg-[var(--separator)]"></div>
     </div>
 
     <div :class="providerGridClass">
@@ -14,7 +14,7 @@
         :key="provider"
         type="button"
         :disabled="disabled"
-        class="btn btn-secondary h-12 w-full justify-center gap-2"
+        class="btn btn-secondary h-[42px] w-full justify-center gap-2"
         @click="startLogin(provider)"
       >
         <GitHubMark v-if="provider === 'github'" class="h-5 w-5 text-gray-800 dark:text-gray-100" />
@@ -65,7 +65,7 @@ const hasProviders = computed(() => visibleProviders.value.length > 0)
 const hasMultipleProviders = computed(() => visibleProviders.value.length > 1)
 const providerGridClass = computed(() => [
   'grid',
-  'grid-cols-1',
+  hasMultipleProviders.value ? 'grid-cols-2' : 'grid-cols-1',
   'gap-3',
   hasMultipleProviders.value ? 'sm:grid-cols-2' : ''
 ])

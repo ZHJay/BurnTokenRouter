@@ -1,18 +1,13 @@
 <template>
   <div class="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
     <!-- Left: Search + Filters -->
-    <div class="flex flex-1 flex-wrap items-center gap-3">
-      <div class="relative w-full sm:w-64">
-        <Icon
-          name="search"
-          size="md"
-          class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
-        />
+    <div class="toolbar flex-1">
+      <div class="search w-full sm:w-64">
+        <Icon name="search" size="sm" />
         <input
           v-model="search"
           type="text"
           :placeholder="t('admin.channelMonitor.searchPlaceholder')"
-          class="input pl-10"
           @input="$emit('search-input')"
         />
       </div>

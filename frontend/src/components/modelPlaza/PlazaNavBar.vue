@@ -1,22 +1,12 @@
 <template>
-  <header
-    class="glass sticky top-0 z-30 border-b border-gray-200/50 dark:border-dark-700/50"
-  >
-    <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
-      <!-- 左:站点 logo + 名称 -->
+  <header class="plaza-nav glass sticky top-0 z-30">
+    <div class="plaza-nav-inner">
+      <!-- 左:纯文字 wordmark(品牌不再渲染 logo 图片) -->
       <div class="flex min-w-0 items-center gap-3">
         <template v-if="settings">
-          <span
-            class="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200 dark:bg-dark-800 dark:ring-dark-700"
-          >
-            <img :src="siteLogo || '/logo.svg'" alt="Logo" class="h-full w-full object-contain" />
-          </span>
-          <span class="truncate text-base font-semibold text-gray-950 dark:text-white">
-            {{ siteName }}
-          </span>
+          <span class="plaza-wordmark truncate">{{ siteName }}</span>
         </template>
         <template v-else>
-          <span class="h-9 w-9 flex-shrink-0 animate-pulse rounded-xl bg-gray-200 dark:bg-dark-700" aria-hidden="true"></span>
           <span class="h-5 w-28 animate-pulse rounded bg-gray-200 dark:bg-dark-700" aria-hidden="true"></span>
         </template>
       </div>
@@ -25,14 +15,14 @@
       <RouterLink
         v-if="isAuthenticated"
         :to="backTarget"
-        class="inline-flex flex-shrink-0 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-primary-500/25 transition-all duration-200 hover:from-primary-600 hover:to-primary-700 hover:shadow-lg hover:shadow-primary-500/30 active:scale-[0.98] dark:shadow-primary-500/20"
+        class="btn btn-primary"
       >
         {{ t('modelPlaza.nav.backToDashboard') }}
       </RouterLink>
       <RouterLink
         v-else
         :to="{ path: '/login', query: { redirect: '/model-plaza' } }"
-        class="inline-flex flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-primary-500/25 transition-all duration-200 hover:from-primary-600 hover:to-primary-700 hover:shadow-lg hover:shadow-primary-500/30 active:scale-[0.98] dark:shadow-primary-500/20"
+        class="btn btn-primary"
       >
         {{ t('modelPlaza.nav.login') }}
       </RouterLink>
@@ -43,7 +33,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { sanitizeUrl } from '@/utils/url'
 import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
 
@@ -52,10 +41,35 @@ const appStore = useAppStore()
 const authStore = useAuthStore()
 
 const settings = computed(() => appStore.cachedPublicSettings)
-const siteName = computed(() => settings.value?.site_name || 'Sub2API')
-const siteLogo = computed(() =>
-  sanitizeUrl(settings.value?.site_logo || '', { allowRelative: true, allowDataUrl: true })
-)
+const siteName = computed(() => settings.value?.site_name || appStore.siteName || 'Sub2API')
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const backTarget = computed(() => (authStore.isAdmin ? '/admin/dashboard' : '/dashboard'))
 </script>
+
+<style scoped>
+/* 独立模型广场导航条:与全局 GlobalNav 同语言的 48px 磨砂条 */
+.plaza-nav {
+  height: var(--gn-height, 48px);
+  border-bottom: 0.5px solid var(--separator);
+  box-shadow: var(--glass-highlight);
+}
+
+.plaza-nav-inner {
+  max-width: 1080px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.plaza-wordmark {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+</style>

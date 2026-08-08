@@ -34,47 +34,47 @@
         </p>
       </div>
 
-      <div v-else class="max-h-96 overflow-auto rounded-lg border border-gray-200 dark:border-dark-600">
-        <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
-          <thead class="sticky top-0 bg-gray-50 dark:bg-dark-700">
+      <div v-else class="table-container max-h-96 overflow-auto">
+        <table class="table min-w-full">
+          <thead class="sticky top-0 z-10">
             <tr>
-              <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+              <th class="whitespace-nowrap">
                 {{ t('admin.errorPassthrough.columns.priority') }}
               </th>
-              <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+              <th class="whitespace-nowrap">
                 {{ t('admin.errorPassthrough.columns.name') }}
               </th>
-              <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+              <th class="whitespace-nowrap">
                 {{ t('admin.errorPassthrough.columns.conditions') }}
               </th>
-              <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+              <th class="whitespace-nowrap">
                 {{ t('admin.errorPassthrough.columns.platforms') }}
               </th>
-              <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+              <th class="whitespace-nowrap">
                 {{ t('admin.errorPassthrough.columns.behavior') }}
               </th>
-              <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+              <th class="whitespace-nowrap">
                 {{ t('admin.errorPassthrough.columns.status') }}
               </th>
-              <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+              <th class="whitespace-nowrap">
                 {{ t('admin.errorPassthrough.columns.actions') }}
               </th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-200 bg-white dark:divide-dark-700 dark:bg-dark-800">
-            <tr v-for="rule in rules" :key="rule.id" class="hover:bg-gray-50 dark:hover:bg-dark-700">
-              <td class="whitespace-nowrap px-3 py-2">
+          <tbody>
+            <tr v-for="rule in rules" :key="rule.id">
+              <td class="whitespace-nowrap">
                 <span class="inline-flex h-5 w-5 items-center justify-center rounded bg-gray-100 text-xs font-medium text-gray-700 dark:bg-dark-600 dark:text-gray-300">
                   {{ rule.priority }}
                 </span>
               </td>
-              <td class="px-3 py-2">
+              <td>
                 <div class="font-medium text-gray-900 dark:text-white text-sm">{{ rule.name }}</div>
                 <div v-if="rule.description" class="mt-0.5 text-xs text-gray-500 dark:text-gray-400 max-w-xs truncate">
                   {{ rule.description }}
                 </div>
               </td>
-              <td class="px-3 py-2">
+              <td>
                 <div class="flex flex-wrap gap-1 max-w-48">
                   <span
                     v-for="code in rule.error_codes.slice(0, 3)"
@@ -107,7 +107,7 @@
                   {{ t('admin.errorPassthrough.matchMode.' + rule.match_mode) }}
                 </div>
               </td>
-              <td class="px-3 py-2">
+              <td>
                 <div v-if="rule.platforms.length === 0" class="text-xs text-gray-500 dark:text-gray-400">
                   {{ t('admin.errorPassthrough.allPlatforms') }}
                 </div>
@@ -124,7 +124,7 @@
                   </span>
                 </div>
               </td>
-              <td class="px-3 py-2">
+              <td>
                 <div class="text-xs space-y-0.5">
                   <div class="flex items-center gap-1">
                     <Icon
@@ -160,35 +160,35 @@
                   </div>
                 </div>
               </td>
-              <td class="px-3 py-2">
+              <td>
                 <button
                   @click="toggleEnabled(rule)"
-                  :class="[
-                    'relative inline-flex h-4 w-7 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-                    rule.enabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600'
-                  ]"
+                  type="button"
+                  class="switch"
+                  :class="{ on: rule.enabled }"
+                  :aria-label="rule.enabled ? t('common.enabled') : t('common.disabled')"
+                  :aria-pressed="rule.enabled"
                 >
-                  <span
-                    :class="[
-                      'pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                      rule.enabled ? 'translate-x-3' : 'translate-x-0'
-                    ]"
-                  />
+                  <span class="knob"></span>
                 </button>
               </td>
-              <td class="px-3 py-2">
+              <td>
                 <div class="flex items-center gap-1">
                   <button
                     @click="handleEdit(rule)"
-                    class="p-1 text-gray-500 hover:text-primary-600 dark:hover:text-primary-400"
+                    type="button"
+                    class="icon-btn"
                     :title="t('common.edit')"
+                    :aria-label="t('common.edit')"
                   >
                     <Icon name="edit" size="sm" />
                   </button>
                   <button
                     @click="handleDelete(rule)"
-                    class="p-1 text-gray-500 hover:text-red-600 dark:hover:text-red-400"
+                    type="button"
+                    class="icon-btn danger"
                     :title="t('common.delete')"
+                    :aria-label="t('common.delete')"
                   >
                     <Icon name="trash" size="sm" />
                   </button>

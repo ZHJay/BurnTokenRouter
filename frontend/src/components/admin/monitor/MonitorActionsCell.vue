@@ -1,38 +1,49 @@
 <template>
-  <div class="flex items-center gap-1">
+  <div class="row-actions justify-end">
     <button
+      type="button"
       @click="$emit('run', row)"
       :disabled="running"
-      class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+      class="icon-btn disabled:cursor-not-allowed disabled:opacity-50"
+      :title="t('admin.channelMonitor.runNow')"
+      :aria-label="t('admin.channelMonitor.runNow')"
     >
       <Icon name="refresh" size="sm" :class="running ? 'animate-spin' : ''" />
-      <span class="text-xs">{{ t('admin.channelMonitor.runNow') }}</span>
     </button>
     <button
+      type="button"
       data-testid="monitor-duplicate"
       :title="duplicateTitle"
+      :aria-label="duplicateTitle"
       :disabled="duplicating || Boolean(row.api_key_decrypt_failed)"
       @click="$emit('duplicate', row)"
-      class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+      class="icon-btn disabled:cursor-not-allowed disabled:opacity-50"
     >
-      <Icon name="copy" size="sm" />
-      <span class="text-xs">
-        {{ duplicating ? t('admin.channelMonitor.duplicating') : t('admin.channelMonitor.duplicate') }}
-      </span>
+      <!--
+        Row actions are icon-only (approved demo). Progress feedback therefore
+        rides on the icon itself — same pattern as the Run button above — so the
+        duplicating state stays visible to sighted users, not just to the
+        accessible name in title/aria-label.
+      -->
+      <Icon :name="duplicating ? 'refresh' : 'copy'" size="sm" :class="duplicating ? 'animate-spin' : ''" />
     </button>
     <button
+      type="button"
       @click="$emit('edit', row)"
-      class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+      class="icon-btn"
+      :title="t('common.edit')"
+      :aria-label="t('common.edit')"
     >
       <Icon name="edit" size="sm" />
-      <span class="text-xs">{{ t('common.edit') }}</span>
     </button>
     <button
+      type="button"
       @click="$emit('delete', row)"
-      class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+      class="icon-btn danger"
+      :title="t('common.delete')"
+      :aria-label="t('common.delete')"
     >
       <Icon name="trash" size="sm" />
-      <span class="text-xs">{{ t('common.delete') }}</span>
     </button>
   </div>
 </template>

@@ -8,7 +8,7 @@
         id="login-agreement-consent"
         type="checkbox"
         :checked="accepted"
-        class="mt-[2px] h-4 w-4 flex-shrink-0 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-dark-600 dark:bg-dark-900"
+        class="mt-[2px] h-4 w-4 flex-shrink-0 rounded border-[var(--separator-strong)] text-primary-600 focus:ring-primary-500 dark:bg-[var(--bg-elevated)]"
         @change="handleCheckboxChange"
       />
       <div class="min-w-0 flex-1">
@@ -63,8 +63,8 @@
         v-if="dialogVisible"
         class="fixed inset-0 z-[140] flex items-center justify-center overflow-y-auto bg-gray-950/60 p-4 backdrop-blur-sm"
       >
-        <div class="w-full max-w-[600px] overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 dark:bg-dark-900 dark:ring-white/10">
-          <div class="border-b border-gray-100 bg-white px-6 py-6 dark:border-dark-800 dark:bg-dark-900">
+        <div class="w-full max-w-[600px] overflow-hidden rounded-[var(--r-xl)] border-[0.5px] border-[var(--separator)] bg-[var(--glass-bg-strong)] shadow-[var(--shadow-pop)]">
+          <div class="border-b-[0.5px] border-[var(--separator)] bg-[var(--bg-elevated)] px-6 py-6">
             <div class="flex items-start gap-4">
               <span class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-700 ring-1 ring-primary-100 dark:bg-primary-500/10 dark:text-primary-300 dark:ring-primary-500/20">
                 <Icon name="shield" size="md" />
@@ -76,7 +76,7 @@
                   </h2>
                   <span
                     v-if="updatedAt"
-                    class="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-dark-800 dark:text-dark-300"
+                    class="rounded-full bg-[var(--fill)] px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)]"
                   >
                     {{ updatedAt }}
                   </span>
@@ -103,9 +103,9 @@
                 :to="documentRoute(doc)"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="group flex min-h-[72px] w-full items-center gap-3 rounded-xl border border-gray-200 bg-gray-50/70 px-4 py-3 text-left transition hover:-translate-y-0.5 hover:border-primary-200 hover:bg-white hover:shadow-sm dark:border-dark-700 dark:bg-dark-800/70 dark:hover:border-primary-500/30 dark:hover:bg-dark-800"
+                class="group flex min-h-[72px] w-full items-center gap-3 rounded-[var(--r-lg)] border-[0.5px] border-[var(--separator)] bg-[var(--fill)] px-4 py-3 text-left transition hover:-translate-y-0.5 hover:border-primary-200 hover:bg-[var(--bg-elevated)] hover:shadow-[var(--shadow-card)]"
               >
-                <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white text-gray-700 ring-1 ring-gray-200 transition group-hover:bg-primary-50 group-hover:text-primary-700 group-hover:ring-primary-100 dark:bg-dark-900 dark:text-dark-200 dark:ring-dark-700 dark:group-hover:bg-primary-500/10 dark:group-hover:text-primary-200 dark:group-hover:ring-primary-500/20">
+                <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[var(--r-md)] bg-[var(--bg-elevated)] text-gray-700 ring-1 ring-[var(--separator)] transition group-hover:bg-primary-50 group-hover:text-primary-700 group-hover:ring-primary-100 dark:text-dark-200 dark:group-hover:bg-primary-500/10 dark:group-hover:text-primary-200 dark:group-hover:ring-primary-500/20">
                   <Icon :name="documentIcon(index, doc.title)" size="sm" />
                 </span>
                 <span class="min-w-0 flex-1">
@@ -118,18 +118,18 @@
             </div>
           </div>
 
-          <div class="border-t border-gray-100 bg-gray-50/80 px-6 py-4 dark:border-dark-800 dark:bg-dark-950/60">
+          <div class="border-t-[0.5px] border-[var(--separator)] bg-[var(--fill)] px-6 py-4">
             <div class="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                class="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 dark:border-dark-700 dark:bg-dark-800 dark:text-dark-200 dark:hover:bg-dark-700"
+                class="rounded-[var(--r-lg)] border-[0.5px] border-[var(--separator-strong)] bg-[var(--bg-elevated)] px-4 py-3 text-sm font-semibold text-gray-700 transition hover:bg-[var(--fill)] dark:text-dark-200"
                 @click="emit('reject')"
               >
                 {{ t('legal.loginAgreementPrompt.reject') }}
               </button>
               <button
                 type="button"
-                class="rounded-xl bg-primary-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-primary-600/20 transition hover:bg-primary-700"
+                class="rounded-[var(--r-lg)] bg-[var(--blue)] px-4 py-3 text-sm font-semibold text-white shadow-[var(--shadow-blue)] transition hover:bg-[var(--blue-hover)]"
                 @click="emit('accept')"
               >
                 {{ t('legal.loginAgreementPrompt.accept') }}

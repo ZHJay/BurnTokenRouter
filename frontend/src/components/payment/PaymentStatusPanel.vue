@@ -112,7 +112,7 @@
               <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('payment.qr.alipayFallbackTitle') }}</p>
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('payment.qr.alipayFallbackHint') }}</p>
             </div>
-            <div class="w-full space-y-2 border-y border-gray-100 py-3 text-sm dark:border-dark-600">
+            <div class="w-full space-y-2 border-y py-3 text-sm">
               <div class="flex items-start justify-between gap-4">
                 <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.payAmount') }}</span>
                 <span class="font-semibold text-gray-900 dark:text-white">{{ displayPaymentAmount }}</span>

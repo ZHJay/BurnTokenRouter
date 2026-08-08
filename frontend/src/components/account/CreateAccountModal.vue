@@ -70,14 +70,14 @@
       <!-- Platform Selection - Segmented Control Style -->
       <div>
         <label class="input-label">{{ t('admin.accounts.platform') }}</label>
-        <div class="mt-2 flex flex-wrap rounded-lg bg-gray-100 p-1 dark:bg-dark-700" data-tour="account-form-platform">
+        <div class="segmented mt-2 w-full flex-wrap" data-tour="account-form-platform">
           <button
             type="button"
             @click="form.platform = 'anthropic'"
             :class="[
               'flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-all',
               form.platform === 'anthropic'
-                ? 'bg-white text-orange-600 shadow-sm dark:bg-dark-600 dark:text-orange-400'
+                ? 'active text-orange-600 dark:text-orange-400'
                 : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
             ]"
           >
@@ -90,7 +90,7 @@
             :class="[
               'flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-all',
               form.platform === 'openai'
-                ? 'bg-white text-green-600 shadow-sm dark:bg-dark-600 dark:text-green-400'
+                ? 'active text-green-600 dark:text-green-400'
                 : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
             ]"
           >
@@ -115,7 +115,7 @@
             :class="[
               'flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-all',
               form.platform === 'gemini'
-                ? 'bg-white text-blue-600 shadow-sm dark:bg-dark-600 dark:text-blue-400'
+                ? 'active text-blue-600 dark:text-blue-400'
                 : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
             ]"
           >
@@ -3607,74 +3607,74 @@
         <p class="mb-4 text-xs text-amber-600 dark:text-amber-400">
           {{ t('admin.accounts.gemini.quotaPolicy.note') }}
         </p>
-        <div class="overflow-x-auto">
-          <table class="w-full text-xs">
-            <thead class="bg-gray-50 dark:bg-dark-600">
+        <div class="table-container">
+          <table class="table w-full text-xs">
+            <thead>
               <tr>
-                <th class="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">
+                <th>
                   {{ t('admin.accounts.gemini.quotaPolicy.columns.channel') }}
                 </th>
-                <th class="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">
+                <th>
                   {{ t('admin.accounts.gemini.quotaPolicy.columns.account') }}
                 </th>
-                <th class="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">
+                <th>
                   {{ t('admin.accounts.gemini.quotaPolicy.columns.limits') }}
                 </th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200 dark:divide-dark-600">
+            <tbody>
               <tr>
-                <td class="px-3 py-2 text-gray-900 dark:text-white">
+                <td class="font-medium">
                   {{ t('admin.accounts.gemini.quotaPolicy.rows.googleOne.channel') }}
                 </td>
-                <td class="px-3 py-2 text-gray-600 dark:text-gray-400">Free</td>
-                <td class="px-3 py-2 text-gray-600 dark:text-gray-400">
+                <td class="text-gray-600 dark:text-gray-400">Free</td>
+                <td class="text-gray-600 dark:text-gray-400">
                   {{ t('admin.accounts.gemini.quotaPolicy.rows.googleOne.limitsFree') }}
                 </td>
               </tr>
               <tr>
-                <td class="px-3 py-2 text-gray-900 dark:text-white"></td>
-                <td class="px-3 py-2 text-gray-600 dark:text-gray-400">Pro</td>
-                <td class="px-3 py-2 text-gray-600 dark:text-gray-400">
+                <td class="font-medium"></td>
+                <td class="text-gray-600 dark:text-gray-400">Pro</td>
+                <td class="text-gray-600 dark:text-gray-400">
                   {{ t('admin.accounts.gemini.quotaPolicy.rows.googleOne.limitsPro') }}
                 </td>
               </tr>
               <tr>
-                <td class="px-3 py-2 text-gray-900 dark:text-white"></td>
-                <td class="px-3 py-2 text-gray-600 dark:text-gray-400">Ultra</td>
-                <td class="px-3 py-2 text-gray-600 dark:text-gray-400">
+                <td class="font-medium"></td>
+                <td class="text-gray-600 dark:text-gray-400">Ultra</td>
+                <td class="text-gray-600 dark:text-gray-400">
                   {{ t('admin.accounts.gemini.quotaPolicy.rows.googleOne.limitsUltra') }}
                 </td>
               </tr>
               <tr>
-                <td class="px-3 py-2 text-gray-900 dark:text-white">
+                <td class="font-medium">
                   {{ t('admin.accounts.gemini.quotaPolicy.rows.gcp.channel') }}
                 </td>
-                <td class="px-3 py-2 text-gray-600 dark:text-gray-400">Standard</td>
-                <td class="px-3 py-2 text-gray-600 dark:text-gray-400">
+                <td class="text-gray-600 dark:text-gray-400">Standard</td>
+                <td class="text-gray-600 dark:text-gray-400">
                   {{ t('admin.accounts.gemini.quotaPolicy.rows.gcp.limitsStandard') }}
                 </td>
               </tr>
               <tr>
-                <td class="px-3 py-2 text-gray-900 dark:text-white"></td>
-                <td class="px-3 py-2 text-gray-600 dark:text-gray-400">Enterprise</td>
-                <td class="px-3 py-2 text-gray-600 dark:text-gray-400">
+                <td class="font-medium"></td>
+                <td class="text-gray-600 dark:text-gray-400">Enterprise</td>
+                <td class="text-gray-600 dark:text-gray-400">
                   {{ t('admin.accounts.gemini.quotaPolicy.rows.gcp.limitsEnterprise') }}
                 </td>
               </tr>
               <tr>
-                <td class="px-3 py-2 text-gray-900 dark:text-white">
+                <td class="font-medium">
                   {{ t('admin.accounts.gemini.quotaPolicy.rows.aiStudio.channel') }}
                 </td>
-                <td class="px-3 py-2 text-gray-600 dark:text-gray-400">Free</td>
-                <td class="px-3 py-2 text-gray-600 dark:text-gray-400">
+                <td class="text-gray-600 dark:text-gray-400">Free</td>
+                <td class="text-gray-600 dark:text-gray-400">
                   {{ t('admin.accounts.gemini.quotaPolicy.rows.aiStudio.limitsFree') }}
                 </td>
               </tr>
               <tr>
-                <td class="px-3 py-2 text-gray-900 dark:text-white"></td>
-                <td class="px-3 py-2 text-gray-600 dark:text-gray-400">Paid</td>
-                <td class="px-3 py-2 text-gray-600 dark:text-gray-400">
+                <td class="font-medium"></td>
+                <td class="text-gray-600 dark:text-gray-400">Paid</td>
+                <td class="text-gray-600 dark:text-gray-400">
                   {{ t('admin.accounts.gemini.quotaPolicy.rows.aiStudio.limitsPaid') }}
                 </td>
               </tr>

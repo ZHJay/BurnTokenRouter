@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-4">
-    <button type="button" :disabled="disabled" class="btn btn-secondary w-full" @click="startLogin">
+    <button type="button" :disabled="disabled" class="btn btn-secondary h-[42px] w-full" @click="startLogin">
       <svg
         class="icon mr-2"
         viewBox="0 0 16 16"
@@ -30,11 +30,11 @@
     </button>
 
     <div v-if="showDivider" class="flex items-center gap-3">
-      <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
-      <span class="text-xs text-gray-500 dark:text-dark-400">
+      <div class="h-[0.5px] flex-1 bg-[var(--separator)]"></div>
+      <span class="text-xs text-[var(--text-tertiary)]">
         {{ t('auth.oauthOrContinue') }}
       </span>
-      <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
+      <div class="h-[0.5px] flex-1 bg-[var(--separator)]"></div>
     </div>
   </div>
 </template>

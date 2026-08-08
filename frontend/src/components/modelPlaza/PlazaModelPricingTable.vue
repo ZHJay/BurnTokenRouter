@@ -533,6 +533,20 @@ function trimZero(n: number): string {
   --pz-bg-hover: color-mix(in srgb, var(--plaza-accent) 13%, transparent);
 }
 
+/* 表格分隔线统一为 0.5px 发丝线(覆盖模板里的 Tailwind 灰) */
+.plaza-pricing-table th,
+.plaza-pricing-table td {
+  border-color: var(--separator);
+}
+
+.plaza-pricing-table tbody tr {
+  transition: background-color 0.14s var(--ease);
+}
+
+.plaza-pricing-table tbody tr:hover {
+  background-color: var(--fill);
+}
+
 .dark .plaza-pricing-table {
   --pz-title: color-mix(in srgb, var(--plaza-accent) 70%, white);
   --pz-bg: color-mix(in srgb, var(--plaza-accent) 6%, transparent);

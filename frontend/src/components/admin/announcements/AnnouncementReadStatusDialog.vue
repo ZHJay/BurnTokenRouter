@@ -16,7 +16,7 @@
             @input="handleSearch"
           />
         </div>
-        <button @click="load" :disabled="loading" class="btn btn-secondary" :title="t('common.refresh')">
+        <button @click="load" :disabled="loading" class="btn btn-secondary" :title="t('common.refresh')" :aria-label="t('common.refresh')">
           <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
         </button>
       </div>

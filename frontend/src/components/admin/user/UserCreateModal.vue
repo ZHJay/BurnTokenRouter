@@ -16,7 +16,13 @@
           <div class="relative flex-1">
             <input v-model="form.password" type="text" required class="input pr-10" :placeholder="t('admin.users.enterPassword')" />
           </div>
-          <button type="button" @click="generateRandomPassword" class="btn btn-secondary px-3">
+          <button
+            type="button"
+            @click="generateRandomPassword"
+            class="btn btn-secondary px-3"
+            :title="t('admin.users.generatePassword')"
+            :aria-label="t('admin.users.generatePassword')"
+          >
             <Icon name="refresh" size="md" />
           </button>
         </div>

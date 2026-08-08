@@ -115,7 +115,7 @@
 
 
       <!-- Config fields -->
-      <div class="border-t border-gray-200 pt-4 dark:border-dark-700">
+      <div class="border-t pt-4">
         <div class="mb-3 flex items-center gap-2">
           <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
             {{ t('admin.settings.payment.providerConfig') }}
@@ -244,7 +244,7 @@
       </div>
 
       <!-- Per-type limits (collapsible) -->
-      <div v-if="limitableTypes.length" class="border-t border-gray-200 pt-4 dark:border-dark-700">
+      <div v-if="limitableTypes.length" class="border-t pt-4">
         <button type="button" @click="limitsExpanded = !limitsExpanded" class="flex w-full items-center justify-between">
           <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
             {{ t('admin.settings.payment.limitsTitle') }}
