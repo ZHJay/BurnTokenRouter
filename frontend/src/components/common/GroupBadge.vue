@@ -152,7 +152,12 @@ const peakRateClass = computed(() => {
   return 'b-orange'
 })
 
-// Badge color based on platform and subscription type
+// Badge color based on platform and subscription type.
+// 只做类名归类，不产生任何颜色——`.badge` / `.b-*` / `.gpill` 的取值全部由
+// `src/style.css` 的全局定义提供（含 `html.dark` 暗色覆盖）。
+// 不要在本文件重建 scoped `.b-*` 副本：Tailwind 3 的 `@layer components` 会在编译期被
+// 摊平成无层级普通规则，而 scoped 规则带 `[data-v-*]`（特异性更高）且由 Vue 在运行时后
+// 注入，必然压过全局 `html.dark` 覆盖，使全站暗色修复在本组件上静默失效。
 const badgeClass = computed(() => {
   if (props.platform === 'anthropic') {
     return 'b-claude'
@@ -190,89 +195,3 @@ const badgeClass = computed(() => {
   return 'b-blue'
 })
 </script>
-
-<style scoped>
-/* 契约镜像：apple-theme.css 的 .badge / .b-* / .gpill 体系（B1 全局类落地前的本地回退） */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
-  border-radius: 7px;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.b-openai {
-  background: rgba(16, 163, 127, 0.12);
-  color: #0f9d78;
-}
-
-.b-claude {
-  background: rgba(217, 119, 87, 0.14);
-  color: #c2612f;
-}
-
-.b-gemini {
-  background: rgba(66, 133, 244, 0.14);
-  color: #3b76e0;
-}
-
-.b-grok {
-  background: rgba(120, 120, 128, 0.16);
-  color: var(--text-secondary);
-}
-
-.b-blue {
-  background: var(--blue-soft);
-  color: var(--blue);
-}
-
-.b-green {
-  background: rgba(52, 199, 89, 0.14);
-  color: #28a745;
-}
-
-.b-orange {
-  background: rgba(255, 159, 10, 0.14);
-  color: #d9820a;
-}
-
-.b-red {
-  background: rgba(255, 59, 48, 0.12);
-  color: var(--red);
-}
-
-.b-purple {
-  background: rgba(175, 82, 222, 0.14);
-  color: var(--purple);
-}
-
-.b-teal {
-  background: rgba(48, 176, 199, 0.14);
-  color: var(--teal);
-}
-
-/* 暗色模式调整（与 apple-theme.css 一致） */
-:global(html.dark) .b-claude {
-  color: #e0955f;
-}
-
-:global(html.dark) .b-green {
-  color: var(--green);
-}
-
-:global(html.dark) .b-orange {
-  color: var(--orange);
-}
-
-.gpill {
-  display: inline-block;
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: var(--r-pill);
-  background: var(--fill);
-  color: var(--text-secondary);
-}
-</style>
