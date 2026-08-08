@@ -3,10 +3,10 @@
     <Transition name="popup-fade">
       <div
         v-if="displayedAnnouncement"
-        class="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-gradient-to-br from-black/70 via-black/60 to-black/70 p-4 pt-[8vh] backdrop-blur-md"
+        class="ann-overlay"
       >
         <div
-          class="w-full max-w-[680px] overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-dark-800 dark:ring-white/10"
+          class="ann-panel w-full max-w-[680px]"
           @click.stop
         >
           <!-- Header with warm gradient -->
@@ -158,12 +158,39 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.ann-overlay {
+  /* 契约镜像：纱幕压暗（亮 18% / 暗 45% 黑） */
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.18);
+  padding: 16px;
+  padding-top: 8vh;
+}
+
+:global(html.dark) .ann-overlay {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.ann-panel {
+  /* 契约镜像：不透明浮出面板 */
+  overflow: hidden;
+  border-radius: var(--r-xl);
+  background: var(--glass-bg-strong);
+  border: 0.5px solid var(--separator);
+  box-shadow: var(--glass-highlight), var(--shadow-pop);
+}
+
 .popup-fade-enter-active {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.3s var(--ease);
 }
 
 .popup-fade-leave-active {
-  transition: all 0.2s cubic-bezier(0.4, 0, 1, 1);
+  transition: opacity 0.2s var(--ease);
 }
 
 .popup-fade-enter-from,

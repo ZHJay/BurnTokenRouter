@@ -1,12 +1,7 @@
 <template>
-  <div class="flex items-center gap-1.5">
-    <span
-      :class="[
-        'inline-block h-2 w-2 rounded-full',
-        variantClass
-      ]"
-    ></span>
-    <span class="text-sm text-gray-700 dark:text-gray-300">
+  <div class="status">
+    <span :class="['dot', variantClass]"></span>
+    <span class="status-label">
       {{ label }}
     </span>
   </div>
@@ -24,16 +19,54 @@ const variantClass = computed(() => {
   switch (props.status) {
     case 'active':
     case 'success':
-      return 'bg-green-500'
+      return 'dot-active'
     case 'disabled':
     case 'inactive':
     case 'warning':
-      return 'bg-yellow-500'
+      return 'dot-cooldown'
     case 'error':
     case 'danger':
-      return 'bg-red-500'
+      return 'dot-error'
     default:
-      return 'bg-gray-400'
+      return 'dot-paused'
   }
 })
 </script>
+
+<style scoped>
+/* 契约镜像：apple-theme.css 的 .status + .dot 体系 */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-active {
+  background: var(--green);
+  box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.18);
+}
+
+.dot-cooldown {
+  background: var(--orange);
+  box-shadow: 0 0 0 3px rgba(255, 159, 10, 0.18);
+}
+
+.dot-error {
+  background: var(--red);
+  box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.18);
+}
+
+.dot-paused {
+  background: var(--gray-dot);
+}
+</style>

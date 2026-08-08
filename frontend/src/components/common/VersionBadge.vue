@@ -4,7 +4,7 @@
     <template v-if="isAdmin">
       <button
         @click="toggleDropdown"
-        class="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs transition-colors"
+        class="vb-trigger"
         :class="[
           hasUpdate
             ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50'
@@ -31,7 +31,7 @@
         <div
           v-if="dropdownOpen"
           ref="dropdownRef"
-          class="absolute left-0 z-50 mt-2 overflow-hidden whitespace-normal rounded-xl border border-gray-200 bg-white shadow-lg transition-all duration-200 dark:border-dark-700 dark:bg-dark-800"
+          class="vb-pop"
           :class="rollbackPanelOpen && isReleaseBuild ? 'w-80' : 'w-64'"
         >
           <!-- Header with refresh button -->
@@ -43,7 +43,7 @@
             }}</span>
             <button
               @click="refreshVersion(true)"
-              class="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-dark-700 dark:hover:text-dark-200"
+              class="vb-icon-btn"
               :disabled="loading"
               :title="t('version.refresh')"
             >
@@ -143,7 +143,7 @@
                 <button
                   @click="handleUpdate"
                   :disabled="updating"
-                  class="flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="vb-action vb-action-red"
                 >
                   {{ t('version.retry') }}
                 </button>
@@ -185,7 +185,7 @@
                 <button
                   @click="handleRestart"
                   :disabled="restarting"
-                  class="flex w-full items-center justify-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="vb-action vb-action-green"
                 >
                   <svg
                     v-if="restarting"
@@ -586,7 +586,7 @@
                             <button
                               @click="handleRollback"
                               :disabled="rollingBack"
-                              class="flex w-full items-center justify-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+                              class="vb-action vb-action-amber"
                             >
                               <svg
                                 v-if="rollingBack"
@@ -923,9 +923,112 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* 触发器：药丸 + fill 底 */
+.vb-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  border: none;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.18s var(--ease), color 0.18s var(--ease);
+}
+
+.vb-trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--blue-soft);
+}
+
+.vb-pop {
+  /* 契约镜像：不透明浮出面板 */
+  position: absolute;
+  left: 0;
+  z-index: 50;
+  margin-top: 8px;
+  overflow: hidden;
+  white-space: normal;
+  background: var(--glass-bg-strong);
+  border: 0.5px solid var(--separator);
+  border-radius: var(--r-lg);
+  box-shadow: var(--glass-highlight), var(--shadow-pop);
+  transition: width 0.2s var(--ease);
+}
+
+.vb-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-pill);
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.vb-icon-btn:hover:not(:disabled) {
+  background: var(--fill);
+  color: var(--text-primary);
+}
+
+.vb-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.vb-icon-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--blue-soft);
+}
+
+.vb-action {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  border-radius: var(--r-pill);
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  color: #fff;
+  cursor: pointer;
+  transition: filter 0.18s var(--ease), opacity 0.18s var(--ease);
+}
+
+.vb-action:hover:not(:disabled) {
+  filter: brightness(0.94);
+}
+
+.vb-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.vb-action-red {
+  background: var(--red);
+}
+
+.vb-action-green {
+  background: var(--green);
+}
+
+.vb-action-amber {
+  background: var(--orange);
+  box-shadow: var(--shadow-card);
+}
+
 .dropdown-enter-active,
 .dropdown-leave-active {
-  transition: all 0.2s ease;
+  transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
 }
 
 .dropdown-enter-from,
@@ -936,7 +1039,7 @@ onBeforeUnmount(() => {
 
 .rollback-enter-active,
 .rollback-leave-active {
-  transition: all 0.2s ease;
+  transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
 }
 
 .rollback-enter-from,

@@ -1,8 +1,8 @@
 <template>
   <div class="w-full">
-    <label v-if="label" :for="id" class="input-label mb-1.5 block">
+    <label v-if="label" :for="id" class="input-label block">
       {{ label }}
-      <span v-if="required" class="text-red-500">*</span>
+      <span v-if="required" class="required-star">*</span>
     </label>
     <div class="relative">
       <!-- Prefix Icon Slot -->
@@ -24,11 +24,11 @@
         :autocomplete="autocomplete"
         :readonly="readonly"
         :class="[
-          'input w-full transition-all duration-200',
+          'input w-full',
           $slots.prefix ? 'pl-11' : '',
           $slots.suffix ? 'pr-11' : '',
-          error ? 'input-error ring-2 ring-red-500/20' : '',
-          disabled ? 'cursor-not-allowed bg-gray-100 opacity-60 dark:bg-dark-900' : ''
+          error ? 'input-error' : '',
+          disabled ? 'input-disabled' : ''
         ]"
         @input="onInput"
         @change="$emit('change', ($event.target as HTMLInputElement).value)"
@@ -40,16 +40,16 @@
       <!-- Suffix Slot (e.g. Password Toggle or Clear Button) -->
       <div
         v-if="$slots.suffix"
-        class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 dark:text-dark-400"
+        class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 dark:text-dark-400"
       >
         <slot name="suffix"></slot>
       </div>
     </div>
     <!-- Hint / Error Text -->
-    <p v-if="error" class="input-error-text mt-1.5">
+    <p v-if="error" class="input-error-text">
       {{ error }}
     </p>
-    <p v-else-if="hint" class="input-hint mt-1.5">
+    <p v-else-if="hint" class="input-hint">
       {{ hint }}
     </p>
   </div>
@@ -101,3 +101,66 @@ defineExpose({
   select: () => inputRef.value?.select()
 })
 </script>
+
+<style scoped>
+/* 契约镜像：apple-theme.css 的 .input / .field label（B1 全局类落地前的本地回退，数值与契约一致） */
+.input {
+  height: 44px;
+  padding: 0 14px;
+  border-radius: var(--r-md);
+  border: 0.5px solid var(--separator-strong);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  transition: box-shadow 0.18s var(--ease), border-color 0.18s var(--ease), opacity 0.18s var(--ease);
+}
+
+.input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 4px var(--blue-soft);
+}
+
+.input-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.required-star {
+  color: var(--red);
+}
+
+.input-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.input-error-text {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--red);
+}
+
+.input-error {
+  border-color: var(--red);
+}
+
+.input-error:focus {
+  border-color: var(--red);
+  box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.12);
+}
+
+.input-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+</style>

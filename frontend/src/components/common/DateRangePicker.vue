@@ -15,7 +15,7 @@
         <Icon
           name="chevronDown"
           size="sm"
-          :class="['transition-transform duration-200', isOpen && 'rotate-180']"
+          :class="['date-picker-chevron-icon', isOpen && 'is-open']"
         />
       </span>
     </button>
@@ -49,7 +49,7 @@
             />
           </div>
           <div class="date-picker-separator">
-            <Icon name="arrowRight" size="sm" class="text-gray-400" />
+            <Icon name="arrowRight" size="sm" />
           </div>
           <div class="date-picker-field">
             <label class="date-picker-label">{{ t('dates.endDate') }}</label>
@@ -322,86 +322,160 @@ onUnmounted(() => {
 
 <style scoped>
 .date-picker-trigger {
-  @apply flex items-center gap-2;
-  @apply rounded-lg px-3 py-2 text-sm;
-  @apply bg-white dark:bg-dark-800;
-  @apply border border-gray-200 dark:border-dark-600;
-  @apply text-gray-700 dark:text-gray-300;
-  @apply transition-all duration-200;
-  @apply focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30;
-  @apply hover:border-gray-300 dark:hover:border-dark-500;
-  @apply cursor-pointer;
+  /* 与 .input 一致的 44px 触发控件 */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: var(--r-md);
+  border: 0.5px solid var(--separator-strong);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: box-shadow 0.18s var(--ease), border-color 0.18s var(--ease);
+}
+
+.date-picker-trigger:hover {
+  border-color: var(--text-tertiary);
+}
+
+.date-picker-trigger:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 4px var(--blue-soft);
 }
 
 .date-picker-trigger-open {
-  @apply border-primary-500 ring-2 ring-primary-500/30;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 4px var(--blue-soft);
 }
 
 .date-picker-icon {
-  @apply text-gray-400 dark:text-dark-400;
+  display: inline-flex;
+  color: var(--text-tertiary);
 }
 
 .date-picker-value {
-  @apply font-medium;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .date-picker-chevron {
-  @apply text-gray-400 dark:text-dark-400;
+  display: inline-flex;
+  color: var(--text-tertiary);
+}
+
+.date-picker-chevron-icon {
+  transition: transform 0.2s var(--ease);
+}
+
+.date-picker-chevron-icon.is-open {
+  transform: rotate(180deg);
 }
 
 .date-picker-dropdown {
-  @apply absolute left-0 z-[100] mt-2;
-  @apply bg-white dark:bg-dark-800;
-  @apply rounded-xl;
-  @apply border border-gray-200 dark:border-dark-700;
-  @apply shadow-lg shadow-black/10 dark:shadow-black/30;
-  @apply overflow-hidden;
-  @apply min-w-[320px];
+  /* 契约镜像：不透明浮出面板（浮出层不透明 + 纱幕规范） */
+  position: absolute;
+  left: 0;
+  z-index: 100;
+  margin-top: 8px;
+  background: var(--glass-bg-strong);
+  border-radius: var(--r-lg);
+  border: 0.5px solid var(--separator);
+  box-shadow: var(--glass-highlight), var(--shadow-pop);
+  overflow: hidden;
+  min-width: 320px;
 }
 
 .date-picker-presets {
-  @apply grid grid-cols-2 gap-1 p-2;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+  padding: 8px;
 }
 
 .date-picker-preset {
-  @apply rounded-md px-3 py-1.5 text-xs font-medium;
-  @apply text-gray-600 dark:text-gray-400;
-  @apply hover:bg-gray-100 dark:hover:bg-dark-700;
-  @apply transition-colors duration-150;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  border-radius: var(--r-sm);
+  padding: 8px 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+  text-align: left;
+}
+
+.date-picker-preset:hover {
+  background: var(--fill);
+  color: var(--text-primary);
+}
+
+.date-picker-preset:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--blue-soft);
 }
 
 .date-picker-preset-active {
-  @apply bg-primary-100 dark:bg-primary-900/30;
-  @apply text-primary-700 dark:text-primary-300;
+  background: var(--blue-soft);
+  color: var(--blue);
 }
 
 .date-picker-divider {
-  @apply border-t border-gray-100 dark:border-dark-700;
+  border-top: 0.5px solid var(--separator);
 }
 
 .date-picker-custom {
-  @apply flex items-end gap-2 p-3;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 12px;
 }
 
 .date-picker-field {
-  @apply flex-1;
+  flex: 1;
 }
 
 .date-picker-label {
-  @apply mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400;
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-tertiary);
 }
 
 .date-picker-input {
-  @apply w-full rounded-md px-2 py-1.5 text-sm;
-  @apply bg-gray-50 dark:bg-dark-700;
-  @apply border border-gray-200 dark:border-dark-600;
-  @apply text-gray-900 dark:text-gray-100;
-  @apply focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30;
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: var(--r-sm);
+  border: 0.5px solid var(--separator-strong);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: box-shadow 0.18s var(--ease), border-color 0.18s var(--ease);
+}
+
+.date-picker-input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 4px var(--blue-soft);
 }
 
 .date-picker-input::-webkit-calendar-picker-indicator {
-  @apply cursor-pointer opacity-60 hover:opacity-100;
+  cursor: pointer;
+  opacity: 0.6;
   filter: invert(0.5);
+}
+
+.date-picker-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
 }
 
 .dark .date-picker-input::-webkit-calendar-picker-indicator {
@@ -409,29 +483,59 @@ onUnmounted(() => {
 }
 
 .date-picker-separator {
-  @apply flex items-center justify-center pb-1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 9px;
+  color: var(--text-tertiary);
 }
 
 .date-picker-actions {
-  @apply flex justify-end p-2 pt-0;
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 12px 12px;
 }
 
 .date-picker-apply {
-  @apply rounded-lg px-4 py-1.5 text-sm font-medium;
-  @apply bg-primary-600 text-white;
-  @apply hover:bg-primary-700;
-  @apply transition-colors duration-150;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: var(--r-pill);
+  border: none;
+  background: var(--blue);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: var(--shadow-blue);
+  transition: background 0.18s var(--ease), transform 0.12s var(--ease);
+}
+
+.date-picker-apply:hover {
+  background: var(--blue-hover);
+}
+
+.date-picker-apply:active {
+  transform: scale(0.97);
+}
+
+.date-picker-apply:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--blue-soft);
 }
 
 /* Dropdown animation */
 .date-picker-dropdown-enter-active,
 .date-picker-dropdown-leave-active {
-  transition: all 0.2s ease;
+  transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
 }
 
 .date-picker-dropdown-enter-from,
 .date-picker-dropdown-leave-to {
   opacity: 0;
-  transform: translateY(-8px);
+  transform: translateY(-6px) scale(0.98);
 }
 </style>

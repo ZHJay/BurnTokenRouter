@@ -1,7 +1,7 @@
 <template>
   <div
     :class="[
-      'animate-pulse bg-gray-200 dark:bg-dark-700',
+      'skel',
       variant === 'circle' ? 'rounded-full' : 'rounded-lg',
       customClass
     ]"
@@ -44,3 +44,27 @@ const style = computed(() => {
   return s
 })
 </script>
+
+<style scoped>
+/* neutral shimmer：基于 --fill，尊重 prefers-reduced-motion */
+.skel {
+  background: var(--fill);
+  animation: skel-pulse 1.6s var(--ease) infinite;
+}
+
+@keyframes skel-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skel {
+    animation: none;
+  }
+}
+</style>

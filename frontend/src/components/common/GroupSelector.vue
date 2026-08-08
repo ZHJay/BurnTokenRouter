@@ -1,33 +1,29 @@
 <template>
   <div>
-    <label class="input-label">
+    <label class="gs-label">
       {{ t('admin.users.groups') }}
       <span class="font-normal text-gray-400">{{ t('common.selectedCount', { count: modelValue.length }) }}</span>
     </label>
     <div
       v-if="isSearchable"
-      class="flex items-center gap-2 rounded-t-lg border border-b-0 border-gray-200 bg-gray-50 px-3 py-2 dark:border-dark-600 dark:bg-dark-800"
+      class="gs-search"
     >
-      <Icon name="search" size="sm" class="shrink-0 text-gray-400" />
+      <Icon name="search" size="sm" class="gs-search-icon" />
       <input
         v-model="searchText"
         type="text"
         :placeholder="t('common.searchPlaceholder')"
-        class="flex-1 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-gray-100 dark:placeholder:text-dark-400"
+        class="gs-search-input"
       />
     </div>
     <div
-      :class="[
-        'grid max-h-32 grid-cols-2 gap-1 overflow-y-auto p-2',
-        isSearchable
-          ? 'rounded-b-lg border border-t-0 border-gray-200 bg-gray-50 dark:border-dark-600 dark:bg-dark-800'
-          : 'rounded-lg border border-gray-200 bg-gray-50 dark:border-dark-600 dark:bg-dark-800'
-      ]"
+      class="gs-list"
+      :class="{ 'gs-list-searchable': isSearchable }"
     >
       <label
         v-for="group in filteredGroups"
         :key="group.id"
-        class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 transition-colors hover:bg-white dark:hover:bg-dark-700"
+        class="gs-item"
         :title="t('admin.groups.rateAndAccounts', { rate: group.rate_multiplier, count: group.account_count || 0 })"
       >
         <input
@@ -35,7 +31,7 @@
           :value="group.id"
           :checked="modelValue.includes(group.id)"
           @change="handleChange(group.id, ($event.target as HTMLInputElement).checked)"
-          class="h-3.5 w-3.5 shrink-0 rounded border-gray-300 text-primary-500 focus:ring-primary-500 dark:border-dark-500"
+          class="gs-checkbox"
         />
         <GroupBadge
           :name="group.name"
@@ -48,7 +44,7 @@
       </label>
       <div
         v-if="filteredGroups.length === 0"
-        class="col-span-2 py-2 text-center text-sm text-gray-500 dark:text-gray-400"
+        class="gs-empty"
       >
         {{ t('common.noGroupsAvailable') }}
       </div>
@@ -117,3 +113,91 @@ const handleChange = (groupId: number, checked: boolean) => {
   emit('update:modelValue', newValue)
 }
 </script>
+
+<style scoped>
+.gs-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.gs-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 0.5px solid var(--separator-strong);
+  border-bottom: none;
+  border-radius: var(--r-md) var(--r-md) 0 0;
+  background: var(--fill);
+}
+
+.gs-search-icon {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+
+.gs-search-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-family: inherit;
+}
+
+.gs-search-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.gs-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+  max-height: 128px;
+  overflow-y: auto;
+  padding: 8px;
+  border: 0.5px solid var(--separator-strong);
+  border-radius: var(--r-md);
+  background: var(--fill);
+}
+
+.gs-list-searchable {
+  border-radius: 0 0 var(--r-md) var(--r-md);
+  border-top: none;
+}
+
+.gs-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: var(--r-sm);
+  padding: 6px 8px;
+  cursor: pointer;
+  transition: background 0.15s var(--ease);
+}
+
+.gs-item:hover {
+  background: var(--bg-elevated);
+}
+
+.gs-checkbox {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  accent-color: var(--blue);
+  border-radius: 4px;
+}
+
+.gs-empty {
+  grid-column: span 2;
+  padding: 8px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+</style>

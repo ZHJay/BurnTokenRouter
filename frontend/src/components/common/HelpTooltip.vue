@@ -121,7 +121,7 @@ onBeforeUnmount(() => {
         v-show="show"
         role="tooltip"
         :class="[
-          'fixed z-[99999] -translate-x-1/2 -translate-y-full rounded-lg bg-gray-900 p-3 text-xs leading-relaxed text-white shadow-xl ring-1 ring-white/10 dark:bg-gray-800',
+          'fixed z-[99999] -translate-x-1/2 -translate-y-full tooltip-panel',
           props.widthClass,
         ]"
         :style="{ top: `calc(${tooltipStyle.top} - 8px)`, left: tooltipStyle.left }"
@@ -129,7 +129,7 @@ onBeforeUnmount(() => {
         <button
           v-if="props.trigger === 'click'"
           type="button"
-          class="absolute right-1.5 top-1.5 rounded p-1 text-gray-300 transition-colors hover:bg-white/10 hover:text-white"
+          class="tooltip-close"
           aria-label="Close"
           @click.stop="closeTooltip"
         >
@@ -138,8 +138,58 @@ onBeforeUnmount(() => {
           </svg>
         </button>
         <slot>{{ content }}</slot>
-        <div class="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-gray-900 dark:bg-gray-800"></div>
+        <div class="tooltip-arrow"></div>
       </div>
     </Teleport>
   </div>
 </template>
+
+<style scoped>
+/* 契约镜像：不透明浮出面板（浮出层一律不透明 + 纱幕规范） */
+.tooltip-panel {
+  background: var(--glass-bg-strong);
+  border: 0.5px solid var(--separator);
+  border-radius: var(--r-md);
+  box-shadow: var(--glass-highlight), var(--shadow-pop);
+  padding: 12px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.tooltip-close {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-pill);
+  color: var(--text-tertiary);
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.tooltip-close:hover {
+  background: var(--fill);
+  color: var(--text-primary);
+}
+
+.tooltip-close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--blue-soft);
+}
+
+.tooltip-arrow {
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  transform: translateX(-50%) rotate(45deg);
+  background: var(--glass-bg-strong);
+  border-right: 0.5px solid var(--separator);
+  border-bottom: 0.5px solid var(--separator);
+}
+</style>

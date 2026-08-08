@@ -3,10 +3,10 @@
     <!-- Mini Progress Display -->
     <button
       @click="toggleTooltip"
-      class="flex cursor-pointer items-center gap-2 rounded-xl bg-purple-50 px-3 py-1.5 transition-colors hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/30"
+      class="spm-trigger"
       :title="t('subscriptionProgress.viewDetails')"
     >
-      <Icon name="creditCard" size="sm" class="text-purple-600 dark:text-purple-400" />
+      <Icon name="creditCard" size="sm" class="spm-trigger-icon" />
       <div class="flex items-center gap-1.5">
         <!-- Combined progress indicator -->
         <div class="flex items-center gap-0.5">
@@ -27,13 +27,13 @@
     <transition name="dropdown">
       <div
         v-if="tooltipOpen"
-        class="absolute right-0 z-50 mt-2 w-[340px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-dark-700 dark:bg-dark-800"
+        class="spm-pop"
       >
-        <div class="border-b border-gray-100 p-3 dark:border-dark-700">
-          <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+        <div class="spm-pop-head">
+          <h3 class="spm-pop-title">
             {{ t('subscriptionProgress.title') }}
           </h3>
-          <p class="mt-0.5 text-xs text-gray-500 dark:text-dark-400">
+          <p class="spm-pop-sub">
             {{ t('subscriptionProgress.activeCount', { count: activeSubscriptions.length }) }}
           </p>
         </div>
@@ -42,15 +42,15 @@
           <div
             v-for="subscription in displaySubscriptions"
             :key="subscription.id"
-            class="border-b border-gray-50 p-3 last:border-b-0 dark:border-dark-700/50"
+            class="spm-pop-item"
           >
-            <div class="mb-2 flex items-center justify-between">
-              <span class="text-sm font-medium text-gray-900 dark:text-white">
+            <div class="spm-pop-row">
+              <span class="spm-pop-name">
                 {{ subscription.group?.name || `Group #${subscription.group_id}` }}
               </span>
               <span
                 v-if="subscription.expires_at"
-                class="text-xs"
+                class="spm-pop-expiry"
                 :class="getDaysRemainingClass(subscription.expires_at)"
               >
                 {{ formatDaysRemaining(subscription.expires_at) }}
@@ -76,9 +76,9 @@
                   <span class="w-8 flex-shrink-0 text-[10px] text-gray-500">{{
                     t('subscriptionProgress.daily')
                   }}</span>
-                  <div class="h-1.5 min-w-0 flex-1 rounded-full bg-gray-200 dark:bg-dark-600">
+                  <div class="spm-track">
                     <div
-                      class="h-1.5 rounded-full transition-all"
+                      class="spm-fill"
                       :class="
                         getProgressBarClass(
                           subscription.daily_usage_usd,
@@ -104,9 +104,9 @@
                   <span class="w-8 flex-shrink-0 text-[10px] text-gray-500">{{
                     t('subscriptionProgress.weekly')
                   }}</span>
-                  <div class="h-1.5 min-w-0 flex-1 rounded-full bg-gray-200 dark:bg-dark-600">
+                  <div class="spm-track">
                     <div
-                      class="h-1.5 rounded-full transition-all"
+                      class="spm-fill"
                       :class="
                         getProgressBarClass(
                           subscription.weekly_usage_usd,
@@ -163,11 +163,11 @@
           </div>
         </div>
 
-        <div class="border-t border-gray-100 p-2 dark:border-dark-700">
+        <div class="spm-pop-foot">
           <router-link
             to="/subscriptions"
             @click="closeTooltip"
-            class="block w-full py-1 text-center text-xs text-primary-600 hover:underline dark:text-primary-400"
+            class="spm-pop-link"
           >
             {{ t('subscriptionProgress.viewAll') }}
           </router-link>
@@ -307,14 +307,136 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.spm-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  border: none;
+  cursor: pointer;
+  background: rgba(175, 82, 222, 0.14);
+  color: var(--purple);
+  font-family: inherit;
+  transition: background 0.18s var(--ease), transform 0.12s var(--ease);
+}
+
+.spm-trigger:hover {
+  background: rgba(175, 82, 222, 0.22);
+}
+
+.spm-trigger:active {
+  transform: scale(0.97);
+}
+
+.spm-trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(175, 82, 222, 0.2);
+}
+
+.spm-trigger-icon {
+  color: var(--purple);
+}
+
+.spm-pop {
+  /* 契约镜像：不透明浮出面板 */
+  position: absolute;
+  right: 0;
+  z-index: 50;
+  margin-top: 8px;
+  width: 340px;
+  overflow: hidden;
+  background: var(--glass-bg-strong);
+  border: 0.5px solid var(--separator);
+  border-radius: var(--r-lg);
+  box-shadow: var(--glass-highlight), var(--shadow-pop);
+}
+
+.spm-pop-head {
+  padding: 12px;
+  border-bottom: 0.5px solid var(--separator);
+}
+
+.spm-pop-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.spm-pop-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.spm-pop-item {
+  padding: 12px;
+  border-bottom: 0.5px solid var(--separator);
+}
+
+.spm-pop-item:last-child {
+  border-bottom: none;
+}
+
+.spm-pop-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.spm-pop-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.spm-pop-expiry {
+  font-size: 12px;
+}
+
+.spm-track {
+  height: 6px;
+  min-width: 0;
+  flex: 1;
+  border-radius: var(--r-pill);
+  background: var(--fill);
+  overflow: hidden;
+}
+
+.spm-fill {
+  height: 100%;
+  border-radius: var(--r-pill);
+  transition: width 0.3s var(--ease);
+}
+
+.spm-pop-foot {
+  padding: 8px;
+  border-top: 0.5px solid var(--separator);
+}
+
+.spm-pop-link {
+  display: block;
+  width: 100%;
+  padding: 6px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--blue);
+}
+
+.spm-pop-link:hover {
+  text-decoration: underline;
+}
+
 .dropdown-enter-active,
 .dropdown-leave-active {
-  transition: all 0.2s ease;
+  transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
 }
 
 .dropdown-enter-from,
 .dropdown-leave-to {
   opacity: 0;
-  transform: scale(0.95) translateY(-4px);
+  transform: scale(0.97) translateY(-4px);
 }
 </style>
