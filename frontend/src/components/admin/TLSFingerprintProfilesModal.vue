@@ -34,46 +34,46 @@
         </p>
       </div>
 
-      <div v-else class="max-h-96 overflow-auto rounded-lg border border-gray-200 dark:border-dark-600">
-        <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
-          <thead class="sticky top-0 bg-gray-50 dark:bg-dark-700">
+      <div v-else class="table-container max-h-96 overflow-auto">
+        <table class="table min-w-full">
+          <thead class="sticky top-0 z-10">
             <tr>
-              <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+              <th class="whitespace-nowrap">
                 {{ t('admin.tlsFingerprintProfiles.columns.name') }}
               </th>
-              <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+              <th class="whitespace-nowrap">
                 {{ t('admin.tlsFingerprintProfiles.columns.description') }}
               </th>
-              <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+              <th class="whitespace-nowrap">
                 {{ t('admin.tlsFingerprintProfiles.columns.grease') }}
               </th>
-              <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+              <th class="whitespace-nowrap">
                 {{ t('admin.tlsFingerprintProfiles.columns.alpn') }}
               </th>
-              <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+              <th class="whitespace-nowrap">
                 {{ t('admin.tlsFingerprintProfiles.columns.actions') }}
               </th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-200 bg-white dark:divide-dark-700 dark:bg-dark-800">
-            <tr v-for="profile in profiles" :key="profile.id" class="hover:bg-gray-50 dark:hover:bg-dark-700">
-              <td class="px-3 py-2">
+          <tbody>
+            <tr v-for="profile in profiles" :key="profile.id">
+              <td>
                 <div class="font-medium text-gray-900 dark:text-white text-sm">{{ profile.name }}</div>
               </td>
-              <td class="px-3 py-2">
+              <td>
                 <div v-if="profile.description" class="text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
                   {{ profile.description }}
                 </div>
                 <div v-else class="text-xs text-gray-400 dark:text-gray-600">—</div>
               </td>
-              <td class="px-3 py-2">
+              <td>
                 <Icon
                   :name="profile.enable_grease ? 'check' : 'lock'"
                   size="sm"
                   :class="profile.enable_grease ? 'text-green-500' : 'text-gray-400'"
                 />
               </td>
-              <td class="px-3 py-2">
+              <td>
                 <div v-if="profile.alpn_protocols?.length" class="flex flex-wrap gap-1">
                   <span
                     v-for="proto in profile.alpn_protocols.slice(0, 3)"
@@ -88,19 +88,23 @@
                 </div>
                 <div v-else class="text-xs text-gray-400 dark:text-gray-600">—</div>
               </td>
-              <td class="px-3 py-2">
+              <td>
                 <div class="flex items-center gap-1">
                   <button
                     @click="handleEdit(profile)"
-                    class="p-1 text-gray-500 hover:text-primary-600 dark:hover:text-primary-400"
+                    type="button"
+                    class="icon-btn"
                     :title="t('common.edit')"
+                    :aria-label="t('common.edit')"
                   >
                     <Icon name="edit" size="sm" />
                   </button>
                   <button
                     @click="handleDelete(profile)"
-                    class="p-1 text-gray-500 hover:text-red-600 dark:hover:text-red-400"
+                    type="button"
+                    class="icon-btn danger"
                     :title="t('common.delete')"
+                    :aria-label="t('common.delete')"
                   >
                     <Icon name="trash" size="sm" />
                   </button>

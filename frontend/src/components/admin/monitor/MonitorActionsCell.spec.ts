@@ -60,7 +60,10 @@ describe('MonitorActionsCell duplicate action', () => {
 
     expect(button.attributes('disabled')).toBeDefined()
     expect(button.attributes('title')).toBe('admin.channelMonitor.duplicating')
-    expect(button.text()).toContain('admin.channelMonitor.duplicating')
+    // Row actions are icon-only, so the duplicating state is conveyed by the
+    // accessible name plus a spinning icon rather than a visible text label.
+    expect(button.attributes('aria-label')).toBe('admin.channelMonitor.duplicating')
+    expect(button.find('.animate-spin').exists()).toBe(true)
   })
 
   it('disables the action when the stored API key cannot be decrypted', () => {

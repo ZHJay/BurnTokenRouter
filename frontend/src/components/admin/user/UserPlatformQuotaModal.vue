@@ -45,6 +45,7 @@
                     class="text-xs text-gray-400 hover:text-amber-500 disabled:opacity-50"
                     :disabled="!!resetting[`${row.platform}.daily`]"
                     :title="t('admin.users.platformQuota.reset.button')"
+                    :aria-label="t('admin.users.platformQuota.reset.button') + ' ' + row.platform + ' daily'"
                     @click="onReset(row.platform, 'daily')"
                   >↻</button>
                 </div>
@@ -64,6 +65,7 @@
                     class="text-xs text-gray-400 hover:text-amber-500 disabled:opacity-50"
                     :disabled="!!resetting[`${row.platform}.weekly`]"
                     :title="t('admin.users.platformQuota.reset.button')"
+                    :aria-label="t('admin.users.platformQuota.reset.button') + ' ' + row.platform + ' weekly'"
                     @click="onReset(row.platform, 'weekly')"
                   >↻</button>
                 </div>
@@ -83,6 +85,7 @@
                     class="text-xs text-gray-400 hover:text-amber-500 disabled:opacity-50"
                     :disabled="!!resetting[`${row.platform}.monthly`]"
                     :title="t('admin.users.platformQuota.reset.button')"
+                    :aria-label="t('admin.users.platformQuota.reset.button') + ' ' + row.platform + ' monthly'"
                     @click="onReset(row.platform, 'monthly')"
                   >↻</button>
                 </div>

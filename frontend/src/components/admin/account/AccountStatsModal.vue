@@ -503,7 +503,11 @@ const isDarkMode = computed(() => {
 // Chart colors
 const chartColors = computed(() => ({
   text: isDarkMode.value ? '#e5e7eb' : '#374151',
-  grid: isDarkMode.value ? '#374151' : '#e5e7eb'
+  grid: isDarkMode.value ? '#374151' : '#e5e7eb',
+  // iOS 语义色（主题感知：亮色用系统蓝，暗色用 iOS 亮蓝）
+  blue: isDarkMode.value ? '#0a84ff' : '#0071e3',
+  green: '#34c759',
+  orange: '#ff9f0a'
 }))
 
 // Line chart data
@@ -516,8 +520,8 @@ const trendChartData = computed(() => {
       {
         label: t('usage.accountBilled') + ' (USD)',
         data: stats.value.history.map((h) => h.actual_cost),
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        borderColor: chartColors.value.blue,
+        backgroundColor: isDarkMode.value ? 'rgba(10, 132, 255, 0.14)' : 'rgba(0, 113, 227, 0.1)',
         fill: true,
         tension: 0.3,
         yAxisID: 'y'
@@ -525,8 +529,8 @@ const trendChartData = computed(() => {
       {
         label: t('usage.userBilled') + ' (USD)',
         data: stats.value.history.map((h) => h.user_cost),
-        borderColor: '#10b981',
-        backgroundColor: 'rgba(16, 185, 129, 0.08)',
+        borderColor: chartColors.value.green,
+        backgroundColor: 'rgba(52, 199, 89, 0.08)',
         fill: false,
         tension: 0.3,
         borderDash: [5, 5],
@@ -535,8 +539,8 @@ const trendChartData = computed(() => {
       {
         label: t('admin.accounts.stats.requests'),
         data: stats.value.history.map((h) => h.requests),
-        borderColor: '#f97316',
-        backgroundColor: 'rgba(249, 115, 22, 0.1)',
+        borderColor: chartColors.value.orange,
+        backgroundColor: 'rgba(255, 159, 10, 0.1)',
         fill: false,
         tension: 0.3,
         yAxisID: 'y1'
@@ -601,7 +605,7 @@ const lineChartOptions = computed(() => ({
         color: chartColors.value.grid
       },
       ticks: {
-        color: '#3b82f6',
+        color: chartColors.value.blue,
         font: {
           size: 10
         },
@@ -610,7 +614,7 @@ const lineChartOptions = computed(() => ({
       title: {
         display: true,
         text: t('usage.accountBilled') + ' (USD)',
-        color: '#3b82f6',
+        color: chartColors.value.blue,
         font: {
           size: 11
         }
@@ -624,7 +628,7 @@ const lineChartOptions = computed(() => ({
         drawOnChartArea: false
       },
       ticks: {
-        color: '#f97316',
+        color: chartColors.value.orange,
         font: {
           size: 10
         },
@@ -633,7 +637,7 @@ const lineChartOptions = computed(() => ({
       title: {
         display: true,
         text: t('admin.accounts.stats.requests'),
-        color: '#f97316',
+        color: chartColors.value.orange,
         font: {
           size: 11
         }
