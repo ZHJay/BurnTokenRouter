@@ -320,107 +320,204 @@ onUnmounted(() => {
 
 <style scoped>
 .select-trigger {
-  @apply flex w-full items-center justify-between gap-2;
-  @apply rounded-xl px-4 py-2.5 text-sm;
-  @apply bg-white dark:bg-dark-800;
-  @apply border border-gray-200 dark:border-dark-600;
-  @apply text-gray-900 dark:text-gray-100;
-  @apply transition-all duration-200;
-  @apply focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30;
-  @apply hover:border-gray-300 dark:hover:border-dark-500;
-  @apply cursor-pointer;
+  /* 契约镜像：.input 外观（与 Select 一致） */
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: var(--r-md);
+  border: 0.5px solid var(--separator-strong);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: box-shadow 0.18s var(--ease), border-color 0.18s var(--ease), opacity 0.18s var(--ease);
+}
+
+.select-trigger:hover {
+  border-color: var(--text-tertiary);
+}
+
+.select-trigger:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 4px var(--blue-soft);
 }
 
 .select-trigger-open {
-  @apply border-primary-500 ring-2 ring-primary-500/30;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 4px var(--blue-soft);
 }
 
 .select-trigger-disabled {
-  @apply cursor-not-allowed bg-gray-100 opacity-60 dark:bg-dark-900;
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .select-value {
-  @apply flex-1 truncate text-left;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
 }
 
 .select-icon {
-  @apply flex-shrink-0 text-gray-400 dark:text-dark-400;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  display: inline-flex;
 }
 
 .select-dropdown {
-  @apply absolute z-[100] mt-2 w-full;
-  @apply bg-white dark:bg-dark-800;
-  @apply rounded-xl;
-  @apply border border-gray-200 dark:border-dark-700;
-  @apply shadow-lg shadow-black/10 dark:shadow-black/30;
-  @apply overflow-hidden;
+  /* 契约镜像：不透明浮出面板 */
+  position: absolute;
+  z-index: 100;
+  margin-top: 8px;
+  width: 100%;
+  background: var(--glass-bg-strong);
+  border-radius: var(--r-lg);
+  border: 0.5px solid var(--separator);
+  box-shadow: var(--glass-highlight), var(--shadow-pop);
+  overflow: hidden;
 }
 
 .select-header {
-  @apply flex items-center gap-2 px-3 py-2;
-  @apply border-b border-gray-100 dark:border-dark-700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 0.5px solid var(--separator);
 }
 
 .select-search {
-  @apply flex flex-1 items-center gap-2;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-tertiary);
 }
 
 .select-search-input {
-  @apply flex-1 bg-transparent text-sm;
-  @apply text-gray-900 dark:text-gray-100;
-  @apply placeholder:text-gray-400 dark:placeholder:text-dark-400;
-  @apply focus:outline-none;
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-family: inherit;
+}
+
+.select-search-input::placeholder {
+  color: var(--text-tertiary);
 }
 
 .batch-test-btn {
-  @apply flex-shrink-0 rounded-lg p-1.5;
-  @apply text-gray-500 hover:text-emerald-600 dark:hover:text-emerald-400;
-  @apply hover:bg-emerald-50 dark:hover:bg-emerald-900/20;
-  @apply transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-pill);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.batch-test-btn:hover:not(:disabled) {
+  background: var(--fill);
+  color: var(--green);
+}
+
+.batch-test-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .select-options {
-  @apply max-h-60 overflow-y-auto py-1;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 6px;
 }
 
 .select-option {
-  @apply flex items-center justify-between gap-2;
-  @apply px-4 py-2.5 text-sm;
-  @apply text-gray-700 dark:text-gray-300;
-  @apply cursor-pointer transition-colors duration-150;
-  @apply hover:bg-gray-50 dark:hover:bg-dark-700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: var(--r-sm);
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.15s var(--ease);
+}
+
+.select-option:hover {
+  background: var(--fill);
 }
 
 .select-option-selected {
-  @apply bg-primary-50 dark:bg-primary-900/20;
-  @apply text-primary-700 dark:text-primary-300;
+  background: var(--blue-soft);
+  color: var(--blue);
 }
 
 .select-option-label {
-  @apply truncate;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .select-empty {
-  @apply px-4 py-8 text-center text-sm;
-  @apply text-gray-500 dark:text-dark-400;
+  padding: 32px 16px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-tertiary);
 }
 
 .test-btn {
-  @apply flex-shrink-0 rounded p-1;
-  @apply text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400;
-  @apply hover:bg-emerald-50 dark:hover:bg-emerald-900/20;
-  @apply transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-pill);
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.test-btn:hover:not(:disabled) {
+  background: var(--fill);
+  color: var(--green);
+}
+
+.test-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 /* Dropdown animation */
 .select-dropdown-enter-active,
 .select-dropdown-leave-active {
-  transition: all 0.2s ease;
+  transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
 }
 
 .select-dropdown-enter-from,
 .select-dropdown-leave-to {
   opacity: 0;
-  transform: translateY(-8px);
+  transform: translateY(-6px) scale(0.98);
 }
 </style>

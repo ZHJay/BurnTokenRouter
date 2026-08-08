@@ -3,7 +3,7 @@
     <!-- 铃铛按钮 -->
     <button
       @click="openModal"
-      class="relative flex h-9 w-9 items-center justify-center rounded-lg text-gray-600 transition-all hover:bg-gray-100 hover:scale-105 dark:text-gray-400 dark:hover:bg-dark-800"
+      class="bell-btn"
       :class="{ 'text-blue-600 dark:text-blue-400': unreadCount > 0 }"
       :aria-label="t('announcements.title')"
     >
@@ -23,11 +23,11 @@
       <Transition name="modal-fade">
         <div
           v-if="isModalOpen"
-          class="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-gradient-to-br from-black/70 via-black/60 to-black/70 p-4 pt-[8vh] backdrop-blur-md"
+          class="ann-overlay"
           @click="closeModal"
         >
           <div
-            class="w-full max-w-[620px] overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-dark-800 dark:ring-white/10"
+            class="ann-panel w-full max-w-[620px]"
             @click.stop
           >
             <!-- Header with Gradient -->
@@ -183,11 +183,11 @@
       <Transition name="modal-fade">
         <div
           v-if="detailModalOpen && selectedAnnouncement"
-          class="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-gradient-to-br from-black/70 via-black/60 to-black/70 p-4 pt-[6vh] backdrop-blur-md"
+          class="ann-overlay"
           @click="closeDetail"
         >
           <div
-            class="w-full max-w-[780px] overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-dark-800 dark:ring-white/10"
+            class="ann-panel w-full max-w-[780px]"
             @click.stop
           >
             <!-- Header with Decorative Elements -->
@@ -422,13 +422,70 @@ watch(
 </script>
 
 <style scoped>
+/* 铃铛按钮：药丸 + fill 悬停 */
+.bell-btn {
+  position: relative;
+  display: flex;
+  height: 36px;
+  width: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-pill);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.18s var(--ease), color 0.18s var(--ease), transform 0.12s var(--ease);
+}
+
+.bell-btn:hover {
+  background: var(--fill);
+  color: var(--text-primary);
+  transform: scale(1.04);
+}
+
+.bell-btn:active {
+  transform: scale(0.94);
+}
+
+.bell-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--blue-soft);
+}
+
+/* 契约镜像：纱幕压暗（亮 18% / 暗 45% 黑），不透明面板 */
+.ann-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.18);
+  padding: 16px;
+  padding-top: 8vh;
+}
+
+:global(html.dark) .ann-overlay {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.ann-panel {
+  overflow: hidden;
+  border-radius: var(--r-xl);
+  background: var(--glass-bg-strong);
+  border: 0.5px solid var(--separator);
+  box-shadow: var(--glass-highlight), var(--shadow-pop);
+}
+
 /* Modal Animations */
 .modal-fade-enter-active {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.3s var(--ease);
 }
 
 .modal-fade-leave-active {
-  transition: all 0.2s cubic-bezier(0.4, 0, 1, 1);
+  transition: opacity 0.2s var(--ease);
 }
 
 .modal-fade-enter-from,

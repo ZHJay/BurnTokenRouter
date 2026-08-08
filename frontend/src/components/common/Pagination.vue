@@ -1,32 +1,32 @@
 <template>
   <div
-    class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 dark:border-dark-700 dark:bg-dark-800 sm:px-6"
+    class="pagination"
   >
-    <div class="flex flex-1 items-center justify-between sm:hidden">
+    <div class="pagination-mobile sm:hidden">
       <!-- Mobile pagination -->
       <button
         @click="goToPage(page - 1)"
         :disabled="page === 1"
-        class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-dark-600 dark:bg-dark-700 dark:text-gray-200 dark:hover:bg-dark-600"
+        class="mobile-btn"
       >
         {{ t('pagination.previous') }}
       </button>
-      <span class="text-sm text-gray-700 dark:text-gray-300">
+      <span class="pagination-info">
         {{ t('pagination.pageOf', { page, total: totalPages }) }}
       </span>
       <button
         @click="goToPage(page + 1)"
         :disabled="page === totalPages"
-        class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-dark-600 dark:bg-dark-700 dark:text-gray-200 dark:hover:bg-dark-600"
+        class="mobile-btn"
       >
         {{ t('pagination.next') }}
       </button>
     </div>
 
-    <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+    <div class="pagination-desktop hidden sm:flex">
       <!-- Desktop pagination info -->
-      <div class="flex items-center space-x-4">
-        <p class="text-sm text-gray-700 dark:text-gray-300">
+      <div class="pagination-left">
+        <p class="pagination-info">
           {{ t('pagination.showing') }}
           <span class="font-medium">{{ fromItem }}</span>
           {{ t('pagination.to') }}
@@ -37,10 +37,8 @@
         </p>
 
         <!-- Page size selector -->
-        <div v-if="showPageSizeSelector" class="flex items-center space-x-2">
-          <span class="text-sm text-gray-700 dark:text-gray-300"
-            >{{ t('pagination.perPage') }}:</span
-          >
+        <div v-if="showPageSizeSelector" class="page-size-group">
+          <span class="pagination-info">{{ t('pagination.perPage') }}:</span>
           <div class="page-size-select w-20">
             <Select
               :model-value="pageSize"
@@ -50,33 +48,30 @@
           </div>
         </div>
 
-        <div v-if="showJump" class="flex items-center space-x-2">
-          <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('pagination.jumpTo') }}</span>
+        <div v-if="showJump" class="jump-group">
+          <span class="pagination-info">{{ t('pagination.jumpTo') }}</span>
           <input
             v-model="jumpPage"
             type="number"
             min="1"
             :max="totalPages"
-            class="input w-20 text-sm"
+            class="jump-input w-20"
             :placeholder="t('pagination.jumpPlaceholder')"
             @keyup.enter="submitJump"
           />
-          <button type="button" class="btn btn-ghost btn-sm" @click="submitJump">
+          <button type="button" class="pager-btn jump-go" @click="submitJump">
             {{ t('pagination.jumpAction') }}
           </button>
         </div>
       </div>
 
       <!-- Desktop pagination buttons -->
-      <nav
-        class="relative z-0 inline-flex -space-x-px rounded-md shadow-sm"
-        aria-label="Pagination"
-      >
+      <nav class="pager" aria-label="Pagination">
         <!-- Previous button -->
         <button
           @click="goToPage(page - 1)"
           :disabled="page === 1"
-          class="relative inline-flex items-center rounded-l-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-dark-600 dark:bg-dark-700 dark:text-gray-400 dark:hover:bg-dark-600"
+          class="pager-btn"
           :aria-label="t('pagination.previous')"
         >
           <Icon name="chevronLeft" size="md" />
@@ -89,11 +84,9 @@
           @click="typeof pageNum === 'number' && goToPage(pageNum)"
           :disabled="typeof pageNum !== 'number'"
           :class="[
-            'relative inline-flex items-center border px-4 py-2 text-sm font-medium',
-            pageNum === page
-              ? 'z-10 border-primary-500 bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400'
-              : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-dark-600 dark:bg-dark-700 dark:text-gray-300 dark:hover:bg-dark-600',
-            typeof pageNum !== 'number' && 'cursor-default'
+            'pager-btn',
+            pageNum === page && 'active',
+            typeof pageNum !== 'number' && 'is-ellipsis'
           ]"
           :aria-label="
             typeof pageNum === 'number' ? t('pagination.goToPage', { page: pageNum }) : undefined
@@ -107,7 +100,7 @@
         <button
           @click="goToPage(page + 1)"
           :disabled="page === totalPages"
-          class="relative inline-flex items-center rounded-r-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-dark-600 dark:bg-dark-700 dark:text-gray-400 dark:hover:bg-dark-600"
+          class="pager-btn"
           :aria-label="t('pagination.next')"
         >
           <Icon name="chevronRight" size="md" />
@@ -241,7 +234,185 @@ const submitJump = () => {
 </script>
 
 <style scoped>
+.pagination {
+  /* 契约镜像：apple-theme.css 的 .pagination */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 22px;
+  border-top: 0.5px solid var(--separator);
+  background: var(--bg-elevated);
+  border-radius: 0 0 var(--r-xl) var(--r-xl);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.pagination-mobile {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pagination-desktop {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pagination-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pagination-info {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.pagination b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.page-size-group,
+.jump-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pager {
+  /* 契约镜像：apple-theme.css 的 .pager */
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.pager-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease), transform 0.12s var(--ease);
+}
+
+.pager-btn:hover:not(:disabled):not(.active) {
+  background: var(--fill);
+}
+
+.pager-btn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.pager-btn.active {
+  background: var(--blue);
+  color: #fff;
+}
+
+.pager-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pager-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--blue-soft);
+}
+
+.pager-btn.is-ellipsis {
+  cursor: default;
+}
+
+.jump-go {
+  min-width: auto;
+  padding: 0 12px;
+  background: var(--fill);
+  border-radius: var(--r-pill);
+  color: var(--text-primary);
+}
+
+.jump-go:hover:not(:disabled) {
+  background: var(--fill-hover);
+}
+
+.mobile-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  border: 0.5px solid var(--separator-strong);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  transition: background 0.15s var(--ease), transform 0.12s var(--ease);
+}
+
+.mobile-btn:hover:not(:disabled) {
+  background: var(--fill);
+}
+
+.mobile-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.mobile-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.mobile-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--blue-soft);
+}
+
 .page-size-select :deep(.select-trigger) {
-  @apply px-3 py-1.5 text-sm;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  border-color: var(--separator-strong);
+}
+
+.jump-input {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: var(--r-sm);
+  border: 0.5px solid var(--separator-strong);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: box-shadow 0.18s var(--ease), border-color 0.18s var(--ease);
+}
+
+.jump-input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 4px var(--blue-soft);
 }
 </style>
