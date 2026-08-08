@@ -15,6 +15,7 @@ import {
 import { Line } from 'vue-chartjs'
 import type { OpsThroughputTrendPoint } from '@/api/admin/ops'
 import type { ChartState } from '../types'
+import { useChartTheme, withAlpha } from '@/components/charts/chartTheme'
 import { formatHistoryLabel, sumNumbers } from '../utils/opsFormatters'
 import HelpTooltip from '@/components/common/HelpTooltip.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -31,12 +32,12 @@ interface Props {
 const props = defineProps<Props>()
 const { t } = useI18n()
 
-const isDarkMode = computed(() => document.documentElement.classList.contains('dark'))
+const chartTheme = useChartTheme()
 const colors = computed(() => ({
-  teal: '#14b8a6',
-  tealAlpha: '#14b8a620',
-  grid: isDarkMode.value ? '#374151' : '#f3f4f6',
-  text: isDarkMode.value ? '#9ca3af' : '#6b7280'
+  teal: chartTheme.value.categorical[5],
+  tealAlpha: withAlpha(chartTheme.value.categorical[5], 0.14),
+  grid: chartTheme.value.grid,
+  text: chartTheme.value.axisText
 }))
 
 const totalRequests = computed(() => sumNumbers(props.points.map((p) => p.request_count)))
@@ -84,9 +85,9 @@ const options = computed(() => {
         labels: { color: c.text, usePointStyle: true, boxWidth: 6, font: { size: 10 } }
       },
       tooltip: {
-        backgroundColor: isDarkMode.value ? '#1f2937' : '#ffffff',
-        titleColor: isDarkMode.value ? '#f3f4f6' : '#111827',
-        bodyColor: isDarkMode.value ? '#d1d5db' : '#4b5563',
+        backgroundColor: chartTheme.value.tooltip.backgroundColor,
+        titleColor: chartTheme.value.tooltip.titleColor,
+        bodyColor: chartTheme.value.tooltip.bodyColor,
         borderColor: c.grid,
         borderWidth: 1,
         padding: 10,
