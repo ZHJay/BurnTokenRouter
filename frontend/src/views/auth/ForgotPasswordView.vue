@@ -61,9 +61,14 @@
               :disabled="isLoading"
               class="input pl-11"
               :class="{ 'input-error': errors.email }"
+              :aria-invalid="!!errors.email"
+              :aria-describedby="errors.email ? 'forgot-email-error' : undefined"
               :placeholder="t('auth.emailPlaceholder')"
             />
           </div>
+          <p v-if="errors.email" id="forgot-email-error" class="input-error-text">
+            {{ errors.email }}
+          </p>
         </div>
 
         <!-- Turnstile Widget -->
@@ -89,7 +94,7 @@
         <button
           type="submit"
           :disabled="isLoading || (turnstileEnabled && !turnstileToken)"
-          class="btn btn-primary w-full"
+          class="btn btn-primary btn-block"
         >
           <svg
             v-if="isLoading"

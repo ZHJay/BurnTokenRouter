@@ -1,7 +1,10 @@
 <template>
-  <div class="min-h-screen bg-gray-50 px-4 py-10 dark:bg-dark-900">
-    <div class="mx-auto max-w-2xl">
-      <div v-if="isProcessing" class="card p-6 text-center">
+  <div class="auth-page px-4 py-10">
+    <div class="auth-spot auth-spot-1" aria-hidden="true"></div>
+    <div class="auth-spot auth-spot-2" aria-hidden="true"></div>
+    <div class="auth-spot auth-spot-3" aria-hidden="true"></div>
+    <div class="relative z-10 mx-auto max-w-2xl">
+      <div v-if="isProcessing" class="glass-card p-6 text-center">
         <div class="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"></div>
         <h1 class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
           {{ t('auth.oauth.callbackTitle') }}
@@ -11,7 +14,7 @@
         </p>
       </div>
 
-      <div v-else-if="needsRegistrationCompletion" class="card p-6">
+      <div v-else-if="needsRegistrationCompletion" class="glass-card p-6">
         <h1 class="text-lg font-semibold text-gray-900 dark:text-white">
           {{ t('auth.oidc.callbackTitle', { providerName }) }}
         </h1>
@@ -79,7 +82,7 @@
         </div>
       </div>
 
-      <div v-else-if="invalidCallback" class="card p-6 text-center">
+      <div v-else-if="invalidCallback" class="glass-card p-6 text-center">
         <h1 class="text-lg font-semibold text-gray-900 dark:text-white">
           {{ t('auth.oauth.invalidCallbackTitle') }}
         </h1>
@@ -91,7 +94,7 @@
         </button>
       </div>
 
-      <div v-else class="card p-6">
+      <div v-else class="glass-card p-6">
         <h1 class="text-lg font-semibold text-gray-900 dark:text-white">
           {{ t('auth.oauth.callbackTitle') }}
         </h1>
@@ -411,3 +414,87 @@ const copy = (value: string) => {
   copyToClipboard(value)
 }
 </script>
+
+<style scoped>
+.auth-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+  transition: background var(--dur) var(--ease);
+}
+
+.auth-spot {
+  position: fixed;
+  z-index: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform;
+}
+.auth-spot-1 {
+  width: 420px;
+  height: 420px;
+  top: -140px;
+  left: -120px;
+  background: var(--blue);
+  opacity: 0.13;
+  filter: blur(90px);
+  animation: auth-drift-1 26s var(--ease) infinite alternate;
+}
+.auth-spot-2 {
+  width: 380px;
+  height: 380px;
+  top: 10%;
+  right: -140px;
+  background: var(--purple);
+  opacity: 0.11;
+  filter: blur(90px);
+  animation: auth-drift-2 30s var(--ease) infinite alternate;
+}
+.auth-spot-3 {
+  width: 460px;
+  height: 460px;
+  bottom: -180px;
+  left: 20%;
+  background: var(--teal);
+  opacity: 0.1;
+  filter: blur(100px);
+  animation: auth-drift-3 34s var(--ease) infinite alternate;
+}
+
+:global(html.dark) .auth-spot-1 {
+  opacity: 0.22;
+}
+:global(html.dark) .auth-spot-2 {
+  opacity: 0.18;
+}
+:global(html.dark) .auth-spot-3 {
+  opacity: 0.16;
+}
+
+@keyframes auth-drift-1 {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(90px, 70px, 0) scale(1.15); }
+}
+@keyframes auth-drift-2 {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(-80px, 60px, 0) scale(1.1); }
+}
+@keyframes auth-drift-3 {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(-70px, -50px, 0) scale(1.12); }
+}
+
+@media (max-width: 560px) {
+  .auth-spot-1 { width: 320px; height: 320px; top: -120px; left: -110px; }
+  .auth-spot-2 { width: 280px; height: 280px; top: 18%; right: -110px; }
+  .auth-spot-3 { width: 340px; height: 340px; bottom: -150px; left: 10%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-spot {
+    animation: none;
+  }
+}
+</style>

@@ -27,6 +27,7 @@
               :disabled="loading"
               class="btn btn-secondary"
               :title="t('common.refresh')"
+              :aria-label="t('common.refresh')"
             >
               <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
             </button>
@@ -60,6 +61,7 @@
                     : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
                 ]"
                 :title="copiedCode === value ? t('admin.promo.copied') : t('keys.copyToClipboard')"
+                :aria-label="copiedCode === value ? t('admin.promo.copied') : t('keys.copyToClipboard')"
               >
                 <Icon v-if="copiedCode !== value" name="copy" size="sm" :stroke-width="2" />
                 <svg v-else class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,6 +117,7 @@
                 @click="copyRegisterLink(row)"
                 class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400"
                 :title="t('admin.promo.copyRegisterLink')"
+                :aria-label="t('admin.promo.copyRegisterLink')"
               >
                 <Icon name="link" size="sm" />
               </button>
@@ -122,6 +125,7 @@
                 @click="handleViewUsages(row)"
                 class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
                 :title="t('admin.promo.viewUsages')"
+                :aria-label="t('admin.promo.viewUsages')"
               >
                 <Icon name="eye" size="sm" />
               </button>
@@ -129,6 +133,7 @@
                 @click="handleEdit(row)"
                 class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-dark-600 dark:hover:text-gray-300"
                 :title="t('common.edit')"
+                :aria-label="t('common.edit')"
               >
                 <Icon name="edit" size="sm" />
               </button>
@@ -136,6 +141,7 @@
                 @click="handleDelete(row)"
                 class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                 :title="t('common.delete')"
+                :aria-label="t('common.delete')"
               >
                 <Icon name="trash" size="sm" />
               </button>

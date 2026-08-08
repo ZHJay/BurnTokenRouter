@@ -47,9 +47,14 @@
               :disabled="registrationActionDisabled"
               class="input pl-11"
               :class="{ 'input-error': errors.email }"
+              :aria-invalid="!!errors.email"
+              :aria-describedby="errors.email ? 'register-email-error' : undefined"
               :placeholder="t('auth.emailPlaceholder')"
             />
           </div>
+          <p v-if="errors.email" id="register-email-error" class="input-error-text">
+            {{ errors.email }}
+          </p>
         </div>
 
         <!-- Password Input -->
@@ -70,6 +75,8 @@
               :disabled="registrationActionDisabled"
               class="input pl-11 pr-11"
               :class="{ 'input-error': errors.password }"
+              :aria-invalid="!!errors.password"
+              :aria-describedby="errors.password ? 'register-password-error' : undefined"
               :placeholder="t('auth.createPasswordPlaceholder')"
             />
             <button
@@ -82,6 +89,9 @@
               <Icon v-else name="eye" size="md" />
             </button>
           </div>
+          <p v-if="errors.password" id="register-password-error" class="input-error-text">
+            {{ errors.password }}
+          </p>
           <p class="input-hint">
             {{ t('auth.passwordHint') }}
           </p>
@@ -106,6 +116,12 @@
                 'border-green-500 focus:border-green-500 focus:ring-green-500': invitationValidation.valid,
                 'border-red-500 focus:border-red-500 focus:ring-red-500': invitationValidation.invalid || errors.invitation_code
               }"
+              :aria-invalid="!!(invitationValidation.invalid || errors.invitation_code)"
+              :aria-describedby="
+                invitationValidation.invalid || errors.invitation_code
+                  ? 'register-invitation-error'
+                  : undefined
+              "
               :placeholder="t('auth.invitationCodePlaceholder')"
               @input="handleInvitationCodeInput"
             />
@@ -123,6 +139,13 @@
               <Icon name="exclamationCircle" size="md" class="text-red-500" />
             </div>
           </div>
+          <p
+            v-if="invitationValidation.invalid || errors.invitation_code"
+            id="register-invitation-error"
+            class="input-error-text"
+          >
+            {{ invitationValidation.invalid ? invitationValidation.message : errors.invitation_code }}
+          </p>
           <!-- Invitation code validation result -->
           <transition name="fade">
             <div v-if="invitationValidation.valid" class="mt-2 flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 dark:bg-green-900/20">
@@ -175,6 +198,8 @@
                 'border-green-500 focus:border-green-500 focus:ring-green-500': promoValidation.valid,
                 'border-red-500 focus:border-red-500 focus:ring-red-500': promoValidation.invalid
               }"
+              :aria-invalid="promoValidation.invalid"
+              :aria-describedby="promoValidation.invalid ? 'register-promo-error' : undefined"
               :placeholder="t('auth.promoCodePlaceholder')"
               @input="handlePromoCodeInput"
             />
@@ -192,6 +217,9 @@
               <Icon name="exclamationCircle" size="md" class="text-red-500" />
             </div>
           </div>
+          <p v-if="promoValidation.invalid" id="register-promo-error" class="input-error-text">
+            {{ promoValidation.message }}
+          </p>
           <!-- Promo code validation result -->
           <transition name="fade">
             <div v-if="promoValidation.valid" class="mt-2 flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 dark:bg-green-900/20">
@@ -238,7 +266,7 @@
         <button
           type="submit"
           :disabled="registrationActionDisabled || (turnstileEnabled && !turnstileToken)"
-          class="btn btn-primary w-full"
+          class="btn btn-primary btn-block"
         >
           <svg
             v-if="isLoading"
@@ -274,46 +302,48 @@
 
       <div v-if="showOAuthLogin" class="space-y-3 pt-1">
         <div class="flex items-center gap-3">
-          <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
-          <span class="text-xs text-gray-500 dark:text-dark-400">
+          <div class="h-[0.5px] flex-1 bg-[var(--separator)]"></div>
+          <span class="text-xs text-[var(--text-tertiary)]">
             {{ t('auth.oauthOrContinue') }}
           </span>
-          <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
+          <div class="h-[0.5px] flex-1 bg-[var(--separator)]"></div>
         </div>
 
-        <EmailOAuthButtons
-          :disabled="registrationActionDisabled"
-          :aff-code="formData.aff_code"
-          :promo-code="formData.promo_code"
-          :github-enabled="githubOAuthEnabled"
-          :google-enabled="googleOAuthEnabled"
-          :show-divider="false"
-          @start="handleOAuthStart"
-        />
+        <div class="social-grid">
+          <EmailOAuthButtons
+            :disabled="registrationActionDisabled"
+            :aff-code="formData.aff_code"
+            :promo-code="formData.promo_code"
+            :github-enabled="githubOAuthEnabled"
+            :google-enabled="googleOAuthEnabled"
+            :show-divider="false"
+            @start="handleOAuthStart"
+          />
 
-        <LinuxDoOAuthSection
-          v-if="linuxdoOAuthEnabled"
-          :disabled="registrationActionDisabled"
-          :aff-code="formData.aff_code"
-          :promo-code="formData.promo_code"
-          :show-divider="false"
-          @start="handleOAuthStart"
-        />
-        <WechatOAuthSection
-          v-if="wechatOAuthEnabled"
-          :disabled="registrationActionDisabled"
-          :aff-code="formData.aff_code"
-          :show-divider="false"
-          @start="handleOAuthStart"
-        />
-        <OidcOAuthSection
-          v-if="oidcOAuthEnabled"
-          :disabled="registrationActionDisabled"
-          :provider-name="oidcOAuthProviderName"
-          :aff-code="formData.aff_code"
-          :show-divider="false"
-          @start="handleOAuthStart"
-        />
+          <LinuxDoOAuthSection
+             v-if="linuxdoOAuthEnabled"
+             :disabled="registrationActionDisabled"
+             :aff-code="formData.aff_code"
+             :promo-code="formData.promo_code"
+            :show-divider="false"
+            @start="handleOAuthStart"
+          />
+          <WechatOAuthSection
+            v-if="wechatOAuthEnabled"
+            :disabled="registrationActionDisabled"
+            :aff-code="formData.aff_code"
+            :show-divider="false"
+            @start="handleOAuthStart"
+          />
+          <OidcOAuthSection
+            v-if="oidcOAuthEnabled"
+            :disabled="registrationActionDisabled"
+            :provider-name="oidcOAuthProviderName"
+            :aff-code="formData.aff_code"
+            :show-divider="false"
+            @start="handleOAuthStart"
+          />
+        </div>
       </div>
     </div>
 
@@ -1065,6 +1095,15 @@ function buildRegistrationErrorMessage(error: unknown, fallback: string): string
 </script>
 
 <style scoped>
+.social-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.social-grid > :last-child {
+  grid-column: 1 / -1;
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition: all 0.3s ease;

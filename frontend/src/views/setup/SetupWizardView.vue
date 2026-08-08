@@ -1,32 +1,34 @@
 <template>
-  <div
-    class="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4 dark:from-dark-900 dark:to-dark-800"
-  >
-    <div class="w-full max-w-2xl">
+  <div class="sw-page">
+    <div class="spot spot-1" aria-hidden="true"></div>
+    <div class="spot spot-2" aria-hidden="true"></div>
+    <div class="spot spot-3" aria-hidden="true"></div>
+
+    <div class="sw-wrap">
       <!-- Logo & Title -->
-      <div class="mb-8 text-center">
+      <div class="sw-brand">
         <div
-          class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 shadow-lg"
+          class="sw-brand-icon"
         >
           <Icon name="cog" size="xl" class="text-white" />
         </div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('setup.title') }}</h1>
-        <p class="mt-2 text-gray-500 dark:text-dark-400">{{ t('setup.description') }}</p>
+        <h1 class="sw-title">{{ t('setup.title') }}</h1>
+        <p class="sw-sub">{{ t('setup.description') }}</p>
       </div>
 
       <!-- Progress Steps -->
-      <div class="mb-8">
+      <div class="sw-steps">
         <div class="flex items-center justify-center">
           <template v-for="(step, index) in steps" :key="step.id">
             <div class="flex items-center">
               <div
                 :class="[
-                  'flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition-all',
+                  'sw-step-dot',
                   currentStep > index
                     ? 'bg-primary-500 text-white'
                     : currentStep === index
-                      ? 'bg-primary-500 text-white ring-4 ring-primary-100 dark:ring-primary-900'
-                      : 'bg-gray-200 text-gray-500 dark:bg-dark-700 dark:text-dark-400'
+                      ? 'bg-primary-500 text-white sw-step-current'
+                      : 'bg-[color:var(--fill)] text-[color:var(--text-tertiary)]'
                 ]"
               >
                 <Icon
@@ -38,11 +40,11 @@
                 <span v-else>{{ index + 1 }}</span>
               </div>
               <span
-                class="ml-2 hidden text-sm font-medium sm:inline"
+                class="sw-step-label"
                 :class="
                   currentStep >= index
-                    ? 'text-gray-900 dark:text-white'
-                    : 'text-gray-400 dark:text-dark-500'
+                    ? 'text-[color:var(--text-primary)]'
+                    : 'text-[color:var(--text-tertiary)]'
                 "
               >
                 {{ step.title }}
@@ -50,15 +52,15 @@
             </div>
             <div
               v-if="index < steps.length - 1"
-              class="mx-2 h-0.5 w-6 sm:mx-3 sm:w-12"
-              :class="currentStep > index ? 'bg-primary-500' : 'bg-gray-200 dark:bg-dark-700'"
+              class="sw-step-line"
+              :class="currentStep > index ? 'bg-[color:var(--blue)]' : 'bg-[color:var(--fill-hover)]'"
             ></div>
           </template>
         </div>
       </div>
 
       <!-- Step Content -->
-      <div class="rounded-2xl bg-white p-8 shadow-xl dark:bg-dark-800">
+      <div class="glass-card sw-card">
         <!-- Step 1: Database -->
         <div v-if="currentStep === 0" class="space-y-6">
           <div class="mb-6 text-center">
@@ -91,12 +93,12 @@
             </div>
           </div>
 
-          <div class="flex items-center justify-between rounded-xl border border-gray-200 p-3 dark:border-dark-700">
+          <div class="sw-toggle-row">
             <div>
-              <p class="text-sm font-medium text-gray-900 dark:text-white">
+              <p class="sw-toggle-title">
                 {{ t("setup.redis.enableTls") }}
               </p>
-              <p class="text-xs text-gray-500 dark:text-dark-400">
+              <p class="sw-toggle-hint">
                 {{ t("setup.redis.enableTlsHint") }}
               </p>
             </div>
@@ -246,12 +248,12 @@
             </div>
           </div>
 
-          <div class="flex items-center justify-between rounded-xl border border-gray-200 p-3 dark:border-dark-700">
+          <div class="sw-toggle-row">
             <div>
-              <p class="text-sm font-medium text-gray-900 dark:text-white">
+              <p class="sw-toggle-title">
                 {{ t("setup.redis.enableTls") }}
               </p>
-              <p class="text-xs text-gray-500 dark:text-dark-400">
+              <p class="sw-toggle-hint">
                 {{ t("setup.redis.enableTlsHint") }}
               </p>
             </div>
@@ -360,31 +362,31 @@
           </div>
 
           <div class="space-y-4">
-            <div class="rounded-xl bg-gray-50 p-4 dark:bg-dark-700">
-              <h3 class="mb-2 text-sm font-medium text-gray-500 dark:text-dark-400">
+            <div class="sw-summary">
+              <h3 class="sw-summary-label">
                 {{ t('setup.ready.database') }}
               </h3>
-              <p class="text-gray-900 dark:text-white">
+              <p class="sw-summary-value">
                 {{ formData.database.user }}@{{ formData.database.host }}:{{
                   formData.database.port
                 }}/{{ formData.database.dbname }}
               </p>
             </div>
 
-            <div class="rounded-xl bg-gray-50 p-4 dark:bg-dark-700">
-              <h3 class="mb-2 text-sm font-medium text-gray-500 dark:text-dark-400">
+            <div class="sw-summary">
+              <h3 class="sw-summary-label">
                 {{ t('setup.ready.redis') }}
               </h3>
-              <p class="text-gray-900 dark:text-white">
+              <p class="sw-summary-value">
                 {{ formData.redis.host }}:{{ formData.redis.port }}
               </p>
             </div>
 
-            <div class="rounded-xl bg-gray-50 p-4 dark:bg-dark-700">
-              <h3 class="mb-2 text-sm font-medium text-gray-500 dark:text-dark-400">
+            <div class="sw-summary">
+              <h3 class="sw-summary-label">
                 {{ t('setup.ready.adminEmail') }}
               </h3>
-              <p class="text-gray-900 dark:text-white">{{ formData.admin.email }}</p>
+              <p class="sw-summary-value">{{ formData.admin.email }}</p>
             </div>
           </div>
         </div>
@@ -443,7 +445,7 @@
         </div>
 
         <!-- Navigation Buttons -->
-        <div class="mt-8 flex justify-between">
+        <div class="sw-actions">
           <button
             v-if="currentStep > 0 && !installSuccess"
             @click="currentStep--"
@@ -684,3 +686,217 @@ async function waitForServiceRestart() {
   errorMessage.value = t('setup.status.timeout')
 }
 </script>
+
+<style scoped>
+.sw-page {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px 40px;
+  background: var(--bg);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+.sw-wrap {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 640px;
+}
+
+/* ambient 漂移光斑(与登录页同语言) */
+.spot {
+  position: fixed;
+  z-index: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform;
+}
+.spot-1 {
+  width: 420px;
+  height: 420px;
+  top: -140px;
+  left: -120px;
+  background: var(--blue);
+  opacity: 0.13;
+  filter: blur(90px);
+  animation: swDrift1 26s var(--ease) infinite alternate;
+}
+.spot-2 {
+  width: 380px;
+  height: 380px;
+  top: 10%;
+  right: -140px;
+  background: var(--purple);
+  opacity: 0.11;
+  filter: blur(90px);
+  animation: swDrift2 30s var(--ease) infinite alternate;
+}
+.spot-3 {
+  width: 460px;
+  height: 460px;
+  bottom: -180px;
+  left: 20%;
+  background: var(--teal);
+  opacity: 0.1;
+  filter: blur(100px);
+  animation: swDrift3 34s var(--ease) infinite alternate;
+}
+:global(html.dark) .spot-1 { opacity: 0.22; }
+:global(html.dark) .spot-2 { opacity: 0.18; }
+:global(html.dark) .spot-3 { opacity: 0.16; }
+
+@keyframes swDrift1 {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(90px, 70px, 0) scale(1.15); }
+}
+@keyframes swDrift2 {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(-80px, 60px, 0) scale(1.1); }
+}
+@keyframes swDrift3 {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(-70px, -50px, 0) scale(1.12); }
+}
+
+.sw-brand {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.sw-brand-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: linear-gradient(160deg, var(--blue), var(--blue-ios));
+  box-shadow: var(--shadow-blue);
+}
+
+.sw-title {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.sw-sub {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.sw-steps {
+  margin-bottom: 28px;
+}
+
+.sw-step-dot {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+
+.sw-step-current {
+  box-shadow: 0 0 0 4px var(--blue-soft);
+}
+
+.sw-step-label {
+  margin-left: 10px;
+  display: none;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+@media (min-width: 640px) {
+  .sw-step-label {
+    display: inline;
+  }
+}
+
+.sw-step-line {
+  width: 24px;
+  height: 2px;
+  margin: 0 8px;
+  border-radius: var(--r-pill);
+  transition: background 0.2s var(--ease);
+}
+@media (min-width: 640px) {
+  .sw-step-line {
+    width: 48px;
+    margin: 0 12px;
+  }
+}
+
+.sw-card {
+  padding: 32px 28px;
+}
+
+.sw-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 0.5px solid var(--separator);
+  border-radius: var(--r-md);
+  background: var(--fill);
+}
+
+.sw-toggle-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.sw-toggle-hint {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.sw-summary {
+  padding: 14px 16px;
+  border: 0.5px solid var(--separator);
+  border-radius: var(--r-md);
+  background: var(--fill);
+}
+
+.sw-summary-label {
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.sw-summary-value {
+  font-family: "SF Mono", ui-monospace, Menlo, monospace;
+  font-size: 13.5px;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.sw-actions {
+  margin-top: 32px;
+  display: flex;
+  justify-content: space-between;
+}
+
+@media (max-width: 560px) {
+  .sw-page { padding: 40px 12px 32px; }
+  .sw-card { padding: 24px 18px; }
+  .sw-title { font-size: 26px; }
+}
+</style>

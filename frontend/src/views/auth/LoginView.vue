@@ -31,9 +31,14 @@
               :disabled="authActionDisabled"
               class="input pl-11"
               :class="{ 'input-error': errors.email }"
+              :aria-invalid="!!errors.email"
+              :aria-describedby="errors.email ? 'login-email-error' : undefined"
               :placeholder="t('auth.emailPlaceholder')"
             />
           </div>
+          <p v-if="errors.email" id="login-email-error" class="input-error-text">
+            {{ errors.email }}
+          </p>
         </div>
 
         <!-- Password Input -->
@@ -54,6 +59,8 @@
               :disabled="authActionDisabled"
               class="input pl-11 pr-11"
               :class="{ 'input-error': errors.password }"
+              :aria-invalid="!!errors.password"
+              :aria-describedby="errors.password ? 'login-password-error' : undefined"
               :placeholder="t('auth.passwordPlaceholder')"
             />
             <button
@@ -66,6 +73,9 @@
               <Icon v-else name="eye" size="md" />
             </button>
           </div>
+          <p v-if="errors.password" id="login-password-error" class="input-error-text">
+            {{ errors.password }}
+          </p>
           <div class="mt-1 flex items-center justify-between">
             <span></span>
             <router-link
@@ -101,7 +111,7 @@
         <button
           type="submit"
           :disabled="authActionDisabled || (turnstileEnabled && !turnstileToken)"
-          class="btn btn-primary w-full"
+          class="btn btn-primary btn-block"
         >
           <svg
             v-if="isLoading"
@@ -141,11 +151,11 @@
 
         <div v-if="showPasskeyLogin || showOAuthLogin" class="space-y-3 pt-1">
           <div class="flex items-center gap-3">
-            <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
-            <span class="text-xs text-gray-500 dark:text-dark-400">
+            <div class="h-[0.5px] flex-1 bg-[var(--separator)]"></div>
+            <span class="text-xs text-[var(--text-tertiary)]">
               {{ t('auth.oauthOrContinue') }}
             </span>
-            <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
+            <div class="h-[0.5px] flex-1 bg-[var(--separator)]"></div>
           </div>
 
           <button
@@ -159,39 +169,41 @@
             {{ passkeyLoading ? t('auth.passkeySigningIn') : t('auth.passkeySignIn') }}
           </button>
 
-          <EmailOAuthButtons
-            :disabled="authActionDisabled"
-            :github-enabled="githubOAuthEnabled"
-            :google-enabled="googleOAuthEnabled"
-            :show-divider="false"
-            @start="handleOAuthStart"
-          />
+          <div class="social-grid">
+            <EmailOAuthButtons
+              :disabled="authActionDisabled"
+              :github-enabled="githubOAuthEnabled"
+              :google-enabled="googleOAuthEnabled"
+              :show-divider="false"
+              @start="handleOAuthStart"
+            />
 
-          <LinuxDoOAuthSection
-            v-if="linuxdoOAuthEnabled"
-            :disabled="authActionDisabled"
-            :show-divider="false"
-            @start="handleOAuthStart"
-          />
-          <DingTalkOAuthSection
-            v-if="dingtalkOAuthEnabled"
-            :disabled="authActionDisabled"
-            :show-divider="false"
-            @start="handleOAuthStart"
-          />
-          <WechatOAuthSection
-            v-if="wechatOAuthEnabled"
-            :disabled="authActionDisabled"
-            :show-divider="false"
-            @start="handleOAuthStart"
-          />
-          <OidcOAuthSection
-            v-if="oidcOAuthEnabled"
-            :disabled="authActionDisabled"
-            :provider-name="oidcOAuthProviderName"
-            :show-divider="false"
-            @start="handleOAuthStart"
-          />
+            <LinuxDoOAuthSection
+              v-if="linuxdoOAuthEnabled"
+              :disabled="authActionDisabled"
+              :show-divider="false"
+              @start="handleOAuthStart"
+            />
+            <WechatOAuthSection
+              v-if="wechatOAuthEnabled"
+              :disabled="authActionDisabled"
+              :show-divider="false"
+              @start="handleOAuthStart"
+            />
+            <OidcOAuthSection
+              v-if="oidcOAuthEnabled"
+              :disabled="authActionDisabled"
+              :provider-name="oidcOAuthProviderName"
+              :show-divider="false"
+              @start="handleOAuthStart"
+            />
+            <DingTalkOAuthSection
+              v-if="dingtalkOAuthEnabled"
+              :disabled="authActionDisabled"
+              :show-divider="false"
+              @start="handleOAuthStart"
+            />
+          </div>
         </div>
       </form>
     </div>
@@ -732,6 +744,15 @@ function handle2FACancel(): void {
 </script>
 
 <style scoped>
+.social-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.social-grid > :last-child {
+  grid-column: 1 / -1;
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition: all 0.3s ease;

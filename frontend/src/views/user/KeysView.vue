@@ -208,7 +208,7 @@
                   <span :class="[
                     'font-medium',
                     row.quota_used >= row.quota ? 'text-red-500' :
-                    row.quota_used >= row.quota * 0.8 ? 'text-yellow-500' :
+                    row.quota_used >= row.quota * 0.8 ? 'text-amber-500' :
                     'text-gray-900 dark:text-white'
                   ]">
                     ${{ row.quota_used?.toFixed(2) || '0.00' }} / ${{ row.quota?.toFixed(2) }}
@@ -219,7 +219,7 @@
                     :class="[
                       'h-full rounded-full transition-all',
                       row.quota_used >= row.quota ? 'bg-red-500' :
-                      row.quota_used >= row.quota * 0.8 ? 'bg-yellow-500' :
+                      row.quota_used >= row.quota * 0.8 ? 'bg-amber-500' :
                       'bg-primary-500'
                     ]"
                     :style="{ width: Math.min((row.quota_used / row.quota) * 100, 100) + '%' }"
@@ -238,7 +238,7 @@
                   <span :class="[
                     'font-medium tabular-nums',
                     row.usage_5h >= row.rate_limit_5h ? 'text-red-500' :
-                    row.usage_5h >= row.rate_limit_5h * 0.8 ? 'text-yellow-500' :
+                    row.usage_5h >= row.rate_limit_5h * 0.8 ? 'text-amber-500' :
                     'text-gray-700 dark:text-gray-300'
                   ]">
                     ${{ row.usage_5h?.toFixed(2) || '0.00' }}/${{ row.rate_limit_5h?.toFixed(2) }}
@@ -249,7 +249,7 @@
                     :class="[
                       'h-full rounded-full transition-all',
                       row.usage_5h >= row.rate_limit_5h ? 'bg-red-500' :
-                      row.usage_5h >= row.rate_limit_5h * 0.8 ? 'bg-yellow-500' :
+                      row.usage_5h >= row.rate_limit_5h * 0.8 ? 'bg-amber-500' :
                       'bg-emerald-500'
                     ]"
                     :style="{ width: Math.min((row.usage_5h / row.rate_limit_5h) * 100, 100) + '%' }"
@@ -266,7 +266,7 @@
                   <span :class="[
                     'font-medium tabular-nums',
                     row.usage_1d >= row.rate_limit_1d ? 'text-red-500' :
-                    row.usage_1d >= row.rate_limit_1d * 0.8 ? 'text-yellow-500' :
+                    row.usage_1d >= row.rate_limit_1d * 0.8 ? 'text-amber-500' :
                     'text-gray-700 dark:text-gray-300'
                   ]">
                     ${{ row.usage_1d?.toFixed(2) || '0.00' }}/${{ row.rate_limit_1d?.toFixed(2) }}
@@ -277,7 +277,7 @@
                     :class="[
                       'h-full rounded-full transition-all',
                       row.usage_1d >= row.rate_limit_1d ? 'bg-red-500' :
-                      row.usage_1d >= row.rate_limit_1d * 0.8 ? 'bg-yellow-500' :
+                      row.usage_1d >= row.rate_limit_1d * 0.8 ? 'bg-amber-500' :
                       'bg-emerald-500'
                     ]"
                     :style="{ width: Math.min((row.usage_1d / row.rate_limit_1d) * 100, 100) + '%' }"
@@ -294,7 +294,7 @@
                   <span :class="[
                     'font-medium tabular-nums',
                     row.usage_7d >= row.rate_limit_7d ? 'text-red-500' :
-                    row.usage_7d >= row.rate_limit_7d * 0.8 ? 'text-yellow-500' :
+                    row.usage_7d >= row.rate_limit_7d * 0.8 ? 'text-amber-500' :
                     'text-gray-700 dark:text-gray-300'
                   ]">
                     ${{ row.usage_7d?.toFixed(2) || '0.00' }}/${{ row.rate_limit_7d?.toFixed(2) }}
@@ -305,7 +305,7 @@
                     :class="[
                       'h-full rounded-full transition-all',
                       row.usage_7d >= row.rate_limit_7d ? 'bg-red-500' :
-                      row.usage_7d >= row.rate_limit_7d * 0.8 ? 'bg-yellow-500' :
+                      row.usage_7d >= row.rate_limit_7d * 0.8 ? 'bg-amber-500' :
                       'bg-emerald-500'
                     ]"
                     :style="{ width: Math.min((row.usage_7d / row.rate_limit_7d) * 100, 100) + '%' }"
@@ -394,7 +394,7 @@
                 :class="[
                   'flex flex-col items-center gap-0.5 rounded-lg p-1.5 transition-colors',
                   row.status === 'active'
-                    ? 'text-gray-500 hover:bg-yellow-50 hover:text-yellow-600 dark:hover:bg-yellow-900/20 dark:hover:text-yellow-400'
+                    ? 'text-gray-500 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20 dark:hover:text-amber-400'
                     : 'text-gray-500 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400'
                 ]"
               >
@@ -705,7 +705,7 @@
                     <span :class="[
                       'font-medium',
                       selectedKey.usage_5h >= selectedKey.rate_limit_5h ? 'text-red-500' :
-                      selectedKey.usage_5h >= selectedKey.rate_limit_5h * 0.8 ? 'text-yellow-500' :
+                      selectedKey.usage_5h >= selectedKey.rate_limit_5h * 0.8 ? 'text-amber-500' :
                       'text-gray-900 dark:text-white'
                     ]">
                       ${{ selectedKey.usage_5h?.toFixed(4) || '0.0000' }}
@@ -721,7 +721,7 @@
                     :class="[
                       'h-full rounded-full transition-all',
                       selectedKey.usage_5h >= selectedKey.rate_limit_5h ? 'bg-red-500' :
-                      selectedKey.usage_5h >= selectedKey.rate_limit_5h * 0.8 ? 'bg-yellow-500' :
+                      selectedKey.usage_5h >= selectedKey.rate_limit_5h * 0.8 ? 'bg-amber-500' :
                       'bg-green-500'
                     ]"
                     :style="{ width: Math.min((selectedKey.usage_5h / selectedKey.rate_limit_5h) * 100, 100) + '%' }"
@@ -751,7 +751,7 @@
                     <span :class="[
                       'font-medium',
                       selectedKey.usage_1d >= selectedKey.rate_limit_1d ? 'text-red-500' :
-                      selectedKey.usage_1d >= selectedKey.rate_limit_1d * 0.8 ? 'text-yellow-500' :
+                      selectedKey.usage_1d >= selectedKey.rate_limit_1d * 0.8 ? 'text-amber-500' :
                       'text-gray-900 dark:text-white'
                     ]">
                       ${{ selectedKey.usage_1d?.toFixed(4) || '0.0000' }}
@@ -767,7 +767,7 @@
                     :class="[
                       'h-full rounded-full transition-all',
                       selectedKey.usage_1d >= selectedKey.rate_limit_1d ? 'bg-red-500' :
-                      selectedKey.usage_1d >= selectedKey.rate_limit_1d * 0.8 ? 'bg-yellow-500' :
+                      selectedKey.usage_1d >= selectedKey.rate_limit_1d * 0.8 ? 'bg-amber-500' :
                       'bg-green-500'
                     ]"
                     :style="{ width: Math.min((selectedKey.usage_1d / selectedKey.rate_limit_1d) * 100, 100) + '%' }"
@@ -797,7 +797,7 @@
                     <span :class="[
                       'font-medium',
                       selectedKey.usage_7d >= selectedKey.rate_limit_7d ? 'text-red-500' :
-                      selectedKey.usage_7d >= selectedKey.rate_limit_7d * 0.8 ? 'text-yellow-500' :
+                      selectedKey.usage_7d >= selectedKey.rate_limit_7d * 0.8 ? 'text-amber-500' :
                       'text-gray-900 dark:text-white'
                     ]">
                       ${{ selectedKey.usage_7d?.toFixed(4) || '0.0000' }}
@@ -813,7 +813,7 @@
                     :class="[
                       'h-full rounded-full transition-all',
                       selectedKey.usage_7d >= selectedKey.rate_limit_7d ? 'bg-red-500' :
-                      selectedKey.usage_7d >= selectedKey.rate_limit_7d * 0.8 ? 'bg-yellow-500' :
+                      selectedKey.usage_7d >= selectedKey.rate_limit_7d * 0.8 ? 'bg-amber-500' :
                       'bg-green-500'
                     ]"
                     :style="{ width: Math.min((selectedKey.usage_7d / selectedKey.rate_limit_7d) * 100, 100) + '%' }"

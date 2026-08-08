@@ -68,16 +68,13 @@
         <label class="text-sm text-gray-700 dark:text-gray-300">{{ t('payment.admin.forSale') }}</label>
         <button
           type="button"
-          :class="[
-            'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-            planForm.for_sale ? 'bg-primary-500' : 'bg-gray-300 dark:bg-dark-600'
-          ]"
+          class="switch outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-dark-800"
+          :class="{ on: planForm.for_sale }"
+          :aria-label="t('payment.admin.forSale')"
+          :aria-pressed="planForm.for_sale"
           @click="planForm.for_sale = !planForm.for_sale"
         >
-          <span :class="[
-            'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-            planForm.for_sale ? 'translate-x-5' : 'translate-x-0'
-          ]" />
+          <span class="knob" />
         </button>
       </div>
     </form>

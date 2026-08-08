@@ -6,31 +6,25 @@
       </div>
 
       <template v-else>
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{{ t('admin.riskControl.title') }}</h1>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.description') }}</p>
-          </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <button type="button" class="btn btn-secondary inline-flex items-center gap-2" :disabled="statusLoading" @click="loadStatus(false)">
-              <Icon name="refresh" size="sm" :class="statusLoading ? 'animate-spin' : ''" />
-              {{ t('admin.riskControl.refreshStatus') }}
-            </button>
-            <button type="button" class="btn btn-primary inline-flex items-center gap-2" @click="openSettings">
-              <Icon name="cog" size="sm" />
-              {{ t('admin.riskControl.openSettings') }}
-            </button>
-          </div>
+        <div class="toolbar justify-end">
+          <button type="button" class="btn btn-secondary inline-flex items-center gap-2" :disabled="statusLoading" @click="loadStatus(false)">
+            <Icon name="refresh" size="sm" :class="statusLoading ? 'animate-spin' : ''" />
+            {{ t('admin.riskControl.refreshStatus') }}
+          </button>
+          <button type="button" class="btn btn-primary inline-flex items-center gap-2" @click="openSettings">
+            <Icon name="cog" size="sm" />
+            {{ t('admin.riskControl.openSettings') }}
+          </button>
         </div>
 
-        <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div class="stat-row grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
           <div
             v-for="item in overviewItems"
             :key="item.key"
-            class="rounded-lg border border-gray-100 bg-white px-4 py-3 shadow-sm dark:border-dark-700 dark:bg-dark-800"
+            class="stat-card"
           >
             <div class="flex min-w-0 items-center gap-3">
-              <div class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg" :class="item.iconClass">
+              <div class="stat-icon flex-shrink-0" :class="item.iconClass">
                 <Icon :name="item.icon" size="sm" />
               </div>
               <div class="min-w-0 flex-1">
@@ -273,55 +267,55 @@
             </div>
           </div>
 
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
-              <thead class="bg-gray-50 dark:bg-dark-800">
+          <div class="table-container">
+            <table class="table min-w-full">
+              <thead>
                 <tr>
-                  <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.time') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.group') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.user') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.apiKey') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.endpoint') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.result') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.highest') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.actionMeta') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.latency') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.input') }}</th>
+                  <th class="whitespace-nowrap">{{ t('admin.riskControl.table.time') }}</th>
+                  <th class="whitespace-nowrap">{{ t('admin.riskControl.table.group') }}</th>
+                  <th class="whitespace-nowrap">{{ t('admin.riskControl.table.user') }}</th>
+                  <th class="whitespace-nowrap">{{ t('admin.riskControl.table.apiKey') }}</th>
+                  <th class="whitespace-nowrap">{{ t('admin.riskControl.table.endpoint') }}</th>
+                  <th class="whitespace-nowrap">{{ t('admin.riskControl.table.result') }}</th>
+                  <th class="whitespace-nowrap">{{ t('admin.riskControl.table.highest') }}</th>
+                  <th class="whitespace-nowrap">{{ t('admin.riskControl.table.actionMeta') }}</th>
+                  <th class="whitespace-nowrap">{{ t('admin.riskControl.table.latency') }}</th>
+                  <th>{{ t('admin.riskControl.table.input') }}</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-100 bg-white dark:divide-dark-800 dark:bg-dark-800">
+              <tbody>
                 <tr v-if="logsLoading">
-                  <td colspan="10" class="px-5 py-12 text-center text-sm text-gray-500 dark:text-gray-400">{{ t('common.loading') }}</td>
+                  <td colspan="10" class="py-12 text-center text-sm text-gray-500 dark:text-gray-400">{{ t('common.loading') }}</td>
                 </tr>
                 <tr v-else-if="logs.length === 0">
-                  <td colspan="10" class="px-5 py-12 text-center text-sm text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.emptyLogs') }}</td>
+                  <td colspan="10" class="py-12 text-center text-sm text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.emptyLogs') }}</td>
                 </tr>
                 <template v-else>
-                  <tr v-for="row in logs" :key="row.id" class="hover:bg-gray-50 dark:hover:bg-dark-700/60">
-                    <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(row.created_at) }}</td>
-                    <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{{ row.group_name || '-' }}</td>
-                    <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                  <tr v-for="row in logs" :key="row.id">
+                    <td class="whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(row.created_at) }}</td>
+                    <td class="whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ row.group_name || '-' }}</td>
+                    <td class="whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                       <div>{{ row.user_email || '-' }}</div>
                       <div v-if="row.user_id" class="text-xs text-gray-400">UID {{ row.user_id }}</div>
                     </td>
-                    <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{{ row.api_key_name || '-' }}</td>
-                    <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                    <td class="whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ row.api_key_name || '-' }}</td>
+                    <td class="whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                       <div>{{ row.endpoint || '-' }}</div>
                       <div class="text-xs text-gray-400">{{ row.provider || '-' }} / {{ row.model || '-' }}</div>
                     </td>
-                    <td class="whitespace-nowrap px-5 py-4">
+                    <td class="whitespace-nowrap">
                       <span class="inline-flex rounded-md px-2 py-1 text-xs font-medium" :class="resultBadgeClass(row)">
                         {{ resultLabel(row) }}
                       </span>
                     </td>
-                    <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                    <td class="whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                       <div>{{ row.highest_category || '-' }}</div>
                       <div class="text-xs text-gray-400">{{ percent(row.highest_score) }}</div>
                       <div v-if="row.matched_keyword" class="mt-0.5 text-xs font-medium text-red-600 dark:text-red-300" :title="t('admin.riskControl.matchedKeyword') + ': ' + row.matched_keyword">
                         {{ t('admin.riskControl.matchedKeyword') }}: {{ row.matched_keyword }}
                       </div>
                     </td>
-                    <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                    <td class="whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                       <div>{{ violationCountText(row) }}</div>
                       <div class="text-xs text-gray-400">
                         {{ row.email_sent ? t('admin.riskControl.emailSent') : t('admin.riskControl.emailNotSent') }}
@@ -338,13 +332,13 @@
                         {{ unbanningUserID === row.user_id ? t('common.processing') : t('admin.riskControl.unbanUser') }}
                       </button>
                     </td>
-                    <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                    <td class="whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                       <div>{{ latencyText(row.upstream_latency_ms) }}</div>
                       <div v-if="row.queue_delay_ms !== null && row.queue_delay_ms !== undefined" class="text-xs text-gray-400">
                         {{ t('admin.riskControl.queueDelay', { ms: row.queue_delay_ms }) }}
                       </div>
                     </td>
-                    <td class="w-[320px] max-w-sm px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                    <td class="w-[320px] max-w-sm text-sm text-gray-700 dark:text-gray-300">
                       <button
                         type="button"
                         class="group flex w-full min-w-0 items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-gray-100 dark:hover:bg-dark-700"
@@ -374,13 +368,13 @@
 
       <BaseDialog :show="settingsOpen" :title="t('admin.riskControl.settingsTitle')" width="extra-wide" @close="settingsOpen = false">
         <div class="space-y-6">
-          <div class="flex gap-2 overflow-x-auto border-b border-gray-100 pb-3 dark:border-dark-700">
+          <div class="segmented overflow-x-auto">
             <button
               v-for="tab in settingsTabs"
               :key="tab.id"
               type="button"
-              class="inline-flex whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors"
-              :class="activeSettingsTab === tab.id ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-dark-700 dark:hover:text-white'"
+              class="whitespace-nowrap px-3 py-2 text-sm font-medium transition-colors"
+              :class="activeSettingsTab === tab.id ? 'active text-primary-700 dark:text-primary-300' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'"
               @click="activeSettingsTab = tab.id"
             >
               {{ tab.label }}

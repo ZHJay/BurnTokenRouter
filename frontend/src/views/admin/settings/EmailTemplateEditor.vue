@@ -101,16 +101,16 @@
               {{ selectedEventMeta.label }}
             </div>
             <span
-              class="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-gray-600 shadow-sm ring-1 ring-gray-200 dark:bg-dark-800 dark:text-gray-300 dark:ring-dark-600"
+              class="badge badge-gray"
             >
               {{ selectedEventMeta.categoryLabel }}
             </span>
             <span
-              class="rounded-full px-2.5 py-1 text-xs font-medium"
+              class="badge"
               :class="
                 selectedEventMeta.optional
-                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
-                  : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
+                  ? 'badge-warning'
+                  : 'badge-success'
               "
             >
               {{ selectedEventMeta.optional ? localText("可退订通知", "Optional") : localText("事务邮件", "Transactional") }}
@@ -204,7 +204,7 @@
                 </div>
                 <span
                   v-if="isCustomTemplate"
-                  class="rounded-full bg-primary-50 px-2.5 py-1 text-xs font-medium text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
+                  class="badge badge-primary"
                 >
                   {{ t("admin.settings.emailTemplates.customized") }}
                 </span>

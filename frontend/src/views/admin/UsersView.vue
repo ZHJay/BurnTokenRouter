@@ -133,6 +133,7 @@
                 :disabled="loading"
                 class="btn btn-secondary px-2 md:px-3"
                 :title="t('common.refresh')"
+                :aria-label="t('common.refresh')"
               >
                 <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
               </button>
@@ -570,15 +571,14 @@
           </template>
 
           <template #cell-status="{ value }">
-            <div class="flex items-center gap-1.5">
-              <span
-                :class="[
-                  'inline-block h-2 w-2 rounded-full',
-                  value === 'active' ? 'bg-green-500' : 'bg-red-500'
-                ]"
-              ></span>
-              <span class="text-sm text-gray-700 dark:text-gray-300">
+            <div>
+              <span class="status">
+                <span
+                  :class="['dot', value === 'active' ? 'dot-active' : 'dot-error']"
+                ></span>
+                <span class="text-sm text-gray-700 dark:text-gray-300">
                 {{ value === 'active' ? t('common.active') : t('admin.users.disabled') }}
+                </span>
               </span>
             </div>
           </template>

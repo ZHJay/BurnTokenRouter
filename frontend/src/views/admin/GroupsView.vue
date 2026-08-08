@@ -6,18 +6,13 @@
           class="flex flex-col justify-between gap-4 lg:flex-row lg:items-start"
         >
           <!-- Left: fuzzy search + filters (can wrap to multiple lines) -->
-          <div class="flex flex-1 flex-wrap items-center gap-3">
-            <div class="relative w-full sm:w-64">
-              <Icon
-                name="search"
-                size="md"
-                class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
-              />
+          <div class="toolbar flex-1">
+            <div class="search w-full sm:w-64">
+              <Icon name="search" size="sm" />
               <input
                 v-model="searchQuery"
                 type="text"
                 :placeholder="t('admin.groups.searchGroups')"
-                class="input pl-10"
                 @input="handleSearch"
               />
             </div>
@@ -73,7 +68,7 @@
               </button>
               <div
                 v-if="showColumnDropdown"
-                class="absolute right-0 top-full z-50 mt-1 max-h-80 w-48 overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-dark-600 dark:bg-dark-800"
+                class="absolute right-0 top-full z-50 mt-2 max-h-80 w-48 overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-xl dark:border-dark-600 dark:bg-dark-800"
               >
                 <button
                   v-for="col in toggleableColumns"
@@ -123,13 +118,13 @@
           @sort="handleSort"
         >
           <template #cell-name="{ value }">
-            <span class="font-medium text-gray-900 dark:text-white">{{
+            <span class="strong">{{
               value
             }}</span>
           </template>
 
           <template #cell-id="{ value }">
-            <span class="font-mono text-xs text-gray-500 dark:text-gray-400"
+            <span class="mono text-xs"
               >#{{ value }}</span
             >
           </template>
@@ -256,7 +251,7 @@
           </template>
 
           <template #cell-rate_multiplier="{ value }">
-            <span class="text-sm text-gray-700 dark:text-gray-300"
+            <span class="mono"
               >{{ value }}x</span
             >
           </template>
@@ -280,7 +275,7 @@
                   >{{ row.active_account_count || 0 }}</span
                 >
                 <span
-                  class="ml-1 inline-flex items-center rounded bg-gray-100 px-1.5 py-0.5 font-medium text-gray-800 dark:bg-dark-600 dark:text-gray-300"
+                  class="ml-1 inline-flex items-center rounded-full bg-[color:var(--fill)] px-1.5 py-0.5 font-medium text-gray-800 dark:text-gray-300"
                   >{{ t("admin.groups.accountsUnit") }}</span
                 >
               </div>
@@ -293,7 +288,7 @@
                   >{{ row.rate_limited_account_count }}</span
                 >
                 <span
-                  class="ml-1 inline-flex items-center rounded bg-gray-100 px-1.5 py-0.5 font-medium text-gray-800 dark:bg-dark-600 dark:text-gray-300"
+                  class="ml-1 inline-flex items-center rounded-full bg-[color:var(--fill)] px-1.5 py-0.5 font-medium text-gray-800 dark:text-gray-300"
                   >{{ t("admin.groups.accountsUnit") }}</span
                 >
               </div>
@@ -306,7 +301,7 @@
                   >{{ row.account_count || 0 }}</span
                 >
                 <span
-                  class="ml-1 inline-flex items-center rounded bg-gray-100 px-1.5 py-0.5 font-medium text-gray-800 dark:bg-dark-600 dark:text-gray-300"
+                  class="ml-1 inline-flex items-center rounded-full bg-[color:var(--fill)] px-1.5 py-0.5 font-medium text-gray-800 dark:text-gray-300"
                   >{{ t("admin.groups.accountsUnit") }}</span
                 >
               </div>
@@ -365,77 +360,80 @@
           <template #cell-status="{ value }">
             <span
               :class="[
-                'badge',
-                value === 'active' ? 'badge-success' : 'badge-danger',
+                'status',
               ]"
             >
+              <span :class="['dot', value === 'active' ? 'dot-active' : 'dot-error']"></span>
               {{ t("admin.accounts.status." + value) }}
             </span>
           </template>
 
           <template #cell-actions="{ row }">
-            <div class="flex items-center gap-1">
+            <div class="row-actions justify-end">
               <button
+                type="button"
                 @click="handleEdit(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+                class="icon-btn"
+                :title="t('common.edit')"
+                :aria-label="t('common.edit')"
               >
                 <Icon name="edit" size="sm" />
-                <span class="text-xs">{{ t("common.edit") }}</span>
               </button>
               <button
+                type="button"
                 data-testid="group-duplicate"
                 :title="
                   duplicatingGroupIds.has(row.id)
                     ? t('admin.groups.duplicating')
                     : t('admin.groups.duplicate')
                 "
+                :aria-label="
+                  duplicatingGroupIds.has(row.id)
+                    ? t('admin.groups.duplicating')
+                    : t('admin.groups.duplicate')
+                "
                 :disabled="duplicatingGroupIds.has(row.id)"
                 @click="handleDuplicate(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+                class="icon-btn disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Icon name="copy" size="sm" />
-                <span class="text-xs">
-                  {{
-                    duplicatingGroupIds.has(row.id)
-                      ? t("admin.groups.duplicating")
-                      : t("admin.groups.duplicate")
-                  }}
-                </span>
               </button>
               <button
+                type="button"
                 v-if="row.platform === 'composite'"
                 @click="handleCompositeRoutes(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-cyan-600 dark:hover:bg-dark-700 dark:hover:text-cyan-400"
+                class="icon-btn"
+                :title="t('admin.groups.compositeRoutes.action')"
+                :aria-label="t('admin.groups.compositeRoutes.action')"
               >
                 <Icon name="swap" size="sm" />
-                <span class="text-xs">{{
-                  t("admin.groups.compositeRoutes.action")
-                }}</span>
               </button>
               <button
+                type="button"
                 @click="handleRateMultipliers(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-purple-600 dark:hover:bg-dark-700 dark:hover:text-purple-400"
+                class="icon-btn"
+                :title="t('admin.groups.rateMultipliers')"
+                :aria-label="t('admin.groups.rateMultipliers')"
               >
                 <Icon name="dollar" size="sm" />
-                <span class="text-xs">{{
-                  t("admin.groups.rateMultipliers")
-                }}</span>
               </button>
               <button
+                type="button"
                 @click="handleRPMOverrides(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-orange-600 dark:hover:bg-dark-700 dark:hover:text-orange-400"
+                class="icon-btn"
+                :title="t('admin.groups.rpmOverrides')"
+                :aria-label="t('admin.groups.rpmOverrides')"
               >
                 <Icon name="bolt" size="sm" />
-                <span class="text-xs">{{
-                  t("admin.groups.rpmOverrides")
-                }}</span>
               </button>
               <button
+                type="button"
                 @click="handleDelete(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                class="icon-btn danger"
+                :title="t('common.delete')"
+                :aria-label="t('common.delete')"
               >
                 <Icon name="trash" size="sm" />
-                <span class="text-xs">{{ t("common.delete") }}</span>
               </button>
             </div>
           </template>
@@ -4226,31 +4224,31 @@
             >
               {{ t("admin.groups.compositeRoutes.empty") }}
             </div>
-            <div v-else class="overflow-x-auto">
-              <table class="min-w-full divide-y divide-gray-200 text-sm dark:divide-dark-600">
-                <thead class="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:bg-dark-800 dark:text-gray-400">
+            <div v-else class="table-container">
+              <table class="table min-w-full text-sm">
+                <thead>
                   <tr>
-                    <th class="px-3 py-2">
+                    <th>
                       {{ t("admin.groups.compositeRoutes.publicModel") }}
                     </th>
-                    <th class="px-3 py-2">
+                    <th>
                       {{ t("admin.groups.compositeRoutes.target") }}
                     </th>
-                    <th class="px-3 py-2">
+                    <th>
                       {{ t("admin.groups.compositeRoutes.scope") }}
                     </th>
-                    <th class="px-3 py-2 text-right">
+                    <th class="text-right">
                       {{ t("admin.groups.columns.actions") }}
                     </th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 bg-white dark:divide-dark-700 dark:bg-dark-900">
+                <tbody>
                   <tr
                     v-for="route in compositeRoutes"
                     :key="route.id"
                     :class="!route.enabled && 'opacity-60'"
                   >
-                    <td class="max-w-[15rem] px-3 py-2">
+                    <td class="max-w-[15rem]">
                       <div class="break-all font-medium text-gray-900 dark:text-white">
                         {{ route.public_model }}
                       </div>
@@ -4266,7 +4264,7 @@
                         </span>
                       </div>
                     </td>
-                    <td class="px-3 py-2">
+                    <td>
                       <div class="flex items-center gap-1.5 text-gray-900 dark:text-white">
                         <PlatformIcon :platform="route.target_platform" size="xs" />
                         <span>{{ formatCompositePlatform(route.target_platform) }}</span>
@@ -4275,7 +4273,7 @@
                         {{ route.upstream_model || route.public_model }}
                       </div>
                     </td>
-                    <td class="px-3 py-2">
+                    <td>
                       <div class="text-gray-700 dark:text-gray-300">
                         {{ formatCompositeEndpoint(route.endpoint) }}
                       </div>
@@ -4284,20 +4282,22 @@
                         {{ route.priority }}
                       </div>
                     </td>
-                    <td class="px-3 py-2">
-                      <div class="flex justify-end gap-1">
+                    <td>
+                      <div class="row-actions justify-end">
                         <button
                           type="button"
-                          class="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+                          class="icon-btn"
                           :title="t('common.edit')"
+                          :aria-label="t('common.edit')"
                           @click="editCompositeRoute(route)"
                         >
                           <Icon name="edit" size="sm" />
                         </button>
                         <button
                           type="button"
-                          class="rounded p-1.5 text-gray-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                          class="icon-btn danger"
                           :title="t('common.delete')"
+                          :aria-label="t('common.delete')"
                           @click="deleteCompositeRoute(route)"
                         >
                           <Icon name="trash" size="sm" />

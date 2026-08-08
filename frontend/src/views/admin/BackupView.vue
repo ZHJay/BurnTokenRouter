@@ -168,7 +168,7 @@
       </div>
 
       <!-- Backup Operations -->
-      <div class="card p-6">
+      <div>
         <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 class="text-base font-semibold text-gray-900 dark:text-white">
@@ -183,90 +183,89 @@
               <label class="text-xs text-gray-600 dark:text-gray-400">{{ t('admin.backup.operations.expireDays') }}</label>
               <input v-model.number="manualExpireDays" type="number" min="0" class="input w-20 text-xs" />
             </div>
-            <button type="button" class="btn btn-primary btn-sm" :disabled="creatingBackup" @click="createBackup">
+            <button type="button" class="btn btn-primary" :disabled="creatingBackup" @click="createBackup">
               {{ creatingBackup ? t('admin.backup.operations.backing') : t('admin.backup.operations.createBackup') }}
             </button>
-            <button type="button" class="btn btn-secondary btn-sm" :disabled="loadingBackups" @click="loadBackups">
+            <button type="button" class="btn btn-secondary" :disabled="loadingBackups" @click="loadBackups">
               {{ loadingBackups ? t('common.loading') : t('common.refresh') }}
             </button>
           </div>
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full min-w-[800px] text-sm">
-            <thead>
-              <tr class="border-b border-gray-200 text-left text-xs uppercase tracking-wide text-gray-500 dark:border-dark-700 dark:text-gray-400">
-                <th class="py-2 pr-4">ID</th>
-                <th class="py-2 pr-4">{{ t('admin.backup.columns.status') }}</th>
-                <th class="py-2 pr-4">{{ t('admin.backup.columns.fileName') }}</th>
-                <th class="py-2 pr-4">{{ t('admin.backup.columns.size') }}</th>
-                <th class="py-2 pr-4">{{ t('admin.backup.columns.parts') }}</th>
-                <th class="py-2 pr-4">{{ t('admin.backup.columns.expiresAt') }}</th>
-                <th class="py-2 pr-4">{{ t('admin.backup.columns.triggeredBy') }}</th>
-                <th class="py-2 pr-4">{{ t('admin.backup.columns.startedAt') }}</th>
-                <th class="py-2">{{ t('admin.backup.columns.actions') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="record in backups" :key="record.id" class="border-b border-gray-100 align-top dark:border-dark-800">
-                <td class="py-3 pr-4 font-mono text-xs">{{ record.id }}</td>
-                <td class="py-3 pr-4">
-                  <span
-                    class="rounded px-2 py-0.5 text-xs"
-                    :class="statusClass(record.status)"
-                  >
-                    {{ record.status === 'running' && record.progress
-                      ? t(`admin.backup.progress.${record.progress}`)
-                      : t(`admin.backup.status.${record.status}`) }}
-                  </span>
-                </td>
-                <td class="py-3 pr-4 text-xs">{{ record.file_name }}</td>
-                <td class="py-3 pr-4 text-xs">{{ formatSize(record.size_bytes) }}</td>
-                <td class="py-3 pr-4 text-xs">{{ record.parts?.length || (record.status === 'running' ? '-' : 1) }}</td>
-                <td class="py-3 pr-4 text-xs">
-                  {{ record.expires_at ? formatDate(record.expires_at) : t('admin.backup.neverExpire') }}
-                </td>
-                <td class="py-3 pr-4 text-xs">
-                  {{ record.triggered_by === 'scheduled' ? t('admin.backup.trigger.scheduled') : t('admin.backup.trigger.manual') }}
-                </td>
-                <td class="py-3 pr-4 text-xs">{{ formatDate(record.started_at) }}</td>
-                <td class="py-3 text-xs">
-                  <div class="flex flex-wrap gap-1">
-                    <button
-                      v-if="record.status === 'completed'"
-                      type="button"
-                      class="btn btn-secondary btn-xs"
-                      @click="downloadBackup(record.id)"
-                    >
-                      {{ t('admin.backup.actions.download') }}
-                    </button>
-                    <button
-                      v-if="record.status === 'completed'"
-                      type="button"
-                      class="btn btn-secondary btn-xs"
-                      :disabled="restoringId === record.id"
-                      @click="restoreBackup(record.id)"
-                    >
-                      {{ restoringId === record.id ? t('common.loading') : t('admin.backup.actions.restore') }}
-                    </button>
-                    <button
-                      v-if="record.status !== 'running'"
-                      type="button"
-                      class="btn btn-danger btn-xs"
-                      @click="removeBackup(record.id)"
-                    >
-                      {{ t('common.delete') }}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-              <tr v-if="backups.length === 0">
-                <td colspan="9" class="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                  {{ t('admin.backup.empty') }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="table-card">
+          <div class="table-scroll">
+            <table class="min-w-[800px]">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>{{ t('admin.backup.columns.status') }}</th>
+                  <th>{{ t('admin.backup.columns.fileName') }}</th>
+                  <th>{{ t('admin.backup.columns.size') }}</th>
+                  <th>{{ t('admin.backup.columns.parts') }}</th>
+                  <th>{{ t('admin.backup.columns.expiresAt') }}</th>
+                  <th>{{ t('admin.backup.columns.triggeredBy') }}</th>
+                  <th>{{ t('admin.backup.columns.startedAt') }}</th>
+                  <th>{{ t('admin.backup.columns.actions') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="record in backups" :key="record.id">
+                  <td class="font-mono text-xs">{{ record.id }}</td>
+                  <td>
+                    <span class="badge" :class="statusClass(record.status)">
+                      {{ record.status === 'running' && record.progress
+                        ? t(`admin.backup.progress.${record.progress}`)
+                        : t(`admin.backup.status.${record.status}`) }}
+                    </span>
+                  </td>
+                  <td class="font-mono text-xs">{{ record.file_name }}</td>
+                  <td>{{ formatSize(record.size_bytes) }}</td>
+                  <td>{{ record.parts?.length || (record.status === 'running' ? '-' : 1) }}</td>
+                  <td>
+                    {{ record.expires_at ? formatDate(record.expires_at) : t('admin.backup.neverExpire') }}
+                  </td>
+                  <td>
+                    {{ record.triggered_by === 'scheduled' ? t('admin.backup.trigger.scheduled') : t('admin.backup.trigger.manual') }}
+                  </td>
+                  <td>{{ formatDate(record.started_at) }}</td>
+                  <td>
+                    <div class="flex flex-wrap gap-1">
+                      <button
+                        v-if="record.status === 'completed'"
+                        type="button"
+                        class="btn btn-secondary btn-sm"
+                        @click="downloadBackup(record.id)"
+                      >
+                        {{ t('admin.backup.actions.download') }}
+                      </button>
+                      <button
+                        v-if="record.status === 'completed'"
+                        type="button"
+                        class="btn btn-secondary btn-sm"
+                        :disabled="restoringId === record.id"
+                        @click="restoreBackup(record.id)"
+                      >
+                        {{ restoringId === record.id ? t('common.loading') : t('admin.backup.actions.restore') }}
+                      </button>
+                      <button
+                        v-if="record.status !== 'running'"
+                        type="button"
+                        class="btn btn-danger btn-sm"
+                        @click="removeBackup(record.id)"
+                      >
+                        {{ t('common.delete') }}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr v-if="backups.length === 0">
+                  <td colspan="9" class="py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                    {{ t('admin.backup.empty') }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -825,13 +824,13 @@ async function removeBackup(id: string) {
 function statusClass(status: string): string {
   switch (status) {
     case 'completed':
-      return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+      return 'badge-success'
     case 'running':
-      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+      return 'badge-primary'
     case 'failed':
-      return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+      return 'badge-danger'
     default:
-      return 'bg-gray-100 text-gray-700 dark:bg-dark-800 dark:text-gray-300'
+      return 'badge-gray'
   }
 }
 

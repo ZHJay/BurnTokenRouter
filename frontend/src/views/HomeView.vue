@@ -16,41 +16,29 @@
   <div
     v-else-if="compactHomeEnabled"
     data-testid="compact-home"
-    class="flex min-h-screen flex-col bg-gray-50 text-gray-900 dark:bg-dark-950 dark:text-white"
+    class="landing-compact"
   >
-    <header class="border-b border-gray-200 px-4 py-4 sm:px-6 dark:border-dark-800">
-      <nav class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 sm:gap-4">
-        <div class="flex min-w-0 flex-1 items-center gap-3">
-          <img
-            :src="siteLogo || '/logo.svg'"
-            alt="Logo"
-            class="h-9 w-9 shrink-0 rounded-lg object-contain"
-          />
-          <span class="min-w-0 truncate text-base font-semibold">{{ siteName }}</span>
+    <header class="landing-nav glass">
+      <nav class="landing-nav-inner">
+        <div class="flex min-w-0 flex-1 items-center">
+          <span class="wordmark truncate">{{ siteName }}</span>
         </div>
-        <div class="flex max-w-full shrink-0 flex-wrap items-center justify-end gap-2">
+        <div class="flex shrink-0 items-center gap-2">
           <LocaleSwitcher />
           <a
             v-if="docUrl"
             :href="docUrl"
             target="_blank"
             rel="noopener noreferrer"
-            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:text-dark-400 dark:hover:bg-dark-800"
+            class="icon-btn"
+            :aria-label="t('home.viewDocs')"
             :title="t('home.viewDocs')"
           >
             <Icon name="book" size="md" />
           </a>
-          <router-link
-            v-if="showModelPlazaEntry"
-            to="/model-plaza"
-            class="flex h-10 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white"
-            :title="t('nav.modelPlaza')"
-          >
-            <Icon name="grid" size="md" />
-            <span class="hidden sm:inline">{{ t('nav.modelPlaza') }}</span>
-          </router-link>
           <button
-            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:text-dark-400 dark:hover:bg-dark-800"
+            class="icon-btn"
+            :aria-label="isDark ? t('home.switchToLight') : t('home.switchToDark')"
             :title="isDark ? t('home.switchToLight') : t('home.switchToDark')"
             @click="toggleTheme"
           >
@@ -59,7 +47,7 @@
           </button>
           <router-link
             :to="isAuthenticated ? dashboardPath : '/login'"
-            class="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+            class="btn btn-primary btn-sm"
           >
             {{ isAuthenticated ? t('home.dashboard') : t('home.login') }}
           </router-link>
@@ -67,406 +55,217 @@
       </nav>
     </header>
 
-    <main class="flex min-w-0 flex-1 items-center justify-center px-4 py-16 sm:px-6">
-      <div class="min-w-0 max-w-2xl text-center">
-        <img
-          :src="siteLogo || '/logo.svg'"
-          alt="Logo"
-          class="mx-auto mb-6 h-20 w-20 rounded-2xl object-contain"
-        />
-        <h1 class="[overflow-wrap:anywhere] text-3xl font-bold md:text-4xl">{{ siteName }}</h1>
-        <p class="mt-4 whitespace-pre-wrap [overflow-wrap:anywhere] text-base text-gray-600 dark:text-dark-300">{{ siteSubtitle }}</p>
-        <router-link
-          :to="isAuthenticated ? dashboardPath : '/login'"
-          class="mt-8 inline-flex min-h-10 items-center justify-center rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-700"
-        >
-          {{ isAuthenticated ? t('home.goToDashboard') : t('home.login') }}
-        </router-link>
+    <main class="landing-main landing-main-center">
+      <div class="landing-hero">
+        <h1 class="landing-title">{{ siteName }}</h1>
+        <p class="landing-sub">{{ siteSubtitle }}</p>
+        <div class="landing-cta-row">
+          <router-link
+            :to="isAuthenticated ? dashboardPath : '/login'"
+            class="btn btn-primary landing-cta"
+          >
+            {{ isAuthenticated ? t('home.goToDashboard') : t('home.login') }}
+          </router-link>
+        </div>
       </div>
     </main>
 
-    <footer class="min-w-0 border-t border-gray-200 px-4 py-5 text-center text-sm text-gray-500 [overflow-wrap:anywhere] sm:px-6 dark:border-dark-800 dark:text-dark-400">
-      &copy; {{ currentYear }} {{ siteName }}
+    <footer class="landing-footer">
+      <div class="landing-footer-inner landing-footer-inner-center">
+        <p class="landing-copy">&copy; {{ currentYear }} {{ siteName }}</p>
+      </div>
     </footer>
   </div>
 
   <!-- Default Home Page -->
-  <div
-    v-else
-    class="relative flex min-h-screen flex-col overflow-hidden bg-gradient-to-br from-gray-50 via-primary-50/30 to-gray-100 dark:from-dark-950 dark:via-dark-900 dark:to-dark-950"
-  >
-    <!-- Background Decorations -->
-    <div class="pointer-events-none absolute inset-0 overflow-hidden">
-      <div
-        class="absolute -right-40 -top-40 h-96 w-96 rounded-full bg-primary-400/20 blur-3xl"
-      ></div>
-      <div
-        class="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-primary-500/15 blur-3xl"
-      ></div>
-      <div
-        class="absolute left-1/3 top-1/4 h-72 w-72 rounded-full bg-primary-300/10 blur-3xl"
-      ></div>
-      <div
-        class="absolute bottom-1/4 right-1/4 h-64 w-64 rounded-full bg-primary-400/10 blur-3xl"
-      ></div>
-      <div
-        class="absolute inset-0 bg-[linear-gradient(rgba(20,184,166,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(20,184,166,0.03)_1px,transparent_1px)] bg-[size:64px_64px]"
-      ></div>
-    </div>
+  <div v-else class="landing">
+    <!-- ambient 光斑 -->
+    <div class="landing-spot landing-spot-1" aria-hidden="true"></div>
+    <div class="landing-spot landing-spot-2" aria-hidden="true"></div>
+    <div class="landing-spot landing-spot-3" aria-hidden="true"></div>
 
-    <!-- Header -->
-    <header class="relative z-20 px-6 py-4">
-      <nav class="mx-auto flex max-w-6xl items-center justify-between">
-        <!-- Logo -->
-        <div class="flex items-center">
-          <div class="h-10 w-10 overflow-hidden rounded-xl shadow-md">
-            <img :src="siteLogo || '/logo.svg'" alt="Logo" class="h-full w-full object-contain" />
-          </div>
+    <header class="landing-nav glass">
+      <nav class="landing-nav-inner">
+        <!-- 纯文字 wordmark(品牌不再渲染 logo 图片) -->
+        <div class="flex min-w-0 items-center">
+          <span class="wordmark truncate">{{ siteName }}</span>
         </div>
 
-        <!-- Nav Actions -->
-        <div class="flex items-center gap-3">
-          <!-- Language Switcher -->
+        <div class="flex items-center gap-2">
           <LocaleSwitcher />
 
-          <!-- Doc Link -->
           <a
             v-if="docUrl"
             :href="docUrl"
             target="_blank"
             rel="noopener noreferrer"
-            class="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white"
+            class="icon-btn"
+            :aria-label="t('home.viewDocs')"
             :title="t('home.viewDocs')"
           >
             <Icon name="book" size="md" />
           </a>
 
-          <!-- Model Plaza Link -->
-          <router-link
-            v-if="showModelPlazaEntry"
-            to="/model-plaza"
-            class="inline-flex items-center gap-1.5 rounded-lg p-2 text-sm text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white"
-            :title="t('nav.modelPlaza')"
-          >
-            <Icon name="grid" size="md" />
-            <span class="hidden sm:inline">{{ t('nav.modelPlaza') }}</span>
-          </router-link>
-
-          <!-- Theme Toggle -->
           <button
-            @click="toggleTheme"
-            class="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white"
+            class="icon-btn"
+            :aria-label="isDark ? t('home.switchToLight') : t('home.switchToDark')"
             :title="isDark ? t('home.switchToLight') : t('home.switchToDark')"
+            @click="toggleTheme"
           >
             <Icon v-if="isDark" name="sun" size="md" />
             <Icon v-else name="moon" size="md" />
           </button>
 
-          <!-- Login / Dashboard Button -->
           <router-link
             v-if="isAuthenticated"
             :to="dashboardPath"
-            class="inline-flex items-center gap-1.5 rounded-full bg-gray-900 py-1 pl-1 pr-2.5 transition-colors hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700"
+            class="btn btn-primary btn-sm"
           >
-            <span
-              class="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-[10px] font-semibold text-white"
-            >
-              {{ userInitial }}
-            </span>
-            <span class="text-xs font-medium text-white">{{ t('home.dashboard') }}</span>
-            <svg
-              class="h-3 w-3 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"
-              />
-            </svg>
+            <span class="avatar-mini">{{ userInitial }}</span>
+            {{ t('home.dashboard') }}
           </router-link>
-          <router-link
-            v-else
-            to="/login"
-            class="inline-flex items-center rounded-full bg-gray-900 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700"
-          >
+          <router-link v-else to="/login" class="btn btn-primary btn-sm">
             {{ t('home.login') }}
           </router-link>
         </div>
       </nav>
     </header>
 
-    <!-- Main Content -->
-    <main class="relative z-10 flex-1 px-6 py-16">
-      <div class="mx-auto max-w-6xl">
-        <!-- Hero Section - Left/Right Layout -->
-        <div class="mb-12 flex flex-col items-center justify-between gap-12 lg:flex-row lg:gap-16">
-          <!-- Left: Text Content -->
-          <div class="flex-1 text-center lg:text-left">
-            <h1
-              class="mb-4 text-4xl font-bold text-gray-900 dark:text-white md:text-5xl lg:text-6xl"
+    <main class="landing-main">
+      <!-- Hero: Left/Right Layout -->
+      <div class="landing-hero-split">
+        <div class="landing-hero">
+          <h1 class="landing-title">{{ siteName }}</h1>
+          <p class="landing-sub">{{ siteSubtitle }}</p>
+          <div class="landing-cta-row">
+            <router-link
+              :to="isAuthenticated ? dashboardPath : '/login'"
+              class="btn btn-primary landing-cta"
             >
-              {{ siteName }}
-            </h1>
-            <p class="mb-8 text-lg text-gray-600 dark:text-dark-300 md:text-xl">
-              {{ siteSubtitle }}
-            </p>
-
-            <!-- CTA Button -->
-            <div>
-              <router-link
-                :to="isAuthenticated ? dashboardPath : '/login'"
-                class="btn btn-primary px-8 py-3 text-base shadow-lg shadow-primary-500/30"
-              >
-                {{ isAuthenticated ? t('home.goToDashboard') : t('home.getStarted') }}
-                <Icon name="arrowRight" size="md" class="ml-2" :stroke-width="2" />
-              </router-link>
-            </div>
+              {{ isAuthenticated ? t('home.goToDashboard') : t('home.getStarted') }}
+              <Icon name="arrowRight" size="md" :stroke-width="2" />
+            </router-link>
           </div>
+        </div>
 
-          <!-- Right: Terminal Animation -->
-          <div class="flex flex-1 justify-center lg:justify-end">
-            <div class="terminal-container">
-              <div class="terminal-window">
-                <!-- Window header -->
-                <div class="terminal-header">
-                  <div class="terminal-buttons">
-                    <span class="btn-close"></span>
-                    <span class="btn-minimize"></span>
-                    <span class="btn-maximize"></span>
-                  </div>
-                  <span class="terminal-title">terminal</span>
+        <!-- Terminal Animation -->
+        <div class="landing-hero-visual">
+          <div class="terminal-container">
+            <div class="terminal-window">
+              <div class="terminal-header">
+                <div class="terminal-buttons">
+                  <span class="btn-close"></span>
+                  <span class="btn-minimize"></span>
+                  <span class="btn-maximize"></span>
                 </div>
-                <!-- Terminal content -->
-                <div class="terminal-body">
-                  <div class="code-line line-1">
-                    <span class="code-prompt">$</span>
-                    <span class="code-cmd">curl</span>
-                    <span class="code-flag">-X POST</span>
-                    <span class="code-url">/v1/messages</span>
-                  </div>
-                  <div class="code-line line-2">
-                    <span class="code-comment"># Routing to upstream...</span>
-                  </div>
-                  <div class="code-line line-3">
-                    <span class="code-success">200 OK</span>
-                    <span class="code-response">{ "content": "Hello!" }</span>
-                  </div>
-                  <div class="code-line line-4">
-                    <span class="code-prompt">$</span>
-                    <span class="cursor"></span>
-                  </div>
+                <span class="terminal-title">terminal</span>
+              </div>
+              <div class="terminal-body">
+                <div class="code-line line-1">
+                  <span class="code-prompt">$</span>
+                  <span class="code-cmd">curl</span>
+                  <span class="code-flag">-X POST</span>
+                  <span class="code-url">/v1/messages</span>
+                </div>
+                <div class="code-line line-2">
+                  <span class="code-comment"># Routing to upstream...</span>
+                </div>
+                <div class="code-line line-3">
+                  <span class="code-success">200 OK</span>
+                  <span class="code-response">{ "content": "Hello!" }</span>
+                </div>
+                <div class="code-line line-4">
+                  <span class="code-prompt">$</span>
+                  <span class="cursor"></span>
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Feature Tags - Centered -->
-        <div class="mb-12 flex flex-wrap items-center justify-center gap-4 md:gap-6">
-          <div
-            class="inline-flex items-center gap-2.5 rounded-full border border-gray-200/50 bg-white/80 px-5 py-2.5 shadow-sm backdrop-blur-sm dark:border-dark-700/50 dark:bg-dark-800/80"
-          >
-            <Icon name="swap" size="sm" class="text-primary-500" />
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{
-              t('home.tags.subscriptionToApi')
-            }}</span>
+      <!-- Feature Tags -->
+      <div class="landing-tags">
+        <span class="tag-chip">
+          <Icon name="swap" size="sm" class="tag-chip-icon" />
+          {{ t('home.tags.subscriptionToApi') }}
+        </span>
+        <span class="tag-chip">
+          <Icon name="shield" size="sm" class="tag-chip-icon" />
+          {{ t('home.tags.stickySession') }}
+        </span>
+        <span class="tag-chip">
+          <Icon name="chart" size="sm" class="tag-chip-icon" />
+          {{ t('home.tags.realtimeBilling') }}
+        </span>
+      </div>
+
+      <!-- Features Grid -->
+      <div class="landing-grid">
+        <div class="card card-hover landing-feature">
+          <div class="feature-icon tint-blue">
+            <Icon name="server" size="lg" />
           </div>
-          <div
-            class="inline-flex items-center gap-2.5 rounded-full border border-gray-200/50 bg-white/80 px-5 py-2.5 shadow-sm backdrop-blur-sm dark:border-dark-700/50 dark:bg-dark-800/80"
-          >
-            <Icon name="shield" size="sm" class="text-primary-500" />
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{
-              t('home.tags.stickySession')
-            }}</span>
-          </div>
-          <div
-            class="inline-flex items-center gap-2.5 rounded-full border border-gray-200/50 bg-white/80 px-5 py-2.5 shadow-sm backdrop-blur-sm dark:border-dark-700/50 dark:bg-dark-800/80"
-          >
-            <Icon name="chart" size="sm" class="text-primary-500" />
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{
-              t('home.tags.realtimeBilling')
-            }}</span>
-          </div>
+          <h3 class="feature-title">{{ t('home.features.unifiedGateway') }}</h3>
+          <p class="feature-desc">{{ t('home.features.unifiedGatewayDesc') }}</p>
         </div>
 
-        <!-- Features Grid -->
-        <div class="mb-12 grid gap-6 md:grid-cols-3">
-          <!-- Feature 1: Unified Gateway -->
-          <div
-            class="group rounded-2xl border border-gray-200/50 bg-white/60 p-6 backdrop-blur-sm transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/10 dark:border-dark-700/50 dark:bg-dark-800/60"
-          >
-            <div
-              class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30 transition-transform group-hover:scale-110"
-            >
-              <Icon name="server" size="lg" class="text-white" />
-            </div>
-            <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
-              {{ t('home.features.unifiedGateway') }}
-            </h3>
-            <p class="text-sm leading-relaxed text-gray-600 dark:text-dark-400">
-              {{ t('home.features.unifiedGatewayDesc') }}
-            </p>
+        <div class="card card-hover landing-feature">
+          <div class="feature-icon tint-purple">
+            <Icon name="users" size="lg" />
           </div>
-
-          <!-- Feature 2: Account Pool -->
-          <div
-            class="group rounded-2xl border border-gray-200/50 bg-white/60 p-6 backdrop-blur-sm transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/10 dark:border-dark-700/50 dark:bg-dark-800/60"
-          >
-            <div
-              class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 shadow-lg shadow-primary-500/30 transition-transform group-hover:scale-110"
-            >
-              <svg
-                class="h-6 w-6 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="1.5"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
-                />
-              </svg>
-            </div>
-            <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
-              {{ t('home.features.multiAccount') }}
-            </h3>
-            <p class="text-sm leading-relaxed text-gray-600 dark:text-dark-400">
-              {{ t('home.features.multiAccountDesc') }}
-            </p>
-          </div>
-
-          <!-- Feature 3: Billing & Quota -->
-          <div
-            class="group rounded-2xl border border-gray-200/50 bg-white/60 p-6 backdrop-blur-sm transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/10 dark:border-dark-700/50 dark:bg-dark-800/60"
-          >
-            <div
-              class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg shadow-purple-500/30 transition-transform group-hover:scale-110"
-            >
-              <svg
-                class="h-6 w-6 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="1.5"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"
-                />
-              </svg>
-            </div>
-            <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
-              {{ t('home.features.balanceQuota') }}
-            </h3>
-            <p class="text-sm leading-relaxed text-gray-600 dark:text-dark-400">
-              {{ t('home.features.balanceQuotaDesc') }}
-            </p>
-          </div>
+          <h3 class="feature-title">{{ t('home.features.multiAccount') }}</h3>
+          <p class="feature-desc">{{ t('home.features.multiAccountDesc') }}</p>
         </div>
 
-        <!-- Supported Providers -->
-        <div class="mb-8 text-center">
-          <h2 class="mb-3 text-2xl font-bold text-gray-900 dark:text-white">
-            {{ t('home.providers.title') }}
-          </h2>
-          <p class="text-sm text-gray-600 dark:text-dark-400">
-            {{ t('home.providers.description') }}
-          </p>
+        <div class="card card-hover landing-feature">
+          <div class="feature-icon tint-green">
+            <Icon name="creditCard" size="lg" />
+          </div>
+          <h3 class="feature-title">{{ t('home.features.balanceQuota') }}</h3>
+          <p class="feature-desc">{{ t('home.features.balanceQuotaDesc') }}</p>
         </div>
+      </div>
 
-        <div class="mb-16 flex flex-wrap items-center justify-center gap-4">
-          <!-- Claude - Supported -->
-          <div
-            class="flex items-center gap-2 rounded-xl border border-primary-200 bg-white/60 px-5 py-3 ring-1 ring-primary-500/20 backdrop-blur-sm dark:border-primary-800 dark:bg-dark-800/60"
-          >
-            <div
-              class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-orange-400 to-orange-500"
-            >
-              <span class="text-xs font-bold text-white">C</span>
-            </div>
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{ t('home.providers.claude') }}</span>
-            <span
-              class="rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
-              >{{ t('home.providers.supported') }}</span
-            >
+      <!-- Supported Providers -->
+      <div class="landing-providers">
+        <h2 class="landing-section-title">{{ t('home.providers.title') }}</h2>
+        <p class="landing-section-sub">{{ t('home.providers.description') }}</p>
+
+        <div class="provider-list">
+          <div class="provider-chip">
+            <span class="provider-mark provider-mark-claude">C</span>
+            <span class="provider-name">{{ t('home.providers.claude') }}</span>
+            <span class="badge b-green">{{ t('home.providers.supported') }}</span>
           </div>
-          <!-- GPT - Supported -->
-          <div
-            class="flex items-center gap-2 rounded-xl border border-primary-200 bg-white/60 px-5 py-3 ring-1 ring-primary-500/20 backdrop-blur-sm dark:border-primary-800 dark:bg-dark-800/60"
-          >
-            <div
-              class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-green-500 to-green-600"
-            >
-              <span class="text-xs font-bold text-white">G</span>
-            </div>
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">GPT</span>
-            <span
-              class="rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
-              >{{ t('home.providers.supported') }}</span
-            >
+          <div class="provider-chip">
+            <span class="provider-mark provider-mark-gpt">G</span>
+            <span class="provider-name">GPT</span>
+            <span class="badge b-green">{{ t('home.providers.supported') }}</span>
           </div>
-          <!-- Gemini - Supported -->
-          <div
-            class="flex items-center gap-2 rounded-xl border border-primary-200 bg-white/60 px-5 py-3 ring-1 ring-primary-500/20 backdrop-blur-sm dark:border-primary-800 dark:bg-dark-800/60"
-          >
-            <div
-              class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600"
-            >
-              <span class="text-xs font-bold text-white">G</span>
-            </div>
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{ t('home.providers.gemini') }}</span>
-            <span
-              class="rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
-              >{{ t('home.providers.supported') }}</span
-            >
+          <div class="provider-chip">
+            <span class="provider-mark provider-mark-gemini">G</span>
+            <span class="provider-name">{{ t('home.providers.gemini') }}</span>
+            <span class="badge b-green">{{ t('home.providers.supported') }}</span>
           </div>
-          <!-- Antigravity - Supported -->
-          <div
-            class="flex items-center gap-2 rounded-xl border border-primary-200 bg-white/60 px-5 py-3 ring-1 ring-primary-500/20 backdrop-blur-sm dark:border-primary-800 dark:bg-dark-800/60"
-          >
-            <div
-              class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-pink-600"
-            >
-              <span class="text-xs font-bold text-white">A</span>
-            </div>
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{ t('home.providers.antigravity') }}</span>
-            <span
-              class="rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
-              >{{ t('home.providers.supported') }}</span
-            >
+          <div class="provider-chip">
+            <span class="provider-mark provider-mark-antigravity">A</span>
+            <span class="provider-name">{{ t('home.providers.antigravity') }}</span>
+            <span class="badge b-green">{{ t('home.providers.supported') }}</span>
           </div>
-          <!-- More - Coming Soon -->
-          <div
-            class="flex items-center gap-2 rounded-xl border border-gray-200/50 bg-white/40 px-5 py-3 opacity-60 backdrop-blur-sm dark:border-dark-700/50 dark:bg-dark-800/40"
-          >
-            <div
-              class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-gray-500 to-gray-600"
-            >
-              <span class="text-xs font-bold text-white">+</span>
-            </div>
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{ t('home.providers.more') }}</span>
-            <span
-              class="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500 dark:bg-dark-700 dark:text-dark-400"
-              >{{ t('home.providers.soon') }}</span
-            >
+          <div class="provider-chip provider-chip-soon">
+            <span class="provider-mark provider-mark-more">+</span>
+            <span class="provider-name">{{ t('home.providers.more') }}</span>
+            <span class="gpill">{{ t('home.providers.soon') }}</span>
           </div>
         </div>
       </div>
     </main>
 
     <!-- Footer -->
-    <footer class="relative z-10 border-t border-gray-200/50 px-6 py-8 dark:border-dark-800/50">
-      <div
-        class="mx-auto flex max-w-6xl flex-col items-center justify-center gap-4 text-center sm:flex-row sm:text-left"
-      >
-        <p class="text-sm text-gray-500 dark:text-dark-400">
+    <footer class="landing-footer">
+      <div class="landing-footer-inner">
+        <p class="landing-copy">
           &copy; {{ currentYear }} {{ siteName }}. {{ t('home.footer.allRightsReserved') }}
         </p>
         <div class="flex items-center gap-4">
@@ -475,7 +274,7 @@
             :href="docUrl"
             target="_blank"
             rel="noopener noreferrer"
-            class="text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-dark-400 dark:hover:text-white"
+            class="landing-link"
           >
             {{ t('home.docs') }}
           </a>
@@ -483,7 +282,7 @@
             :href="githubUrl"
             target="_blank"
             rel="noopener noreferrer"
-            class="text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-dark-400 dark:hover:text-white"
+            class="landing-link"
           >
             GitHub
           </a>
@@ -494,28 +293,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore, useAppStore } from '@/stores'
 import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
 import Icon from '@/components/icons/Icon.vue'
 import { sanitizeUrl } from '@/utils/url'
-import { FeatureFlags, isFeatureFlagEnabled } from '@/utils/featureFlags'
+import { useTheme } from '@/composables/useTheme'
 
 const { t } = useI18n()
+const { isDark, toggleTheme } = useTheme()
 
 const authStore = useAuthStore()
 const appStore = useAppStore()
 
 // Site settings - directly from appStore (already initialized from injected config)
 const siteName = computed(() => appStore.cachedPublicSettings?.site_name || appStore.siteName || 'Sub2API')
-const siteLogo = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.site_logo || appStore.siteLogo || '', { allowRelative: true, allowDataUrl: true }))
 const siteSubtitle = computed(() => appStore.cachedPublicSettings?.site_subtitle || 'AI API Gateway Platform')
 const docUrl = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.doc_url || appStore.docUrl || ''))
 const homeContent = computed(() => appStore.cachedPublicSettings?.home_content || '')
 const hasHomeContent = computed(() => homeContent.value.trim().length > 0)
 const compactHomeEnabled = computed(() => appStore.cachedPublicSettings?.compact_home_enabled === true)
-const modelPlazaEnabled = computed(() => isFeatureFlagEnabled(FeatureFlags.modelPlaza))
 
 // Check if homeContent is a URL (for iframe display)
 const isHomeContentUrl = computed(() => {
@@ -523,20 +321,11 @@ const isHomeContentUrl = computed(() => {
   return content.startsWith('http://') || content.startsWith('https://')
 })
 
-// Theme
-const isDark = ref(document.documentElement.classList.contains('dark'))
-
 // GitHub URL
 const githubUrl = 'https://github.com/Wei-Shaw/sub2api'
 
 // Auth state
 const isAuthenticated = computed(() => authStore.isAuthenticated)
-const modelPlazaRequiresAuth = computed(
-  () => appStore.cachedPublicSettings?.model_plaza_require_auth === true,
-)
-const showModelPlazaEntry = computed(
-  () => modelPlazaEnabled.value && (isAuthenticated.value || !modelPlazaRequiresAuth.value),
-)
 const isAdmin = computed(() => authStore.isAdmin)
 const dashboardPath = computed(() => isAdmin.value ? '/admin/dashboard' : '/dashboard')
 const userInitial = computed(() => {
@@ -548,28 +337,7 @@ const userInitial = computed(() => {
 // Current year for footer
 const currentYear = computed(() => new Date().getFullYear())
 
-// Toggle theme
-function toggleTheme() {
-  isDark.value = !isDark.value
-  document.documentElement.classList.toggle('dark', isDark.value)
-  localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
-}
-
-// Initialize theme
-function initTheme() {
-  const savedTheme = localStorage.getItem('theme')
-  if (
-    savedTheme === 'dark' ||
-    (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)
-  ) {
-    isDark.value = true
-    document.documentElement.classList.add('dark')
-  }
-}
-
 onMounted(() => {
-  initTheme()
-
   // Check auth state
   authStore.checkAuth()
 
@@ -581,37 +349,420 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Terminal Container */
+/* =========================================================================
+   Landing · Apple 落地页外壳(组件样式来自全局设计系统 style.css)
+   ========================================================================= */
+
+.landing,
+.landing-compact {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text-primary);
+  overflow-x: clip;
+}
+
+/* ambient 光斑(与登录页同语言) */
+.landing-spot {
+  position: fixed;
+  z-index: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform;
+}
+.landing-spot-1 {
+  width: 480px;
+  height: 480px;
+  top: -160px;
+  left: -140px;
+  background: var(--blue);
+  opacity: 0.13;
+  filter: blur(100px);
+  animation: landingDrift1 26s var(--ease) infinite alternate;
+}
+.landing-spot-2 {
+  width: 440px;
+  height: 440px;
+  top: 5%;
+  right: -160px;
+  background: var(--purple);
+  opacity: 0.1;
+  filter: blur(100px);
+  animation: landingDrift2 30s var(--ease) infinite alternate;
+}
+.landing-spot-3 {
+  width: 480px;
+  height: 480px;
+  bottom: -200px;
+  left: 25%;
+  background: var(--teal);
+  opacity: 0.09;
+  filter: blur(110px);
+  animation: landingDrift3 34s var(--ease) infinite alternate;
+}
+:global(html.dark) .landing-spot-1 { opacity: 0.2; }
+:global(html.dark) .landing-spot-2 { opacity: 0.16; }
+:global(html.dark) .landing-spot-3 { opacity: 0.14; }
+
+@keyframes landingDrift1 {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(90px, 70px, 0) scale(1.15); }
+}
+@keyframes landingDrift2 {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(-80px, 60px, 0) scale(1.1); }
+}
+@keyframes landingDrift3 {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(-70px, -50px, 0) scale(1.12); }
+}
+
+/* 48px 磨砂顶栏(与全局 GlobalNav 同语言) */
+.landing-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: var(--gn-height, 48px);
+  border-bottom: 0.5px solid var(--separator);
+  box-shadow: var(--glass-highlight);
+}
+
+.landing-nav-inner {
+  max-width: 1080px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.wordmark {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.avatar-mini {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.28);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.landing-main {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 64px 20px 32px;
+  flex: 1;
+}
+
+.landing-main-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
+/* Hero */
+.landing-hero-split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 48px;
+  align-items: center;
+  margin-bottom: 56px;
+}
+@media (min-width: 1024px) {
+  .landing-hero-split {
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 64px;
+  }
+}
+
+.landing-hero {
+  text-align: center;
+}
+@media (min-width: 1024px) {
+  .landing-hero {
+    text-align: left;
+  }
+}
+
+.landing-title {
+  font-size: clamp(40px, 6vw, 68px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+  background: linear-gradient(120deg, var(--blue) 10%, var(--purple) 55%, var(--teal) 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.landing-sub {
+  margin-top: 18px;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  max-width: 520px;
+  overflow-wrap: anywhere;
+}
+@media (min-width: 1024px) {
+  .landing-sub { margin-inline: 0; }
+}
+
+.landing-cta-row {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+}
+@media (min-width: 1024px) {
+  .landing-cta-row { justify-content: flex-start; }
+}
+
+.landing-cta {
+  height: 46px;
+  padding: 0 30px;
+  font-size: 15px;
+}
+
+.landing-hero-visual {
+  display: flex;
+  justify-content: center;
+}
+
+/* Feature tags */
+.landing-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 48px;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: var(--r-pill);
+  background: var(--fill);
+  border: 0.5px solid var(--separator);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.tag-chip-icon {
+  color: var(--blue);
+}
+
+/* Features grid */
+.landing-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  margin-bottom: 56px;
+}
+@media (min-width: 768px) {
+  .landing-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.landing-feature {
+  padding: 26px 24px;
+}
+
+.feature-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.feature-title {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.feature-desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* Providers */
+.landing-providers {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.landing-section-title {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.landing-section-sub {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.provider-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.provider-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px 10px 10px;
+  border-radius: var(--r-lg);
+  background: var(--bg-elevated);
+  border: 0.5px solid var(--separator);
+  box-shadow: var(--shadow-card);
+}
+
+.provider-chip-soon {
+  opacity: 0.6;
+}
+
+.provider-mark {
+  display: flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* 品牌字形配色(Claude/GPT/Gemini/Antigravity 厂商品牌色,保留) */
+.provider-mark-claude {
+  background: linear-gradient(160deg, #d97757, #c2612f);
+}
+.provider-mark-gpt {
+  background: linear-gradient(160deg, #34c759, #28a745);
+}
+.provider-mark-gemini {
+  background: linear-gradient(160deg, #4285f4, #3b76e0);
+}
+.provider-mark-antigravity {
+  background: linear-gradient(160deg, #f43f5e, #db2777);
+}
+.provider-mark-more {
+  background: linear-gradient(160deg, #6e6e73, #3a3a3c);
+}
+
+.provider-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Footer */
+.landing-footer {
+  position: relative;
+  z-index: 1;
+  border-top: 0.5px solid var(--separator);
+}
+
+.landing-footer-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+@media (min-width: 640px) {
+  .landing-footer-inner {
+    flex-direction: row;
+    text-align: left;
+  }
+}
+
+.landing-footer-inner-center {
+  justify-content: center;
+}
+
+.landing-copy {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+.landing-link {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  transition: color 0.18s var(--ease);
+}
+.landing-link:hover {
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+/* =========================================================================
+   Terminal 装饰窗(固定深色表面,明暗模式均保持深色终端观感)
+   ========================================================================= */
 .terminal-container {
   position: relative;
   display: inline-block;
+  width: min(420px, 100%);
 }
 
-/* Terminal Window */
 .terminal-window {
-  width: 420px;
-  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
-  border-radius: 14px;
-  box-shadow:
-    0 25px 50px -12px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  background: linear-gradient(145deg, #1c1c1e 0%, #000000 100%);
+  border-radius: var(--r-lg);
+  border: 0.5px solid var(--separator);
+  box-shadow: var(--shadow-pop), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   overflow: hidden;
   transform: perspective(1000px) rotateX(2deg) rotateY(-2deg);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s var(--ease);
 }
 
 .terminal-window:hover {
   transform: perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(-4px);
 }
 
-/* Terminal Header */
 .terminal-header {
   display: flex;
   align-items: center;
   padding: 12px 16px;
-  background: rgba(30, 41, 59, 0.8);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(28, 28, 30, 0.7);
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
 }
 
 .terminal-buttons {
@@ -626,13 +777,13 @@ onMounted(() => {
 }
 
 .btn-close {
-  background: #ef4444;
+  background: var(--red);
 }
 .btn-minimize {
-  background: #eab308;
+  background: var(--orange);
 }
 .btn-maximize {
-  background: #22c55e;
+  background: var(--green);
 }
 
 .terminal-title {
@@ -640,15 +791,14 @@ onMounted(() => {
   text-align: center;
   font-size: 12px;
   font-family: ui-monospace, monospace;
-  color: #64748b;
+  color: var(--text-tertiary);
   margin-right: 52px;
 }
 
-/* Terminal Body */
 .terminal-body {
   padding: 20px 24px;
   font-family: ui-monospace, 'Fira Code', monospace;
-  font-size: 14px;
+  font-size: 13.5px;
   line-height: 2;
 }
 
@@ -658,21 +808,13 @@ onMounted(() => {
   gap: 8px;
   flex-wrap: wrap;
   opacity: 0;
-  animation: line-appear 0.5s ease forwards;
+  animation: line-appear 0.5s var(--ease) forwards;
 }
 
-.line-1 {
-  animation-delay: 0.3s;
-}
-.line-2 {
-  animation-delay: 1s;
-}
-.line-3 {
-  animation-delay: 1.8s;
-}
-.line-4 {
-  animation-delay: 2.5s;
-}
+.line-1 { animation-delay: 0.3s; }
+.line-2 { animation-delay: 1s; }
+.line-3 { animation-delay: 1.8s; }
+.line-4 { animation-delay: 2.5s; }
 
 @keyframes line-appear {
   from {
@@ -685,32 +827,33 @@ onMounted(() => {
   }
 }
 
+/* 语法高亮:全部走 iOS 语义色,明暗模式均保持可读 */
 .code-prompt {
-  color: #22c55e;
+  color: var(--green);
   font-weight: bold;
 }
 .code-cmd {
-  color: #38bdf8;
+  color: var(--blue-ios);
 }
 .code-flag {
-  color: #a78bfa;
+  color: var(--purple);
 }
 .code-url {
-  color: #14b8a6;
+  color: var(--teal);
 }
 .code-comment {
-  color: #64748b;
+  color: var(--text-tertiary);
   font-style: italic;
 }
 .code-success {
-  color: #22c55e;
-  background: rgba(34, 197, 94, 0.15);
+  color: var(--green);
+  background: rgba(52, 199, 89, 0.16);
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: 6px;
   font-weight: 600;
 }
 .code-response {
-  color: #fbbf24;
+  color: var(--orange);
 }
 
 /* Blinking Cursor */
@@ -718,7 +861,7 @@ onMounted(() => {
   display: inline-block;
   width: 8px;
   height: 16px;
-  background: #22c55e;
+  background: var(--green);
   animation: blink 1s step-end infinite;
 }
 
@@ -733,12 +876,20 @@ onMounted(() => {
   }
 }
 
-/* Dark mode adjustments */
-:deep(.dark) .terminal-window {
-  box-shadow:
-    0 25px 50px -12px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(20, 184, 166, 0.2),
-    0 0 40px rgba(20, 184, 166, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+@media (max-width: 768px) {
+  .landing-main {
+    padding: 40px 16px 24px;
+  }
+  .landing-title {
+    font-size: 38px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-spot,
+  .code-line,
+  .cursor {
+    animation: none;
+  }
 }
 </style>

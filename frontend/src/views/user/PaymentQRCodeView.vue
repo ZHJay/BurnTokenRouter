@@ -1,8 +1,9 @@
 <template>
   <AppLayout>
     <div class="mx-auto flex max-w-md flex-col items-center space-y-6 py-8">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-        {{ qrUrl ? scanTitle : t('payment.qr.payInNewWindow') }}
+      <!-- QR 模式下的标题由 AppLayout 按路由渲染，此处只保留“新窗口支付”提示 -->
+      <h2 v-if="!qrUrl" class="text-xl font-semibold text-gray-900 dark:text-white">
+        {{ t('payment.qr.payInNewWindow') }}
       </h2>
       <div v-if="qrUrl" class="rounded-2xl bg-white p-6 shadow-lg dark:bg-dark-800">
         <canvas ref="qrCanvas" class="mx-auto"></canvas>
@@ -72,12 +73,6 @@ const countdownDisplay = computed(() => {
 
 const isAlipay = computed(() => isBuiltInAlipayMethod(paymentType.value))
 const isWxpay = computed(() => isBuiltInWxpayMethod(paymentType.value))
-
-const scanTitle = computed(() => {
-  if (isAlipay.value) return t('payment.qr.scanAlipay')
-  if (isWxpay.value) return t('payment.qr.scanWxpay')
-  return t('payment.qr.scanToPay')
-})
 
 const scanHint = computed(() => {
   if (isAlipay.value) return t('payment.qr.scanAlipayHint')

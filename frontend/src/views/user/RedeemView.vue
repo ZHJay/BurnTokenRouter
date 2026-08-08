@@ -5,7 +5,7 @@
       <div class="card overflow-hidden">
         <div class="bg-gradient-to-br from-primary-500 to-primary-600 px-6 py-8 text-center">
           <div
-            class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm"
+            class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20"
           >
             <Icon name="creditCard" size="xl" class="text-white" />
           </div>
@@ -200,7 +200,7 @@
 
       <!-- Recent Activity -->
       <div class="card">
-        <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
+        <div class="border-b px-6 py-4">
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
             {{ t('redeem.recentActivity') }}
           </h2>

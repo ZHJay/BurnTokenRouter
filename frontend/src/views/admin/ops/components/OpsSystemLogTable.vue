@@ -99,10 +99,10 @@ const filterLevelOptions = computed(() => [
 
 const levelBadgeClass = (level: string) => {
   const v = String(level || '').toLowerCase()
-  if (v === 'error' || v === 'fatal') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-  if (v === 'warn' || v === 'warning') return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-  if (v === 'debug') return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
-  return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+  if (v === 'error' || v === 'fatal') return 'badge b-red'
+  if (v === 'warn' || v === 'warning') return 'badge b-orange'
+  if (v === 'debug') return 'badge bg-gray-100 text-gray-600 dark:bg-dark-700 dark:text-gray-300'
+  return 'badge b-blue'
 }
 
 const formatTime = (value: string) => {
@@ -380,7 +380,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-dark-700 dark:bg-dark-900/60">
+  <section class="card">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <div>
         <h3 class="text-sm font-bold text-gray-900 dark:text-white">{{ t('admin.ops.systemLogs.title') }}</h3>
@@ -394,7 +394,7 @@ onMounted(async () => {
       </div>
     </div>
 
-    <div class="mb-4 rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-dark-700 dark:bg-dark-800/70">
+    <div class="mb-4 rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-dark-700 dark:bg-dark-800">
       <div class="mb-2 flex items-center justify-between">
         <div class="text-xs font-semibold text-gray-700 dark:text-gray-200">{{ t('admin.ops.systemLogs.runtimeConfig') }}</div>
         <span v-if="runtimeLoading" class="text-xs text-gray-500">{{ t('common.loading') }}</span>
@@ -512,13 +512,13 @@ onMounted(async () => {
       <button type="button" class="btn btn-secondary btn-sm" @click="fetchHealth">{{ t('admin.ops.systemLogs.refreshHealth') }}</button>
     </div>
 
-    <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-dark-700">
+    <div class="table-card">
       <div v-if="loading" class="px-4 py-8 text-center text-sm text-gray-500">{{ t('common.loading') }}</div>
       <div v-else-if="!hasData" class="px-4 py-8 text-center text-sm text-gray-500">{{ t('admin.ops.systemLogs.empty') }}</div>
       <div v-else-if="!isDesktopViewport" class="divide-y divide-gray-100 dark:divide-dark-800">
         <div v-for="row in logs" :key="row.id" class="space-y-1.5 p-3">
           <div class="flex items-center justify-between gap-2">
-            <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold" :class="levelBadgeClass(row.level)">
+            <span :class="levelBadgeClass(row.level)">
               {{ row.level }}
             </span>
             <span class="text-xs text-gray-500 dark:text-gray-400">{{ formatTime(row.created_at) }}</span>
@@ -526,12 +526,12 @@ onMounted(async () => {
           <div v-if="row.host" class="truncate text-xs text-gray-500 dark:text-gray-400" :title="row.host">
             {{ row.host }}
           </div>
-          <div class="whitespace-normal break-all text-xs text-gray-700 dark:text-gray-300">
+          <div class="mono whitespace-normal break-all">
             {{ formatSystemLogDetail(row) }}
           </div>
         </div>
       </div>
-      <div v-else class="overflow-auto">
+      <div v-else class="table-scroll">
         <table class="min-w-full table-fixed divide-y divide-gray-200 dark:divide-dark-700">
           <thead class="bg-gray-50 dark:bg-dark-900">
             <tr>
@@ -552,7 +552,7 @@ onMounted(async () => {
                   {{ row.level }}
                 </span>
               </td>
-              <td class="px-3 py-2 text-xs text-gray-700 dark:text-gray-300 whitespace-normal break-all">
+              <td class="mono px-3 py-2 whitespace-normal break-all">
                 {{ formatSystemLogDetail(row) }}
               </td>
             </tr>

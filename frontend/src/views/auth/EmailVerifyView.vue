@@ -46,8 +46,13 @@
             :disabled="isLoading"
             class="input py-3 text-center font-mono text-xl tracking-[0.5em]"
             :class="{ 'input-error': errors.code }"
+            :aria-invalid="!!errors.code"
+            :aria-describedby="errors.code ? 'verify-code-error' : undefined"
             placeholder="000000"
           />
+          <p v-if="errors.code" id="verify-code-error" class="input-error-text text-center">
+            {{ errors.code }}
+          </p>
           <p class="input-hint text-center">{{ t('auth.verificationCodeHint') }}</p>
         </div>
 
@@ -109,7 +114,7 @@
         <button
           type="submit"
           :disabled="isLoading || !verifyCode || (pendingOAuthCreateTurnstileRequired && !createAccountTurnstileToken)"
-          class="btn btn-primary w-full"
+          class="btn btn-primary btn-block"
         >
           <svg
             v-if="isLoading"
