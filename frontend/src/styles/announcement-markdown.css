@@ -1,113 +1,231 @@
-/* Shared rich-text styles for announcement popup and bell detail content. */
+/* =========================================================================
+   公告正文（Markdown + 内嵌 HTML）共享排版
+   —— 供 AnnouncementPopup.vue 与 AnnouncementBell.vue 详情共用
+
+   契约：只消费 CSS 变量（src/styles/apple-tokens.css），禁止硬编码颜色，
+   否则暗色模式必坏。此文件不是邮件正文——邮件正文必须内联 + 字面色值。
+
+   对齐设计 token 的三档体系：
+     · 字号三档   标题 h1 24 / h2 20 / h3 17（h4 收进正文档 15）
+                  正文 15（p / li / td）
+                  辅助 12.5（code / pre / caption）
+     · 行高三档   标题 1.25（紧）/ 正文 1.75（松）/ 表格与代码 1.5（中）
+     · 分隔线三档 --separator-strong（h1 章节级）
+                  --separator（h2 与表格行，0.5px 发丝线）
+                  无线（h3 及更低，靠间距分层）
+   ========================================================================= */
+
 .markdown-body {
-  @apply text-[15px] leading-[1.75];
-  @apply text-gray-700 dark:text-gray-300;
+  font-size: 15px;
+  line-height: 1.75;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
 }
 
+/* ---- 标题：字号递减 + 分隔线由重到无 ---- */
 .markdown-body h1 {
-  @apply mb-6 mt-8 border-b border-gray-200 pb-3 text-3xl font-bold text-gray-900 dark:border-dark-600 dark:text-white;
+  margin: 32px 0 20px;
+  padding-bottom: 12px;
+  border-bottom: 0.5px solid var(--separator-strong);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
 }
 
 .markdown-body h2 {
-  @apply mb-4 mt-7 border-b border-gray-100 pb-2 text-2xl font-bold text-gray-900 dark:border-dark-700 dark:text-white;
+  margin: 28px 0 14px;
+  padding-bottom: 8px;
+  border-bottom: 0.5px solid var(--separator);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
 }
 
 .markdown-body h3 {
-  @apply mb-3 mt-6 text-xl font-semibold text-gray-900 dark:text-white;
+  margin: 24px 0 10px;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
 }
 
 .markdown-body h4 {
-  @apply mb-2 mt-5 text-lg font-semibold text-gray-900 dark:text-white;
+  margin: 20px 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-primary);
 }
 
+.markdown-body h1:first-child,
+.markdown-body h2:first-child,
+.markdown-body h3:first-child,
+.markdown-body h4:first-child {
+  margin-top: 0;
+}
+
+/* ---- 正文 ---- */
 .markdown-body p {
-  @apply mb-4 leading-relaxed;
+  margin-bottom: 16px;
+  line-height: 1.75;
+}
+
+.markdown-body p:last-child {
+  margin-bottom: 0;
 }
 
 .markdown-body a {
-  @apply font-medium text-blue-600 underline decoration-blue-600/30 decoration-2 underline-offset-2 transition-all hover:decoration-blue-600 dark:text-blue-400 dark:decoration-blue-400/30 dark:hover:decoration-blue-400;
+  color: var(--blue);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--blue) 35%, transparent);
+  text-underline-offset: 2px;
+  transition: text-decoration-color 0.18s var(--ease);
+}
+
+.markdown-body a:hover {
+  text-decoration-color: var(--blue);
 }
 
 .markdown-body ul,
 .markdown-body ol {
-  @apply mb-4 ml-6 space-y-2;
+  margin: 0 0 16px 22px;
 }
 
 .markdown-body ul {
-  @apply list-disc;
+  list-style: disc;
 }
 
 .markdown-body ol {
-  @apply list-decimal;
+  list-style: decimal;
 }
 
 .markdown-body li {
-  @apply pl-2 leading-relaxed;
+  margin-bottom: 6px;
+  padding-left: 6px;
+  line-height: 1.75;
+}
+
+.markdown-body li:last-child {
+  margin-bottom: 0;
 }
 
 .markdown-body li::marker {
-  @apply text-blue-600 dark:text-blue-400;
+  color: var(--blue);
 }
 
+.markdown-body strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.markdown-body em {
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+/* ---- 引用：3px 蓝条 + 极淡蓝底，不用装饰性引号字形 ----
+   正文用 --text-primary 而非 --text-secondary：叠在 --blue-soft 底上时
+   secondary 在亮色下实测只有 4.42:1，差一点点到 AA 的 4.5:1 */
 .markdown-body blockquote {
-  @apply relative my-5 border-l-4 border-blue-500 bg-blue-50/50 py-3 pl-5 pr-4 italic text-gray-700 dark:border-blue-400 dark:bg-blue-900/10 dark:text-gray-300;
+  margin: 20px 0;
+  padding: 12px 16px;
+  border-left: 3px solid var(--blue);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  background: var(--blue-soft);
+  color: var(--text-primary);
 }
 
-.markdown-body blockquote::before {
-  content: '"';
-  @apply absolute -left-1 top-0 font-serif text-5xl text-blue-500/20 dark:text-blue-400/20;
+.markdown-body blockquote p:last-child {
+  margin-bottom: 0;
 }
 
+/* ---- 代码：辅助字号档 + 中行高档 ----
+   前景色用 --text-secondary（对齐 demo 的 .mono），不要用 --purple：
+   --purple 只在 :root 定义、html.dark 里没有重映射，同一个中紫叠在暗色
+   --fill 上实测 3.09:1，12.5px 文字远低于 AA 的 4.5:1。 */
 .markdown-body code {
-  @apply rounded-lg bg-gray-100 px-2 py-1 font-mono text-[13px] text-pink-600 dark:bg-dark-700 dark:text-pink-400;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--fill);
+  font-family: 'SF Mono', ui-monospace, Menlo, monospace;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
 }
 
 .markdown-body pre {
-  @apply my-5 overflow-x-auto rounded-xl border border-gray-200 bg-gray-50 p-5 dark:border-dark-600 dark:bg-dark-900/50;
+  margin: 20px 0;
+  padding: 16px;
+  overflow-x: auto;
+  border: 0.5px solid var(--separator);
+  border-radius: var(--r-md);
+  background: var(--fill);
+  line-height: 1.5;
 }
 
 .markdown-body pre code {
-  @apply bg-transparent p-0 text-[13px] text-gray-800 dark:text-gray-200;
+  padding: 0;
+  background: transparent;
+  color: var(--text-primary);
 }
 
+/* ---- 分隔线：发丝线，不用 2px 粗线 ---- */
 .markdown-body hr {
-  @apply my-8 border-0 border-t-2 border-gray-200 dark:border-dark-700;
+  margin: 28px 0;
+  height: 0.5px;
+  border: none;
+  background: var(--separator);
 }
 
+/* ---- 表格：发丝线分行，表头用 fill 底而非渐变 ---- */
 .markdown-body table {
-  @apply mb-5 w-full overflow-hidden rounded-lg border border-gray-200 dark:border-dark-600;
+  width: 100%;
+  margin-bottom: 20px;
+  border-collapse: collapse;
+  border: 0.5px solid var(--separator);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  font-size: 13.5px;
 }
 
 .markdown-body th,
 .markdown-body td {
-  @apply border-b border-r border-gray-200 px-4 py-3 text-left dark:border-dark-600;
-}
-
-.markdown-body th:last-child,
-.markdown-body td:last-child {
-  @apply border-r-0;
-}
-
-.markdown-body tr:last-child td {
-  @apply border-b-0;
+  padding: 10px 14px;
+  text-align: left;
+  line-height: 1.5;
+  border-bottom: 0.5px solid var(--separator);
 }
 
 .markdown-body th {
-  @apply bg-gradient-to-br from-blue-50 to-indigo-50 font-semibold text-gray-900 dark:from-blue-900/20 dark:to-indigo-900/10 dark:text-white;
+  background: var(--fill);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 .markdown-body tbody tr {
-  @apply transition-colors hover:bg-gray-50 dark:hover:bg-dark-700/30;
+  transition: background 0.14s var(--ease);
+}
+
+.markdown-body tbody tr:hover {
+  background: var(--fill);
+}
+
+.markdown-body tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .markdown-body img {
-  @apply my-5 max-w-full rounded-xl border border-gray-200 shadow-md dark:border-dark-600;
-}
-
-.markdown-body strong {
-  @apply font-semibold text-gray-900 dark:text-white;
-}
-
-.markdown-body em {
-  @apply italic text-gray-600 dark:text-gray-400;
+  margin: 20px 0;
+  max-width: 100%;
+  border: 0.5px solid var(--separator);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-card);
 }
