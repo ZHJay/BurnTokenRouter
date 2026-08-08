@@ -1,0 +1,536 @@
+/* =========================================================================
+   GlobalNav — apple.com-style top navigation (Phase B, B2)
+   Consumes only the design tokens defined in the Phase B token layer
+   (apple-tokens.css / tailwind theme). See design-demo/apple-theme.css.
+   ========================================================================= */
+
+/* ---------- Top bar ---------- */
+
+.gn {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--gn-height, 48px);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 0.5px solid var(--separator);
+  box-shadow: var(--glass-highlight);
+}
+
+.gn-inner {
+  /* The demo uses 1080px, but its nav has 4 action items; ours has 8 (docs,
+     Model Plaza, locale, balance and subscription are app-only). At 1080px the
+     centred links + action cluster overflow the measure and flex steals the
+     space from the only shrinkable child — the brand wordmark, which collapsed
+     to a single character. */
+  max-width: 1360px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gn-wordmark {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  white-space: nowrap;
+  padding: 4px 8px 4px 0;
+  /* The wordmark IS the brand (no logo image anywhere), so it must never be the
+     element flex sacrifices while nav links are on screen. Below the desktop
+     breakpoint the links are hidden and `site_name` is admin-configurable and
+     can be arbitrarily long, so there it may ellipsis instead of overflowing. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex-shrink: 0;
+}
+.gn-wordmark:hover { text-decoration: none; opacity: 0.8; }
+
+.gn-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 auto;
+  height: 100%;
+}
+
+.gn-item {
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* Right-hand action cluster (bell / docs / locale / balance / theme / avatar).
+   Without this the div stays `display: block`, so every action stacks
+   vertically and spills out of the 48px bar. Values match apple-theme.css. */
+.gn-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  /* Never squeeze the icon buttons; the wordmark absorbs tight widths. */
+  flex-shrink: 0;
+}
+
+.gn-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 400;
+  font-family: inherit;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.18s var(--ease);
+  position: relative;
+  text-decoration: none;
+}
+.gn-link:hover { color: var(--text-primary); text-decoration: none; }
+.gn-link.active { color: var(--text-primary); font-weight: 600; }
+.gn-link.active::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 7px;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+.gn-link .chev {
+  width: 10px;
+  height: 10px;
+  transition: transform 0.25s var(--ease);
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+.gn-item.open .gn-link .chev,
+.gn-item:hover .gn-link .chev { transform: rotate(180deg); }
+
+/* ---------- Full-width flyout mega-menu ---------- */
+
+.gn-flyout {
+  position: absolute;
+  top: var(--gn-height, 48px);
+  left: 0;
+  right: 0;
+  background: var(--glass-bg-strong);
+  border-bottom: 0.5px solid var(--separator);
+  box-shadow: var(--glass-highlight), var(--shadow-pop);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: opacity 0.3s var(--ease), transform 0.3s var(--ease), visibility 0s 0.3s;
+}
+.gn-item.open .gn-flyout,
+.gn-item:focus-within .gn-flyout {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity 0.3s var(--ease), transform 0.3s var(--ease), visibility 0s;
+}
+
+.gn-flyout-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 20px 36px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 24px;
+}
+
+.gn-flyout-col h4 {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin: 0 0 10px;
+}
+
+.gn-flyout-col a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-decoration: none;
+  border-radius: var(--r-sm);
+}
+.gn-flyout-col a:hover { color: var(--blue); text-decoration: none; }
+.gn-flyout-col a .fl-ico { width: 17px; height: 17px; color: var(--text-tertiary); flex-shrink: 0; }
+.gn-flyout-col a:hover .fl-ico { color: var(--blue); }
+.gn-flyout-col a.active { color: var(--blue); font-weight: 600; }
+.gn-flyout-col a.active .fl-ico { color: var(--blue); }
+
+/* ---------- Curtain (page dim behind open flyouts) ---------- */
+
+.gn-curtain {
+  position: fixed;
+  inset: var(--gn-height, 48px) 0 0 0;
+  background: rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s var(--ease), visibility 0s 0.3s;
+  z-index: 90;
+  pointer-events: none;
+}
+html.dark .gn-curtain { background: rgba(0, 0, 0, 0.45); }
+.gn-curtain.open {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.3s var(--ease), visibility 0s;
+}
+
+/* ---------- Icon buttons / avatar ---------- */
+
+.gn-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-pill);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  transition: background 0.18s var(--ease), color 0.18s var(--ease), transform 0.12s var(--ease);
+  position: relative;
+}
+.gn-icon-btn:hover { background: var(--fill); color: var(--text-primary); }
+.gn-icon-btn:active { transform: scale(0.97); }
+.gn-icon-btn svg { width: 17px; height: 17px; }
+
+.gn-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-pill);
+  background: linear-gradient(160deg, var(--purple), var(--blue-ios));
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  border: none;
+  margin-left: 4px;
+  transition: transform 0.12s var(--ease), box-shadow 0.18s var(--ease);
+}
+.gn-avatar:hover { box-shadow: 0 0 0 4px var(--blue-soft); }
+.gn-avatar:active { transform: scale(0.97); }
+
+/* ---------- Popover cards (user dropdown / balance breakdown) ---------- */
+
+.gn-pop-wrap { position: relative; }
+
+.gn-pop {
+  position: absolute;
+  top: calc(var(--gn-height, 48px) - 4px);
+  right: 0;
+  min-width: 240px;
+  background: var(--glass-bg-strong);
+  border: 0.5px solid var(--separator);
+  border-radius: var(--r-lg);
+  box-shadow: var(--glass-highlight), var(--shadow-pop);
+  padding: 8px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px) scale(0.98);
+  transform-origin: top right;
+  transition: opacity 0.22s var(--ease), transform 0.22s var(--ease), visibility 0s 0.22s;
+  z-index: 120;
+}
+.gn-pop-wrap.open .gn-pop {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  transition: opacity 0.22s var(--ease), transform 0.22s var(--ease), visibility 0s;
+}
+
+.gn-pop-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: var(--r-md);
+  font-size: 13.5px;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+  transition: background 0.15s var(--ease);
+}
+.gn-pop-item:hover { background: var(--fill); text-decoration: none; }
+.gn-pop-item svg { width: 16px; height: 16px; color: var(--text-tertiary); flex-shrink: 0; }
+.gn-pop-item.danger { color: var(--red); }
+.gn-pop-item.danger svg { color: var(--red); }
+.gn-pop-item.danger:hover { background: var(--fill); }
+.gn-pop-sep { height: 0.5px; background: var(--separator); margin: 6px 10px; }
+.gn-pop-title { font-size: 12px; font-weight: 600; color: var(--text-tertiary); padding: 8px 12px 4px; }
+.gn-pop-head {
+  border-bottom: 0.5px solid var(--separator);
+  padding: 10px 12px 12px;
+}
+.gn-pop-head .name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.gn-pop-head .mail { font-size: 12px; color: var(--text-secondary); margin-top: 2px; word-break: break-all; }
+.gn-pop-foot {
+  border-top: 0.5px solid var(--separator);
+  margin-top: 6px;
+  padding-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Balance chip + hover breakdown (ported from the old header) */
+.gn-balance {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  background: var(--blue-soft);
+  color: var(--blue);
+  cursor: default;
+  position: relative;
+}
+.gn-balance .amount { font-size: 13px; font-weight: 600; }
+.gn-balance .frozen-chip {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 159, 10, 0.16);
+  color: var(--orange);
+  white-space: nowrap;
+}
+.gn-balance-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 224px;
+  background: var(--glass-bg-strong);
+  border: 0.5px solid var(--separator);
+  border-radius: var(--r-lg);
+  box-shadow: var(--glass-highlight), var(--shadow-pop);
+  padding: 14px;
+  font-size: 12px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.22s var(--ease), transform 0.22s var(--ease), visibility 0s 0.22s;
+}
+.gn-balance:hover .gn-balance-pop,
+.gn-balance:focus-within .gn-balance-pop {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity 0.22s var(--ease), transform 0.22s var(--ease), visibility 0s;
+}
+.gn-balance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+.gn-balance-row .label { color: var(--text-secondary); }
+.gn-balance-row .value { font-weight: 600; color: var(--text-primary); }
+.gn-balance-row .value.frozen { color: var(--orange); }
+.gn-balance-row.total { border-top: 0.5px solid var(--separator); margin-top: 4px; padding-top: 10px; }
+
+/* ---------- Expanding search bar ---------- */
+
+.gn-search-bar {
+  position: absolute;
+  top: var(--gn-height, 48px);
+  left: 0;
+  right: 0;
+  background: var(--glass-bg-strong);
+  border-bottom: 0.5px solid var(--separator);
+  padding: 18px 0 22px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: opacity 0.28s var(--ease), transform 0.28s var(--ease), visibility 0s 0.28s;
+  z-index: 110;
+}
+.gn-search-bar.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity 0.28s var(--ease), transform 0.28s var(--ease), visibility 0s;
+}
+.gn-search-inner { max-width: 680px; margin: 0 auto; padding: 0 20px; }
+.gn-search-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  background: var(--fill);
+  transition: background 0.18s var(--ease), box-shadow 0.18s var(--ease);
+}
+.gn-search-input:focus-within {
+  background: var(--bg-elevated);
+  box-shadow: 0 0 0 4px var(--blue-soft), var(--shadow-card);
+}
+.gn-search-input svg { width: 16px; height: 16px; color: var(--text-tertiary); flex-shrink: 0; }
+.gn-search-input input {
+  border: none;
+  background: transparent;
+  outline: none;
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-family: inherit;
+}
+.gn-search-input input::placeholder { color: var(--text-tertiary); }
+.gn-search-results { margin-top: 12px; }
+.gn-search-results a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+.gn-search-results a:hover { background: var(--fill); text-decoration: none; color: var(--blue); }
+.gn-search-results .empty {
+  padding: 14px 12px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+/* ---------- Mobile: burger + fullscreen menu ---------- */
+
+.gn-burger { display: none; }
+
+.gn-mobile {
+  position: fixed;
+  inset: var(--gn-height, 48px) 0 0 0;
+  background: var(--bg);
+  z-index: 99;
+  padding: 20px 28px 40px;
+  overflow-y: auto;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-12px);
+  transition: opacity 0.32s var(--ease), transform 0.32s var(--ease), visibility 0s 0.32s;
+}
+.gn-mobile.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity 0.32s var(--ease), transform 0.32s var(--ease), visibility 0s;
+}
+
+.gn-mobile a.gn-m-link {
+  display: block;
+  padding: 13px 4px;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  border-bottom: 0.5px solid var(--separator);
+  text-decoration: none;
+}
+.gn-mobile a.gn-m-link:hover { text-decoration: none; color: var(--blue); }
+.gn-mobile a.gn-m-link.active { color: var(--blue); }
+.gn-mobile details { border-bottom: 0.5px solid var(--separator); }
+.gn-mobile details[open] { padding-bottom: 10px; }
+.gn-mobile summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 4px;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+.gn-mobile summary::-webkit-details-marker { display: none; }
+.gn-mobile summary .chev { width: 14px; height: 14px; color: var(--text-tertiary); transition: transform 0.25s var(--ease); }
+.gn-mobile details[open] summary .chev { transform: rotate(180deg); }
+.gn-mobile details a {
+  display: block;
+  padding: 9px 4px 9px 18px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+.gn-mobile details a:hover { color: var(--blue); text-decoration: none; }
+.gn-mobile details a:last-child { margin-bottom: 10px; }
+
+/* ---------- Page head rendered by AppLayout (was the old header title) ---------- */
+
+.gn-page-head { margin-bottom: 24px; }
+.gn-page-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  margin: 0;
+}
+.gn-page-sub {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* ---------- Accessibility ---------- */
+
+.gn :focus-visible,
+.gn-mobile :focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 768px) {
+  .gn-links { display: none; }
+  .gn-burger { display: grid; }
+  .gn-inner { padding: 0 14px; }
+  /* Links are gone here, so a long site name may truncate rather than overflow. */
+  .gn-wordmark { flex-shrink: 1; }
+  /* Which action items survive at each width is decided in GlobalNav.vue's
+     scoped block: a global rule here ties on specificity with the scoped
+     `[data-v-*]` selector and loses on injection order. */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gn,
+  .gn * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

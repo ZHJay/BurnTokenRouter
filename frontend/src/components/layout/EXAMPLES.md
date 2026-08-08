@@ -415,10 +415,10 @@ async function handleChangePassword() {
 
 ## Tips for Using Layouts
 
-1. **Page Titles**: Set route meta to automatically display page titles in the header
+1. **Page Titles**: Set route meta (`titleKey`/`title`, `descriptionKey`/`description`) to automatically display the page head inside `AppLayout`
 2. **Loading States**: Use `appStore.setLoading(true/false)` for global loading indicators
 3. **Toast Notifications**: Use `appStore.showSuccess()`, `appStore.showError()`, etc.
 4. **Authentication**: All authenticated pages should use `AppLayout`
 5. **Auth Pages**: Login and Register pages should use `AuthLayout`
-6. **Sidebar State**: The sidebar state persists across navigation
-7. **Mobile First**: All examples are responsive by default using Tailwind's mobile-first approach
+6. **Navigation**: Feature flags and simple-mode filtering live in `navItems.ts`; the visual shell is `GlobalNav.vue`
+7. **Mobile First**: All examples are responsive by default — the nav collapses to a hamburger menu below 768px
