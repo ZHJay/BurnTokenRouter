@@ -4,6 +4,7 @@
  * All components that need platform-specific styling should import from here
  * instead of defining their own color mappings.
  */
+import { IOS_BLUE } from '@/components/charts/chartTheme'
 
 export type Platform =
   | 'anthropic'
@@ -84,7 +85,7 @@ const ACCENT: Record<Platform, string> = {
   deepseek: '#14b8a6', // teal-500
   composite: '#06b6d4', // cyan-500
 }
-const ACCENT_DEFAULT = '#14b8a6' // primary-500 (teal)
+const ACCENT_DEFAULT = IOS_BLUE // primary-500 → Apple 蓝（品牌主色，非 teal）
 
 // ── Accent bar (gradient) ───────────────────────────────────────────
 const ACCENT_BAR: Record<Platform, string> = {

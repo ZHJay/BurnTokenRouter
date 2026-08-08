@@ -5,6 +5,7 @@ import { Chart as ChartJS, ArcElement, Legend, Tooltip } from 'chart.js'
 import { Doughnut } from 'vue-chartjs'
 import type { OpsErrorDistributionResponse } from '@/api/admin/ops'
 import type { ChartState } from '../types'
+import { useChartTheme } from '@/components/charts/chartTheme'
 import HelpTooltip from '@/components/common/HelpTooltip.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 
@@ -21,13 +22,12 @@ const emit = defineEmits<{
 }>()
 const { t } = useI18n()
 
-const isDarkMode = computed(() => document.documentElement.classList.contains('dark'))
+const chartTheme = useChartTheme()
 const colors = computed(() => ({
-  blue: '#3b82f6',
-  red: '#ef4444',
-  orange: '#f59e0b',
-  gray: '#9ca3af',
-  text: isDarkMode.value ? '#9ca3af' : '#6b7280'
+  blue: chartTheme.value.categorical[0],
+  red: chartTheme.value.semantic.red,
+  orange: chartTheme.value.semantic.orange,
+  gray: chartTheme.value.neutral
 }))
 
 const totalSlaErrors = computed(() =>
@@ -100,9 +100,11 @@ const options = computed(() => ({
   plugins: {
     legend: { display: false },
     tooltip: {
-      backgroundColor: isDarkMode.value ? '#1f2937' : '#ffffff',
-      titleColor: isDarkMode.value ? '#f3f4f6' : '#111827',
-      bodyColor: isDarkMode.value ? '#d1d5db' : '#4b5563'
+      backgroundColor: chartTheme.value.tooltip.backgroundColor,
+      titleColor: chartTheme.value.tooltip.titleColor,
+      bodyColor: chartTheme.value.tooltip.bodyColor,
+      borderColor: chartTheme.value.tooltip.borderColor,
+      borderWidth: 1
     }
   }
 }))
