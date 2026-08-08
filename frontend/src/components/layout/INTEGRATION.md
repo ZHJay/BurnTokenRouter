@@ -251,53 +251,55 @@ Replace HTML entity icons with your preferred icon library:
 <ChartBarIcon class="h-5 w-5" />
 ```
 
-### Sidebar Customization
+### Navigation Customization
 
-Modify navigation items in `AppSidebar.vue`:
+The nav data model lives in `navItems.ts` (typed module, unit-tested):
 
 ```typescript
-// Add/remove/modify navigation items
-const userNavItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: '&#128200;' },
-  { path: '/new-page', label: 'New Page', icon: '&#128196;' } // Add new item
-  // ...
-]
+// Add/remove/modify navigation items (feature flags / simple mode included)
+import { buildSelfNavItems, buildAdminNavItems, finalizeNav } from './navItems'
 ```
 
-### Header Customization
+- Built-in entries carry a `labelKey` (i18n key under `nav.*`), custom menu
+  items carry a literal `label` + `iconSvg`.
+- `featureFlag?: () => boolean | undefined` hides an item when it returns
+  `false` (children included); `undefined`/`true` shows it.
+- `hideInSimpleMode: true` items disappear in simple mode (after flags).
+- Admin flyout grouping is declared in `ADMIN_FLYOUT_GROUPS` and applied by
+  `groupAdminNav()` — keep every real route mapped to a column so no nav entry
+  silently disappears.
 
-Modify user dropdown in `AppHeader.vue`:
+The visual shell is `GlobalNav.vue` — apple.com-style 48px sticky top bar:
 
-```vue
-<!-- Add new dropdown items -->
-<router-link
-  to="/settings"
-  @click="closeDropdown"
-  class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
->
-  <span class="mr-2">&#9881;</span>
-  Settings
-</router-link>
-```
+- Centered links; admin flyout mega-menus on hover / keyboard focus / click,
+  with a curtain dimming the page while open.
+- Right-hand action cluster: search, announcement bell, docs, model plaza,
+  locale switcher, subscription progress, balance breakdown, theme toggle,
+  user dropdown (profile / keys / GitHub / contact / replay guide / logout).
+- Mobile (≤768px): hamburger opens a fullscreen accordion menu with body
+  scroll lock, `Escape` to close, and a basic focus trap.
+- Theme state comes exclusively from `@/composables/useTheme` (B1).
+- Onboarding tour anchors are preserved on the new elements:
+  `#sidebar-channel-manage`, `#sidebar-group-manage`, `#sidebar-wallet`,
+  `[data-tour="sidebar-my-keys"]`.
 
 ---
 
 ## Mobile Responsive Behavior
 
-### Sidebar
+### Navigation
 
-- **Desktop (md+)**: Always visible, can be collapsed to icon-only view
-- **Mobile**: Hidden by default, shown via menu toggle in header
+- **Desktop (≥769px)**: centered links + flyout mega-menus (admin) or flat
+  links (user / simple mode)
+- **Mobile (≤768px)**: links hide, hamburger opens the fullscreen accordion
+  menu; body scroll locks while open and unlocks on close
+- Balance chip hides below `sm`; the mobile balance block moves inside the
+  user dropdown
 
-### Header
-
-- **Desktop**: Shows full user info and balance
-- **Mobile**: Shows compact view with hamburger menu
-
-To improve mobile experience, you can add overlay and transitions:
+To improve the mobile experience, you can add overlay transitions:
 
 ```vue
-<!-- AppSidebar.vue enhancement for mobile -->
+<!-- GlobalNav.vue — the .gn-mobile panel already handles scroll lock/focus -->
 <aside
   class="fixed left-0 top-0 z-40 h-screen transition-transform duration-300"
   :class="[
@@ -405,26 +407,26 @@ To enhance further:
 ### Unit Testing Layout Components
 
 ```typescript
-// AppHeader.test.ts
+// GlobalNav.spec.ts
 import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import AppHeader from '@/components/layout/AppHeader.vue'
+import GlobalNav from '@/components/layout/GlobalNav.vue'
 
-describe('AppHeader', () => {
+describe('GlobalNav', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
   })
 
-  it('renders user info when authenticated', () => {
-    const wrapper = mount(AppHeader)
+  it('renders the nav for authenticated users', () => {
+    const wrapper = mount(GlobalNav)
     // Add assertions
   })
 
-  it('shows dropdown when clicked', async () => {
-    const wrapper = mount(AppHeader)
+  it('opens the user dropdown when clicked', async () => {
+    const wrapper = mount(GlobalNav)
     await wrapper.find('button').trigger('click')
-    expect(wrapper.find('.dropdown').exists()).toBe(true)
+    expect(wrapper.find('.gn-pop').exists()).toBe(true)
   })
 })
 ```
@@ -459,19 +461,20 @@ const sidebarCollapsed = computed(() => appStore.sidebarCollapsed)
 
 ## Troubleshooting
 
-### Sidebar not showing
+### Nav links not showing
 
 - Check if `useAppStore` is properly initialized
 - Verify Tailwind classes are being processed
 - Check z-index conflicts with other components
+- Non-admin users in backend mode intentionally see no nav
 
-### Routes not highlighting in sidebar
+### Routes not highlighting in the nav
 
 - Ensure route paths match exactly
-- Check `isActive()` function logic
+- Check `isPathActive()` in `navItems.ts` (exact match or `path + '/'` prefix)
 - Verify `useRoute()` is working correctly
 
-### User info not displaying
+### User menu not displaying
 
 - Ensure auth store is initialized with `checkAuth()`
 - Verify user is logged in
@@ -479,6 +482,7 @@ const sidebarCollapsed = computed(() => appStore.sidebarCollapsed)
 
 ### Mobile menu not working
 
-- Verify `toggleSidebar()` is called correctly
-- Check responsive breakpoints (md:)
+- Verify the burger button toggles `.gn-mobile.open`
+- Check the `≤768px` breakpoint in `global-nav.css`
+- Body scroll lock is driven by a watcher on `mobileOpen`
 - Test on actual mobile device or browser dev tools
