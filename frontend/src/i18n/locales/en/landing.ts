@@ -121,6 +121,8 @@ export default {
     placeholder: 'sk-ant-mirror-xxxxxxxxxxxx',
     query: 'Query',
     querying: 'Querying...',
+    showKey: 'Show key',
+    hideKey: 'Hide key',
     privacyNote: 'Your Key is processed locally in the browser and will not be stored',
     dateRange: 'Date Range:',
     dateRangeToday: 'Today',
