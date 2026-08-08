@@ -1,38 +1,32 @@
 <template>
-  <div class="min-h-screen bg-gray-50 text-gray-900 dark:bg-dark-950 dark:text-white">
-    <header class="border-b border-gray-200 bg-white/95 dark:border-dark-800 dark:bg-dark-900/95">
-      <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+  <div class="legal-page">
+    <header class="legal-nav glass">
+      <div class="legal-nav-inner">
         <RouterLink to="/home" class="flex min-w-0 items-center gap-3">
           <template v-if="settings">
-            <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200 dark:bg-dark-800 dark:ring-dark-700">
-              <img :src="siteLogo || '/logo.svg'" alt="Logo" class="h-full w-full object-contain" />
-            </span>
-            <span class="truncate text-base font-semibold text-gray-950 dark:text-white">
-              {{ siteName }}
-            </span>
+            <span class="legal-wordmark truncate">{{ siteName }}</span>
           </template>
           <template v-else>
-            <span class="h-10 w-10 flex-shrink-0 animate-pulse rounded-xl bg-gray-200 dark:bg-dark-700" aria-hidden="true"></span>
             <span class="h-5 w-28 animate-pulse rounded bg-gray-200 dark:bg-dark-700" aria-hidden="true"></span>
           </template>
         </RouterLink>
         <RouterLink
           to="/login"
-          class="inline-flex flex-shrink-0 items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-primary-600/20 transition hover:bg-primary-700"
+          class="btn btn-primary btn-sm"
         >
           {{ t('home.login') }}
         </RouterLink>
       </div>
     </header>
 
-    <main class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:py-10">
+    <main class="legal-main">
       <div v-if="loading" class="flex min-h-[320px] items-center justify-center">
         <div class="h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
       </div>
 
       <section
         v-else-if="loadError"
-        class="rounded-lg border border-red-200 bg-red-50 p-6 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+        class="legal-error card"
       >
         <h1 class="text-lg font-semibold">{{ t('legal.loadFailed') }}</h1>
         <p class="mt-2 text-sm">{{ t('legal.retryLater') }}</p>
@@ -40,15 +34,15 @@
 
       <section
         v-else-if="!currentDocument"
-        class="rounded-lg border border-gray-200 bg-white p-6 dark:border-dark-700 dark:bg-dark-900"
+        class="card"
       >
         <div class="flex items-start gap-3">
-          <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-600 dark:bg-dark-800 dark:text-dark-300">
+          <span class="legal-doc-icon">
             <Icon name="document" size="sm" />
           </span>
           <div>
-            <h1 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('legal.notFound') }}</h1>
-            <p class="mt-2 text-sm leading-6 text-gray-600 dark:text-dark-300">
+            <h1 class="text-lg font-semibold">{{ t('legal.notFound') }}</h1>
+            <p class="legal-muted mt-2 text-sm leading-6">
               {{ t('legal.notFoundDescription') }}
             </p>
           </div>
@@ -56,17 +50,17 @@
       </section>
 
       <article v-else>
-        <div class="mb-8 border-b border-gray-200 pb-6 dark:border-dark-700">
+        <div class="legal-doc-head">
           <div class="flex items-start gap-4">
-            <span class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
+            <span class="legal-doc-icon legal-doc-icon-lg">
               <Icon :name="documentIcon" size="md" />
             </span>
             <div class="min-w-0">
-              <p class="text-sm font-medium text-primary-700 dark:text-primary-300">{{ documentTypeLabel }}</p>
-              <h1 class="mt-2 break-words text-2xl font-bold tracking-normal text-gray-950 dark:text-white sm:text-3xl">
+              <p class="legal-doc-type">{{ documentTypeLabel }}</p>
+              <h1 class="legal-doc-title">
                 {{ currentDocument.title }}
               </h1>
-              <p v-if="updatedAt" class="mt-3 text-sm text-gray-500 dark:text-dark-400">
+              <p v-if="updatedAt" class="legal-muted mt-3 text-sm">
                 {{ t('legal.updatedAt', { date: updatedAt }) }}
               </p>
             </div>
@@ -80,7 +74,7 @@
         ></div>
         <div
           v-else
-          class="rounded-lg border border-dashed border-gray-300 bg-white px-6 py-14 text-center text-sm text-gray-500 dark:border-dark-700 dark:bg-dark-900 dark:text-dark-400"
+          class="legal-empty"
         >
           {{ t('legal.empty') }}
         </div>
@@ -97,7 +91,6 @@ import DOMPurify from 'dompurify'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
 import { getLocale } from '@/i18n'
-import { sanitizeUrl } from '@/utils/url'
 import { useAppStore } from '@/stores/app'
 import type { LoginAgreementDocument } from '@/types'
 import zhAdminCompliance from '../../../../docs/legal/admin-compliance.zh.md?raw'
@@ -120,11 +113,7 @@ marked.setOptions({
 const documentId = computed(() => String(route.params.documentId || ''))
 const isAdminComplianceDocument = computed(() => documentId.value === 'admin-compliance')
 const documents = computed(() => settings.value?.login_agreement_documents ?? [])
-const siteName = computed(() => settings.value?.site_name || 'Sub2API')
-const siteLogo = computed(() => sanitizeUrl(settings.value?.site_logo || '', {
-  allowRelative: true,
-  allowDataUrl: true,
-}))
+const siteName = computed(() => settings.value?.site_name || appStore.siteName || 'Sub2API')
 const updatedAt = computed(() =>
   isAdminComplianceDocument.value ? '' : settings.value?.login_agreement_updated_at || ''
 )
@@ -183,81 +172,243 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.legal-page {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text-primary);
+}
+
+/* 48px 磨砂顶栏(与全局导航同语言) */
+.legal-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: var(--gn-height, 48px);
+  border-bottom: 0.5px solid var(--separator);
+  box-shadow: var(--glass-highlight);
+}
+
+.legal-nav-inner {
+  max-width: 780px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.legal-wordmark {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.legal-main {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 48px 20px 80px;
+}
+
+.legal-muted {
+  color: var(--text-secondary);
+}
+
+.legal-doc-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+.legal-doc-icon-lg {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+}
+
+.legal-doc-type {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blue);
+}
+
+.legal-doc-title {
+  margin-top: 6px;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.legal-doc-head {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 0.5px solid var(--separator);
+}
+
+.legal-error {
+  border: 0.5px solid color-mix(in srgb, var(--red) 30%, transparent);
+  background: color-mix(in srgb, var(--red) 8%, var(--bg-elevated));
+  color: var(--red);
+}
+
+.legal-empty {
+  padding: 56px 20px;
+  text-align: center;
+  border: 1px dashed var(--separator-strong);
+  border-radius: var(--r-lg);
+  color: var(--text-tertiary);
+  font-size: 14px;
+}
+
 .legal-document-content {
-  line-height: 1.75;
+  font-size: 15.5px;
+  line-height: 1.85;
   overflow-wrap: anywhere;
   color: inherit;
 }
 
 .legal-document-content :deep(h1) {
-  @apply mb-4 mt-8 border-b border-gray-200 pb-3 text-3xl font-bold dark:border-dark-700;
+  margin: 40px 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 0.5px solid var(--separator);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
 }
 
 .legal-document-content :deep(h2) {
-  @apply mb-3 mt-7 text-2xl font-bold;
+  margin: 32px 0 12px;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
 }
 
 .legal-document-content :deep(h3) {
-  @apply mb-2 mt-6 text-xl font-semibold;
+  margin: 26px 0 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .legal-document-content :deep(h4) {
-  @apply mb-2 mt-5 text-lg font-semibold;
+  margin: 22px 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .legal-document-content :deep(p) {
-  @apply mb-4 text-gray-700 dark:text-dark-200;
+  margin-bottom: 16px;
+  color: var(--text-secondary);
 }
 
 .legal-document-content :deep(a) {
-  @apply text-primary-600 underline underline-offset-4 hover:text-primary-700 dark:text-primary-300 dark:hover:text-primary-200;
+  color: var(--blue);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.legal-document-content :deep(a):hover {
+  color: var(--blue-hover);
 }
 
 .legal-document-content :deep(ul) {
-  @apply mb-4 list-disc pl-6;
+  margin-bottom: 16px;
+  padding-left: 22px;
+  list-style: disc;
 }
 
 .legal-document-content :deep(ol) {
-  @apply mb-4 list-decimal pl-6;
+  margin-bottom: 16px;
+  padding-left: 22px;
+  list-style: decimal;
 }
 
 .legal-document-content :deep(li) {
-  @apply mb-1 text-gray-700 dark:text-dark-200;
+  margin-bottom: 4px;
+  color: var(--text-secondary);
 }
 
 .legal-document-content :deep(blockquote) {
-  @apply my-5 border-l-4 border-gray-300 pl-4 text-gray-600 dark:border-dark-600 dark:text-dark-300;
+  margin: 20px 0;
+  padding: 2px 0 2px 16px;
+  border-left: 3px solid var(--separator-strong);
+  color: var(--text-secondary);
 }
 
 .legal-document-content :deep(code) {
-  @apply rounded bg-gray-100 px-1.5 py-0.5 font-mono text-sm dark:bg-dark-800;
+  border-radius: 6px;
+  background: var(--fill);
+  padding: 2px 6px;
+  font-family: "SF Mono", ui-monospace, Menlo, monospace;
+  font-size: 0.88em;
+  color: var(--text-primary);
 }
 
 .legal-document-content :deep(pre) {
-  @apply my-5 overflow-x-auto rounded-lg bg-gray-950 p-4 text-gray-100;
+  margin: 20px 0;
+  overflow-x: auto;
+  border-radius: var(--r-md);
+  background: var(--bg-elevated);
+  border: 0.5px solid var(--separator);
+  padding: 16px;
+  color: var(--text-secondary);
+  box-shadow: var(--shadow-card);
 }
 
 .legal-document-content :deep(pre code) {
-  @apply bg-transparent p-0 text-inherit;
+  background: transparent;
+  padding: 0;
+  color: inherit;
 }
 
 .legal-document-content :deep(table) {
-  @apply my-5 block w-full overflow-x-auto border-collapse;
+  margin: 20px 0;
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
 }
 
 .legal-document-content :deep(th) {
-  @apply border border-gray-300 bg-gray-50 px-3 py-2 text-left font-semibold dark:border-dark-600 dark:bg-dark-800;
+  border: 0.5px solid var(--separator);
+  background: var(--fill);
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .legal-document-content :deep(td) {
-  @apply border border-gray-300 px-3 py-2 dark:border-dark-600;
+  border: 0.5px solid var(--separator);
+  padding: 8px 12px;
+  color: var(--text-secondary);
 }
 
 .legal-document-content :deep(img) {
-  @apply my-5 h-auto max-w-full rounded-lg;
+  margin: 20px 0;
+  height: auto;
+  max-width: 100%;
+  border-radius: var(--r-md);
 }
 
 .legal-document-content :deep(hr) {
-  @apply my-7 border-gray-200 dark:border-dark-700;
+  margin: 28px 0;
+  border: none;
+  height: 0.5px;
+  background: var(--separator);
 }
 </style>

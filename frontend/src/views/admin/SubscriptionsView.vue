@@ -98,6 +98,7 @@
               :disabled="loading"
               class="btn btn-secondary"
               :title="t('common.refresh')"
+              :aria-label="t('common.refresh')"
             >
               <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
             </button>
@@ -156,6 +157,7 @@
               @click="showGuideModal = true"
               class="btn btn-secondary"
               :title="t('admin.subscriptions.guide.showGuide')"
+              :aria-label="t('admin.subscriptions.guide.showGuide')"
             >
               <Icon name="questionCircle" size="md" />
             </button>

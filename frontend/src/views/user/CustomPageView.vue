@@ -376,7 +376,8 @@ onUnmounted(() => {
 <style scoped>
 .custom-page-layout {
   @apply flex flex-col;
-  height: calc(100vh - 64px - 4rem);
+  /* 48px GlobalNav + AppLayout lg: 上下各 32px 内边距 */
+  height: calc(100vh - 48px - 4rem);
 }
 
 .toc-sidebar {

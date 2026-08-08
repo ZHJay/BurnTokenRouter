@@ -9,6 +9,7 @@ import Icon from '@/components/icons/Icon.vue'
 import { adminAPI } from '@/api'
 import { opsAPI, type OpsDashboardOverview, type OpsMetricThresholds, type OpsRealtimeTrafficSummary } from '@/api/admin/ops'
 import type { OpsRequestDetailsPreset } from './OpsRequestDetailsModal.vue'
+import { useChartTheme } from '@/components/charts/chartTheme'
 import { useAdminSettingsStore } from '@/stores'
 import { formatNumber } from '@/utils/format'
 import { formatMemorySizeMB } from '../utils/opsFormatters'
@@ -51,6 +52,7 @@ const emit = defineEmits<Emits>()
 
 const { t } = useI18n()
 const adminSettingsStore = useAdminSettingsStore()
+const chartTheme = useChartTheme()
 
 const realtimeWindow = ref<RealtimeWindow>('1min')
 
@@ -437,12 +439,12 @@ const healthScoreValue = computed<number | null>(() => {
 })
 
 const healthScoreColor = computed(() => {
-  if (isSystemIdle.value) return '#9ca3af' // gray-400
+  if (isSystemIdle.value) return chartTheme.value.semantic.gray
   const score = healthScoreValue.value
-  if (score == null) return '#9ca3af'
-  if (score >= 90) return '#10b981' // green
-  if (score >= 60) return '#f59e0b' // yellow
-  return '#ef4444' // red
+  if (score == null) return chartTheme.value.semantic.gray
+  if (score >= 90) return chartTheme.value.semantic.green
+  if (score >= 60) return chartTheme.value.semantic.orange
+  return chartTheme.value.semantic.red
 })
 
 const healthScoreClass = computed(() => {
@@ -930,7 +932,7 @@ function handleToolbarRefresh() {
         <button
           v-if="!props.fullscreen"
           type="button"
-          class="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 dark:bg-dark-700 dark:text-gray-400 dark:hover:bg-dark-600"
+          class="icon-btn h-8 w-8 shrink-0"
           :disabled="loading"
           :title="t('common.refresh')"
           @click="handleToolbarRefresh"
@@ -980,7 +982,7 @@ function handleToolbarRefresh() {
         <button
           v-if="!props.fullscreen"
           type="button"
-          class="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-gray-700 transition-colors hover:bg-gray-200 dark:bg-dark-700 dark:text-gray-300 dark:hover:bg-dark-600"
+          class="icon-btn h-8 w-8 shrink-0"
           :title="t('admin.ops.fullscreen.enter')"
           @click="emit('enterFullscreen')"
         >
@@ -1185,7 +1187,7 @@ function handleToolbarRefresh() {
                   <path
                     d="M0 16 Q 20 16, 40 16 T 80 16 T 120 10 T 160 22 T 200 16 T 240 16 T 280 16"
                     fill="none"
-                    stroke="#3b82f6"
+                    stroke="var(--blue)"
                     stroke-width="2"
                     vector-effect="non-scaling-stroke"
                   >
