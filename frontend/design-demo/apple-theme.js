@@ -209,6 +209,7 @@
           '</div>' +
         '</div>' +
       '</nav>' +
+      '<div class="gn-curtain" aria-hidden="true"></div>' +
       '<div class="gn-mobile">' + buildMobileLinks(items, activeKey) + '</div>'
     );
 
