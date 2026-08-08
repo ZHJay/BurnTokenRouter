@@ -44,15 +44,17 @@
         :group-id="selectedGroupId"
         :rate="selectedRate"
         :search="searchQuery"
+        :view="view"
         @update:platform="selectedPlatform = $event"
         @update:group-id="selectedGroupId = $event"
         @update:rate="selectedRate = $event"
         @update:search="searchQuery = $event"
+        @update:view="setView"
       />
 
       <!-- 分组分节的模型清单(默认按生效倍率升序) -->
       <div v-if="filteredGroups.length > 0" class="space-y-5">
-        <PlazaGroupSection v-for="g in filteredGroups" :key="g.id" :group="g" />
+        <PlazaGroupSection v-for="g in filteredGroups" :key="g.id" :group="g" :view="view" />
       </div>
       <div
         v-else
@@ -72,6 +74,11 @@ import DOMPurify from 'dompurify'
 import Icon from '@/components/icons/Icon.vue'
 import PlazaFilterBar from './PlazaFilterBar.vue'
 import PlazaGroupSection from './PlazaGroupSection.vue'
+import {
+  readStoredPlazaView,
+  persistPlazaView,
+  type PlazaViewMode
+} from './viewMode'
 import type { ModelPlazaGroup, ModelPlazaResponse } from '@/api/modelPlaza'
 import { useAuthStore } from '@/stores/auth'
 
@@ -91,6 +98,14 @@ const selectedPlatform = ref<string>('all')
 const selectedGroupId = ref<number | 'all'>('all')
 const selectedRate = ref<number | 'all'>('all')
 const searchQuery = ref('')
+
+/** 视图偏好跨会话持久化(卡片为默认,表格是可切换的密集模式)。 */
+const view = ref<PlazaViewMode>(readStoredPlazaView())
+
+function setView(next: PlazaViewMode) {
+  view.value = next
+  persistPlazaView(next)
+}
 
 const searchActive = computed(() => searchQuery.value.trim() !== '')
 
