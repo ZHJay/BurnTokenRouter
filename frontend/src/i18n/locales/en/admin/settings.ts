@@ -947,7 +947,11 @@ export default {
         validationRequired: 'Subject and HTML template are required',
         empty: 'No email template events or locales are available yet.',
         noPreview: 'Refresh the preview to see the rendered email subject.',
-        customized: 'Customized'
+        customized: 'Customized',
+        insertBaseline: 'Insert Baseline',
+        insertBaselineConfirm: 'Replace the current HTML with the Apple design baseline template? Your in-progress content will be overwritten, and you still need to click "Save Template" for it to take effect.',
+        insertBaselineSuccess: 'Baseline template inserted — review it, then save',
+        baselineHint: 'The baseline template uses inline styles, literal color values, and a table layout so it renders in email clients that do not support CSS variables (Gmail / Outlook / Apple Mail). Branding is the site name as text, with no logo image.'
       },
       opsMonitoring: {
         title: 'Ops Monitoring',

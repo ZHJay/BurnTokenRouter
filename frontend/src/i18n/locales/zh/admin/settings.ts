@@ -942,7 +942,11 @@ export default {
         validationRequired: '主题和 HTML 模板不能为空',
         empty: '暂无可用的邮件模板事件或语言。',
         noPreview: '刷新预览后查看渲染后的邮件主题。',
-        customized: '已自定义'
+        customized: '已自定义',
+        insertBaseline: '插入基准模板',
+        insertBaselineConfirm: '用 Apple 设计基准模板替换当前 HTML 内容吗？编辑中的内容会被覆盖，且替换后仍需点击「保存模板」才会生效。',
+        insertBaselineSuccess: '已插入基准模板，请检查后保存',
+        baselineHint: '基准模板按 Apple 设计基线编写：内联样式 + 字面色值 + 表格布局，以兼容不支持 CSS 变量的邮件客户端（Gmail / Outlook / Apple Mail）；品牌使用站点名文本，不含 logo 图片。'
       },
       opsMonitoring: {
         title: '运维监控',

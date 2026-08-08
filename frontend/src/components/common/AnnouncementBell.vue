@@ -4,18 +4,12 @@
     <button
       @click="openModal"
       class="bell-btn"
-      :class="{ 'text-blue-600 dark:text-blue-400': unreadCount > 0 }"
+      :class="{ 'has-unread': unreadCount > 0 }"
       :aria-label="t('announcements.title')"
     >
       <Icon name="bell" size="md" />
-      <!-- 未读红点 -->
-      <span
-        v-if="unreadCount > 0"
-        class="absolute right-1 top-1 flex h-2 w-2"
-      >
-        <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
-        <span class="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
-      </span>
+      <!-- 未读红点：静态，对齐 demo 的 .gn-icon-btn .badge-dot -->
+      <span v-if="unreadCount > 0" class="bell-dot" data-testid="announcement-bell-dot"></span>
     </button>
 
     <!-- 公告列表 Modal -->
@@ -28,55 +22,53 @@
         >
           <div
             class="ann-panel w-full max-w-[620px]"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="announcement-list-title"
             @click.stop
           >
-            <!-- Header with Gradient -->
-            <div class="relative overflow-hidden border-b border-gray-100/80 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 px-6 py-5 dark:border-dark-700/50 dark:from-blue-900/10 dark:to-indigo-900/5">
-              <div class="relative z-10 flex items-start justify-between">
-                <div>
+            <!-- Header：发丝线分隔，无渐变无光斑 -->
+            <div class="ann-head">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
                   <div class="flex items-center gap-2">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
+                    <span class="ann-mark ann-mark-sm">
                       <Icon name="bell" size="sm" />
-                    </div>
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    </span>
+                    <h2 id="announcement-list-title" class="ann-head-title">
                       {{ t('announcements.title') }}
                     </h2>
                   </div>
-                  <p v-if="unreadCount > 0" class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                    <span class="font-medium text-blue-600 dark:text-blue-400">{{ unreadCount }}</span>
+                  <p v-if="unreadCount > 0" class="ann-head-sub">
+                    <span class="ann-head-count">{{ unreadCount }}</span>
                     {{ t('announcements.unread') }}
                   </p>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex flex-shrink-0 items-center gap-2">
                   <button
                     v-if="unreadCount > 0"
                     @click="markAllAsRead"
                     :disabled="loading"
-                    class="rounded-lg bg-blue-600 px-4 py-2 text-xs font-medium text-white shadow-lg shadow-blue-500/30 transition-all hover:bg-blue-700 hover:shadow-xl disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
+                    class="btn btn-primary btn-sm"
                   >
                     {{ t('announcements.markAllRead') }}
                   </button>
                   <button
                     @click="closeModal"
-                    class="flex h-9 w-9 items-center justify-center rounded-lg bg-white/50 text-gray-500 backdrop-blur-sm transition-all hover:bg-white hover:text-gray-700 dark:bg-dark-700/50 dark:text-gray-400 dark:hover:bg-dark-700 dark:hover:text-gray-300"
+                    class="ann-close"
                     :aria-label="t('common.close')"
                   >
                     <Icon name="x" size="sm" />
                   </button>
                 </div>
               </div>
-              <!-- Decorative gradient -->
-              <div class="absolute right-0 top-0 h-full w-48 bg-gradient-to-l from-indigo-100/20 to-transparent dark:from-indigo-900/10"></div>
             </div>
 
             <!-- Body -->
-            <div class="max-h-[65vh] overflow-y-auto">
+            <div class="ann-list">
               <!-- Loading -->
-              <div v-if="loading" class="flex items-center justify-center py-16">
-                <div class="relative">
-                  <div class="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600 dark:border-dark-600 dark:border-t-blue-400"></div>
-                  <div class="absolute inset-0 h-12 w-12 animate-pulse rounded-full border-4 border-blue-400/30"></div>
-                </div>
+              <div v-if="loading" class="ann-state">
+                <span class="ann-spinner"></span>
               </div>
 
               <!-- Announcements List -->
@@ -84,93 +76,47 @@
                 <div
                   v-for="item in announcements"
                   :key="item.id"
-                  class="group relative flex items-center gap-4 border-b border-gray-100 px-6 py-4 transition-all hover:bg-gray-50 dark:border-dark-700 dark:hover:bg-dark-700/30"
-                  :class="{ 'bg-blue-50/30 dark:bg-blue-900/5': !item.read_at }"
-                  style="min-height: 72px"
+                  class="ann-row"
+                  :class="{ 'is-unread': !item.read_at }"
                   @click="openDetail(item)"
                 >
                   <!-- Status Indicator -->
-                  <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center">
-                    <div
-                      v-if="!item.read_at"
-                      class="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30"
-                    >
-                      <!-- Pulse ring -->
-                      <span class="absolute inline-flex h-full w-full animate-ping rounded-xl bg-blue-400 opacity-75"></span>
-                      <!-- Icon -->
-                      <svg class="relative z-10 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div
-                      v-else
-                      class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-400 dark:bg-dark-700 dark:text-gray-600"
-                    >
-                      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                  </div>
+                  <span class="ann-row-mark" :class="item.read_at ? 'is-read' : 'is-unread'">
+                    <svg v-if="!item.read_at" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </span>
 
                   <!-- Content -->
-                  <div class="flex min-w-0 flex-1 items-center justify-between gap-4">
+                  <div class="flex min-w-0 flex-1 items-center justify-between gap-3">
                     <div class="min-w-0 flex-1">
-                      <h3 class="truncate text-sm font-medium text-gray-900 dark:text-white">
-                        {{ item.title }}
-                      </h3>
+                      <h3 class="ann-row-title">{{ item.title }}</h3>
                       <div class="mt-1 flex items-center gap-2">
-                        <time class="text-xs text-gray-500 dark:text-gray-400">
-                          {{ formatRelativeTime(item.created_at) }}
-                        </time>
-                        <span
-                          v-if="!item.read_at"
-                          class="inline-flex items-center gap-1 rounded-md bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
-                        >
-                          <span class="relative flex h-1.5 w-1.5">
-                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75"></span>
-                            <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-blue-600"></span>
-                          </span>
+                        <time class="ann-row-time">{{ formatRelativeTime(item.created_at) }}</time>
+                        <span v-if="!item.read_at" class="badge badge-primary">
                           {{ t('announcements.unread') }}
                         </span>
                       </div>
                     </div>
 
                     <!-- Arrow -->
-                    <div class="flex-shrink-0">
-                      <svg
-                        class="h-5 w-5 text-gray-400 transition-transform group-hover:translate-x-1 dark:text-gray-600"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="2"
-                      >
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
+                    <svg class="ann-row-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
                   </div>
-
-                  <!-- Unread indicator bar -->
-                  <div
-                    v-if="!item.read_at"
-                    class="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-blue-500 to-indigo-600"
-                  ></div>
                 </div>
               </div>
 
               <!-- Empty State -->
-              <div v-else class="flex flex-col items-center justify-center py-16">
-                <div class="relative mb-4">
-                  <div class="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-dark-700 dark:to-dark-600">
-                    <Icon name="inbox" size="xl" class="text-gray-400 dark:text-gray-500" />
-                  </div>
-                  <div class="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-white">
-                    <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                </div>
-                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ t('announcements.empty') }}</p>
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t('announcements.emptyDescription') }}</p>
+              <div v-else class="ann-state ann-empty">
+                <span class="ann-empty-mark">
+                  <Icon name="inbox" size="xl" />
+                </span>
+                <p class="ann-empty-title">{{ t('announcements.empty') }}</p>
+                <p class="ann-empty-sub">{{ t('announcements.emptyDescription') }}</p>
               </div>
             </div>
           </div>
@@ -188,68 +134,51 @@
         >
           <div
             class="ann-panel w-full max-w-[780px]"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="announcement-detail-title"
             @click.stop
           >
-            <!-- Header with Decorative Elements -->
-            <div class="relative overflow-hidden border-b border-gray-100 bg-gradient-to-br from-blue-50/80 via-indigo-50/50 to-purple-50/30 px-8 py-6 dark:border-dark-700 dark:from-blue-900/20 dark:via-indigo-900/10 dark:to-purple-900/5">
-              <!-- Decorative background elements -->
-              <div class="absolute right-0 top-0 h-full w-64 bg-gradient-to-l from-indigo-100/30 to-transparent dark:from-indigo-900/20"></div>
-              <div class="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gradient-to-br from-blue-400/20 to-indigo-500/20 blur-3xl"></div>
-              <div class="absolute -left-4 -bottom-4 h-24 w-24 rounded-full bg-gradient-to-tr from-purple-400/20 to-pink-500/20 blur-2xl"></div>
-
-              <div class="relative z-10 flex items-start justify-between gap-4">
-                <div class="flex-1 min-w-0">
-                  <!-- Icon and Category -->
-                  <div class="mb-3 flex items-center gap-2">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
-                      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <!-- Header：发丝线分隔，无渐变无光斑 -->
+            <div class="ann-head">
+              <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0 flex-1">
+                  <div class="mb-3 flex flex-wrap items-center gap-2">
+                    <span class="ann-mark">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <span class="rounded-lg bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-                        {{ t('announcements.title') }}
-                      </span>
-                      <span
-                        v-if="!selectedAnnouncement.read_at"
-                        class="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 px-2.5 py-1 text-xs font-medium text-white shadow-lg shadow-blue-500/30"
-                      >
-                        <span class="relative flex h-2 w-2">
-                          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75"></span>
-                          <span class="relative inline-flex h-2 w-2 rounded-full bg-white"></span>
-                        </span>
-                        {{ t('announcements.unread') }}
-                      </span>
-                    </div>
+                    </span>
+                    <span class="badge badge-gray">{{ t('announcements.title') }}</span>
+                    <span v-if="!selectedAnnouncement.read_at" class="badge badge-primary">
+                      {{ t('announcements.unread') }}
+                    </span>
                   </div>
 
-                  <!-- Title -->
-                  <h2 class="mb-3 text-2xl font-bold leading-tight text-gray-900 dark:text-white">
+                  <h2 id="announcement-detail-title" class="ann-title">
                     {{ selectedAnnouncement.title }}
                   </h2>
 
-                  <!-- Meta Info -->
-                  <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                    <div class="flex items-center gap-1.5">
-                      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <div class="ann-meta-row">
+                    <span class="ann-meta">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <time>{{ formatRelativeWithDateTime(selectedAnnouncement.created_at) }}</time>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    </span>
+                    <span class="ann-meta">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                       </svg>
                       <span>{{ selectedAnnouncement.read_at ? t('announcements.read') : t('announcements.unread') }}</span>
-                    </div>
+                    </span>
                   </div>
                 </div>
 
-                <!-- Close button -->
                 <button
                   @click="closeDetail"
-                  class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white/50 text-gray-500 backdrop-blur-sm transition-all hover:bg-white hover:text-gray-700 hover:shadow-lg dark:bg-dark-700/50 dark:text-gray-400 dark:hover:bg-dark-700 dark:hover:text-gray-300"
+                  class="ann-close"
                   :aria-label="t('common.close')"
                 >
                   <Icon name="x" size="md" />
@@ -257,51 +186,36 @@
               </div>
             </div>
 
-            <!-- Body with Enhanced Markdown -->
-            <div class="max-h-[60vh] overflow-y-auto bg-white px-8 py-8 dark:bg-dark-800">
-              <!-- Content with decorative border -->
-              <div class="relative">
-                <!-- Decorative left border -->
-                <div class="absolute left-0 top-0 bottom-0 w-1 rounded-full bg-gradient-to-b from-blue-500 via-indigo-500 to-purple-500"></div>
-
-                <div class="pl-6">
-                  <div
-                    class="markdown-body prose prose-sm max-w-none dark:prose-invert"
-                    v-html="renderMarkdown(selectedAnnouncement.content)"
-                  ></div>
-                </div>
-              </div>
+            <!-- Body：继承不透明面板底色 -->
+            <div class="ann-body ann-body-tall">
+              <div
+                class="markdown-body"
+                v-html="renderMarkdown(selectedAnnouncement.content)"
+              ></div>
             </div>
 
-            <!-- Footer with Actions -->
-            <div class="border-t border-gray-100 bg-gray-50/50 px-8 py-5 dark:border-dark-700 dark:bg-dark-900/30">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <!-- Footer -->
+            <div class="ann-foot ann-foot-split">
+              <span class="ann-foot-hint">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{{ selectedAnnouncement.read_at ? t('announcements.readStatus') : t('announcements.markReadHint') }}</span>
+              </span>
+              <div class="flex flex-shrink-0 items-center gap-3">
+                <button @click="closeDetail" class="btn btn-secondary">
+                  {{ t('common.close') }}
+                </button>
+                <button
+                  v-if="!selectedAnnouncement.read_at"
+                  @click="markAsReadAndClose(selectedAnnouncement.id)"
+                  class="btn btn-primary"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
-                  <span>{{ selectedAnnouncement.read_at ? t('announcements.readStatus') : t('announcements.markReadHint') }}</span>
-                </div>
-                <div class="flex items-center gap-3">
-                  <button
-                    @click="closeDetail"
-                    class="rounded-xl border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow dark:border-dark-600 dark:bg-dark-700 dark:text-gray-300 dark:hover:bg-dark-600"
-                  >
-                    {{ t('common.close') }}
-                  </button>
-                  <button
-                    v-if="!selectedAnnouncement.read_at"
-                    @click="markAsReadAndClose(selectedAnnouncement.id)"
-                    class="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/30 transition-all hover:shadow-xl hover:scale-105"
-                  >
-                    <span class="flex items-center gap-2">
-                      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                      {{ t('announcements.markRead') }}
-                    </span>
-                  </button>
-                </div>
+                  {{ t('announcements.markRead') }}
+                </button>
               </div>
             </div>
           </div>
@@ -320,6 +234,7 @@ import DOMPurify from 'dompurify'
 import { useAppStore } from '@/stores/app'
 import { useAnnouncementStore } from '@/stores/announcements'
 import { formatRelativeTime, formatRelativeWithDateTime } from '@/utils/format'
+import { lockBodyScroll, unlockBodyScroll } from '@/composables/useCommandPalette'
 import type { UserAnnouncement } from '@/types'
 import Icon from '@/components/icons/Icon.vue'
 import '@/styles/announcement-markdown.css'
@@ -410,15 +325,36 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', handleEscape)
-  document.body.style.overflow = ''
+  releaseLock()
 })
 
-watch(
-  [isModalOpen, detailModalOpen, () => announcementStore.currentPopup],
-  ([modal, detail, popup]) => {
-    document.body.style.overflow = (modal || detail || popup) ? 'hidden' : ''
+/*
+ * 滚动锁定走 useCommandPalette 的引用计数锁，不再直写 body.style.overflow。
+ * ⌘K 命令面板与移动端汉堡菜单锁同一个 body；直写会与计数器互相破坏
+ * （详见 GlobalNav.vue 的同款说明与 AnnouncementPopup.vue 的注释）。
+ *
+ * 只跟自己的两个浮层：列表与详情。announcementStore.currentPopup 由
+ * AnnouncementPopup 自己持锁 —— 它在 App.vue 全局挂载，铃铛不必代管，
+ * 代管反而会在未登录（铃铛不挂载）时留下无人释放的锁。
+ */
+let holdsLock = false
+
+function releaseLock() {
+  if (holdsLock) {
+    unlockBodyScroll()
+    holdsLock = false
   }
-)
+}
+
+watch([isModalOpen, detailModalOpen], ([modal, detail]) => {
+  const wantsLock = modal || detail
+  if (wantsLock && !holdsLock) {
+    lockBodyScroll()
+    holdsLock = true
+  } else if (!wantsLock) {
+    releaseLock()
+  }
+})
 </script>
 
 <style scoped>
@@ -453,11 +389,28 @@ watch(
   box-shadow: 0 0 0 4px var(--blue-soft);
 }
 
+/* 有未读时铃铛本体变蓝 */
+.bell-btn.has-unread {
+  color: var(--blue);
+}
+
+/* 未读红点：静态，描边取页面底色以在顶栏玻璃上分离 */
+.bell-dot {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--red);
+  border: 1.5px solid var(--bg);
+}
+
 /* 契约镜像：纱幕压暗（亮 18% / 暗 45% 黑），不透明面板 */
 .ann-overlay {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 130;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -477,6 +430,283 @@ watch(
   background: var(--glass-bg-strong);
   border: 0.5px solid var(--separator);
   box-shadow: var(--glass-highlight), var(--shadow-pop);
+}
+
+/* ---- 头部 ---- */
+.ann-head {
+  padding: 20px 24px 18px;
+  border-bottom: 0.5px solid var(--separator);
+}
+
+.ann-mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-md);
+  background: var(--blue-soft);
+  color: var(--blue);
+  flex-shrink: 0;
+}
+
+.ann-mark svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ann-mark-sm {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+}
+
+.ann-head-title {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.ann-head-sub {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.ann-head-count {
+  font-weight: 600;
+  color: var(--blue);
+}
+
+.ann-title {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.ann-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.ann-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.ann-meta svg {
+  width: 15px;
+  height: 15px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+/* 关闭按钮：透明底 + fill 悬停，不用半透明白底 */
+.ann-close {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.18s var(--ease), color 0.18s var(--ease), transform 0.12s var(--ease);
+}
+
+.ann-close:hover {
+  background: var(--fill);
+  color: var(--text-primary);
+}
+
+.ann-close:active {
+  transform: scale(0.94);
+}
+
+.ann-close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--blue-soft);
+}
+
+/* ---- 列表 ---- */
+.ann-list {
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
+.ann-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 72px;
+  padding: 14px 24px;
+  border-bottom: 0.5px solid var(--separator);
+  cursor: pointer;
+  transition: background 0.14s var(--ease);
+}
+
+.ann-row:last-child {
+  border-bottom: none;
+}
+
+.ann-row:hover {
+  background: var(--fill);
+}
+
+.ann-row.is-unread {
+  background: var(--blue-soft);
+}
+
+.ann-row.is-unread:hover {
+  background: var(--fill-hover);
+}
+
+.ann-row-mark {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--r-md);
+}
+
+.ann-row-mark svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ann-row-mark.is-unread {
+  background: var(--blue);
+  color: #fff;
+}
+
+.ann-row-mark.is-read {
+  background: var(--fill);
+  color: var(--text-tertiary);
+}
+
+.ann-row-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.ann-row-time {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.ann-row-chev {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  transition: transform 0.2s var(--ease);
+}
+
+.ann-row:hover .ann-row-chev {
+  transform: translateX(3px);
+  color: var(--text-secondary);
+}
+
+/* ---- 加载 / 空状态 ---- */
+.ann-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 20px;
+}
+
+.ann-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2.5px solid var(--fill-hover);
+  border-top-color: var(--blue);
+  animation: ann-spin 0.7s linear infinite;
+}
+
+@keyframes ann-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ann-empty-mark {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 14px;
+  border-radius: var(--r-pill);
+  background: var(--fill);
+  color: var(--text-tertiary);
+}
+
+.ann-empty-title {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.ann-empty-sub {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+/* ---- 详情正文：继承面板底色 ---- */
+.ann-body {
+  max-height: 50vh;
+  overflow-y: auto;
+  padding: 24px 28px;
+}
+
+.ann-body-tall {
+  max-height: 60vh;
+}
+
+/* ---- 页脚 ---- */
+.ann-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 28px;
+  border-top: 0.5px solid var(--separator);
+}
+
+.ann-foot-split {
+  justify-content: space-between;
+}
+
+.ann-foot-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.ann-foot-hint svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
 }
 
 /* Modal Animations */
@@ -503,29 +733,31 @@ watch(
   opacity: 0;
 }
 
-/* Scrollbar Styling */
-.overflow-y-auto::-webkit-scrollbar {
+/* 滚动条：Apple 风格细条，消费变量而非硬编码灰阶。
+   （旧实现挂在 .overflow-y-auto 上且用 .dark 作根，两处都已失效：
+     容器已改名为 .ann-list / .ann-body，且本仓库暗色根是 html.dark） */
+.ann-list::-webkit-scrollbar,
+.ann-body::-webkit-scrollbar {
   width: 8px;
 }
 
-.overflow-y-auto::-webkit-scrollbar-track {
+.ann-list::-webkit-scrollbar-track,
+.ann-body::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.overflow-y-auto::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #cbd5e1, #94a3b8);
-  border-radius: 4px;
+.ann-list::-webkit-scrollbar-thumb,
+.ann-body::-webkit-scrollbar-thumb {
+  background: var(--fill-hover);
+  border-radius: var(--r-pill);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
-.dark .overflow-y-auto::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #4b5563, #374151);
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #94a3b8, #64748b);
-}
-
-.dark .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #6b7280, #4b5563);
+.ann-list::-webkit-scrollbar-thumb:hover,
+.ann-body::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+  background-clip: padding-box;
+  border: 2px solid transparent;
 }
 </style>

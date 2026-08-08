@@ -31,11 +31,11 @@
         @sort="handleSort"
       >
         <template #cell-email="{ value }">
-          <span class="font-medium text-gray-900 dark:text-white">{{ value }}</span>
+          <span class="rs-strong">{{ value }}</span>
         </template>
 
         <template #cell-balance="{ value }">
-          <span class="font-medium text-gray-900 dark:text-white">${{ Number(value ?? 0).toFixed(2) }}</span>
+          <span class="rs-strong mono-amount">${{ Number(value ?? 0).toFixed(2) }}</span>
         </template>
 
         <template #cell-eligible="{ value }">
@@ -45,9 +45,8 @@
         </template>
 
         <template #cell-read_at="{ value }">
-          <span class="text-sm text-gray-500 dark:text-dark-400">
-            {{ value ? formatDateTime(value) : t('admin.announcements.unread') }}
-          </span>
+          <span v-if="value" class="rs-muted">{{ formatDateTime(value) }}</span>
+          <span v-else class="badge badge-gray">{{ t('admin.announcements.unread') }}</span>
         </template>
       </DataTable>
 
@@ -251,3 +250,24 @@ onUnmounted(() => {
   cancelPendingLoad()
 })
 </script>
+
+<style scoped>
+/* 只消费 CSS 变量。血泪教训 #1：本文件所有 flex 都在单元格内的 span/div 上，
+   DataTable 的 <td> 不挂 display:flex/grid 的类 */
+.rs-strong {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.mono-amount {
+  font-family: 'SF Mono', ui-monospace, Menlo, monospace;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rs-muted {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+</style>
