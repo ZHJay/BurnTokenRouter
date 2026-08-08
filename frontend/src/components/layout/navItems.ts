@@ -425,3 +425,74 @@ export function resolveNavLabel(item: NavItem, t: (key: string) => string): stri
 export function isPathActive(path: string, currentPath: string): boolean {
   return currentPath === path || currentPath.startsWith(path + '/')
 }
+
+/* ---------------------------------------------------------------------------
+ * Command palette (⌘K) source — Phase C.
+ *
+ * The palette is deliberately fed the SAME already-filtered NavItem lists the
+ * bar renders, never the raw builders. That is a functional requirement, not a
+ * stylistic one: `featureFlag` and `hideInSimpleMode` decide what a given user
+ * is allowed to see, so re-deriving the list here (or walking the unfiltered
+ * `buildAdminNavItems` output) would surface disabled or unauthorized features
+ * in search results — a real privilege/UX leak rather than a visual bug.
+ *
+ * Therefore: callers pass `finalizeNav(...)` / `groupAdminNav(...)` output.
+ * `buildCommandEntries` only flattens, dedupes and labels.
+ * ------------------------------------------------------------------------- */
+
+/** One searchable palette row. */
+export interface CommandEntry {
+  /** Router target — also the dedupe key and DOM id seed. */
+  path: string
+  /** Resolved, already-translated display label. */
+  label: string
+  /** i18n key of the owning group heading (results are rendered grouped). */
+  groupLabelKey: string
+  /** Stable group key for grouping/ordering results. */
+  groupKey: string
+}
+
+/** A group of already-filtered nav items to expose in the palette. */
+export interface CommandGroupSource {
+  key: string
+  labelKey: string
+  items: NavItem[]
+}
+
+/**
+ * Flatten grouped nav items into palette entries.
+ *
+ * - Containers (`expandOnly`) are never emitted as entries: they have no
+ *   navigable route (see the flyout notes above), only their children do.
+ * - Dedupe is global and first-wins, so a path listed in several groups is
+ *   attributed to the first group that claims it (mirrors the bar, where the
+ *   flyout column wins over the personal list).
+ */
+export function buildCommandEntries(
+  sources: CommandGroupSource[],
+  t: (key: string) => string,
+): CommandEntry[] {
+  const entries: CommandEntry[] = []
+  const seen = new Set<string>()
+
+  const walk = (items: NavItem[], source: CommandGroupSource): void => {
+    for (const item of items) {
+      if (!item.expandOnly && !seen.has(item.path)) {
+        seen.add(item.path)
+        entries.push({
+          path: item.path,
+          label: resolveNavLabel(item, t),
+          groupKey: source.key,
+          groupLabelKey: source.labelKey,
+        })
+      }
+      // Defensive: the grouped admin nav is already flattened, but the user /
+      // simple-mode lists come straight from the builders where a group may
+      // still carry children.
+      if (item.children?.length) walk(item.children, source)
+    }
+  }
+
+  for (const source of sources) walk(source.items, source)
+  return entries
+}
