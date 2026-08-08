@@ -213,6 +213,13 @@ export default {
     searchPlaceholder: '搜索页面、功能、文档…',
     searchNoResults: '未找到匹配的页面',
     searchResults: '搜索结果',
+    // Phase C: 全局命令面板（⌘K）
+    commandPalette: '命令面板',
+    commandGroupPages: '页面',
+    commandGroupAccount: '我的账户',
+    commandHintSelect: '选择',
+    commandHintOpen: '打开',
+    commandHintClose: '关闭',
     resources: '资源',
     operations: '运营',
     analytics: '分析',

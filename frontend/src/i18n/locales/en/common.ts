@@ -213,6 +213,13 @@ export default {
     searchPlaceholder: 'Search pages, features, docs…',
     searchNoResults: 'No matching pages found',
     searchResults: 'Search results',
+    // Phase C: global command palette (⌘K)
+    commandPalette: 'Command palette',
+    commandGroupPages: 'Pages',
+    commandGroupAccount: 'My account',
+    commandHintSelect: 'Select',
+    commandHintOpen: 'Open',
+    commandHintClose: 'Close',
     resources: 'Resources',
     operations: 'Operations',
     analytics: 'Analytics',
