@@ -77,21 +77,22 @@
     </footer>
   </div>
 
-  <!-- Default Home Page -->
-  <div v-else class="landing">
-    <!-- ambient 光斑 -->
+  <!-- Default Home Page: apple.com 产品页式营销落地页 -->
+  <div v-else class="landing" data-testid="landing-full">
+    <!-- ambient 光斑（玻璃质感三处保留位之一：ambient 环境渐变） -->
     <div class="landing-spot landing-spot-1" aria-hidden="true"></div>
     <div class="landing-spot landing-spot-2" aria-hidden="true"></div>
     <div class="landing-spot landing-spot-3" aria-hidden="true"></div>
 
     <header class="landing-nav glass">
       <nav class="landing-nav-inner">
-        <!-- 纯文字 wordmark(品牌不再渲染 logo 图片) -->
-        <div class="flex min-w-0 items-center">
-          <span class="wordmark truncate">{{ siteName }}</span>
+        <!-- 纯文字 wordmark（品牌不渲染 logo 图片）。
+             flex: 0 1 auto + min-width:0 让它可截断但不会被压成单字符。 -->
+        <div class="landing-brand">
+          <span class="wordmark">{{ siteName }}</span>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="landing-nav-actions">
           <LocaleSwitcher />
 
           <a
@@ -99,7 +100,7 @@
             :href="docUrl"
             target="_blank"
             rel="noopener noreferrer"
-            class="icon-btn"
+            class="icon-btn landing-nav-docs"
             :aria-label="t('home.viewDocs')"
             :title="t('home.viewDocs')"
           >
@@ -132,134 +133,105 @@
     </header>
 
     <main class="landing-main">
-      <!-- Hero: Left/Right Layout -->
-      <div class="landing-hero-split">
-        <div class="landing-hero">
-          <h1 class="landing-title">{{ siteName }}</h1>
-          <p class="landing-sub">{{ siteSubtitle }}</p>
-          <div class="landing-cta-row">
-            <router-link
-              :to="isAuthenticated ? dashboardPath : '/login'"
-              class="btn btn-primary landing-cta"
-            >
-              {{ isAuthenticated ? t('home.goToDashboard') : t('home.getStarted') }}
-              <Icon name="arrowRight" size="md" :stroke-width="2" />
-            </router-link>
+      <!--
+        首屏刻意零入场动效：这是未登录可访问的公开首页，也是全站第一印象，
+        必须立刻可读，不能把可见性押在 JS + IntersectionObserver 上。
+        入场动效只存在于首屏之下的区块（见各 LandingSection 内的 LandingReveal）。
+      -->
+      <section class="lp-hero-section">
+        <div class="lp-shell">
+          <LandingHero
+            :site-name="siteName"
+            :site-subtitle="siteSubtitle"
+            :primary-to="primaryCtaTo"
+            :primary-label="heroCtaLabel"
+            secondary-href="#lp-console"
+            :show-note="showHeroNote"
+            :settings-ready="settingsReady"
+          >
+            <template #visual>
+              <LandingTerminal :caption="t('home.hero.visualCaption')" />
+            </template>
+          </LandingHero>
+
+          <div class="lp-caps-wrap">
+            <LandingCapabilities />
           </div>
         </div>
+      </section>
 
-        <!-- Terminal Animation -->
-        <div class="landing-hero-visual">
-          <div class="terminal-container">
-            <div class="terminal-window">
-              <div class="terminal-header">
-                <div class="terminal-buttons">
-                  <span class="btn-close"></span>
-                  <span class="btn-minimize"></span>
-                  <span class="btn-maximize"></span>
-                </div>
-                <span class="terminal-title">terminal</span>
-              </div>
-              <div class="terminal-body">
-                <div class="code-line line-1">
-                  <span class="code-prompt">$</span>
-                  <span class="code-cmd">curl</span>
-                  <span class="code-flag">-X POST</span>
-                  <span class="code-url">/v1/messages</span>
-                </div>
-                <div class="code-line line-2">
-                  <span class="code-comment"># Routing to upstream...</span>
-                </div>
-                <div class="code-line line-3">
-                  <span class="code-success">200 OK</span>
-                  <span class="code-response">{ "content": "Hello!" }</span>
-                </div>
-                <div class="code-line line-4">
-                  <span class="code-prompt">$</span>
-                  <span class="cursor"></span>
-                </div>
-              </div>
-            </div>
-          </div>
+      <!-- 首屏之下：全部走 LandingReveal 入场，尊重 prefers-reduced-motion -->
+      <LandingSection
+        id="lp-console"
+        divider
+        :eyebrow="t('home.sections.preview')"
+        :title="t('home.preview.title')"
+        :subtitle="t('home.preview.subtitle')"
+      >
+        <LandingReveal>
+          <LandingConsolePreview :site-name="siteName" />
+        </LandingReveal>
+      </LandingSection>
+
+      <LandingSection
+        divider
+        :eyebrow="t('home.sections.painPoints')"
+        :title="t('home.painPoints.title')"
+      >
+        <LandingPainPoints />
+      </LandingSection>
+
+      <LandingSection
+        divider
+        :eyebrow="t('home.sections.features')"
+        :title="t('home.solutions.title')"
+      >
+        <LandingFeatures />
+      </LandingSection>
+
+      <LandingSection
+        divider
+        :eyebrow="t('home.sections.solutions')"
+        :title="t('home.solutions.subtitle')"
+      >
+        <LandingSteps :base-url="baseUrl" />
+      </LandingSection>
+
+      <LandingSection
+        divider
+        :eyebrow="t('home.sections.comparison')"
+        :title="t('home.comparison.title')"
+      >
+        <LandingComparison />
+      </LandingSection>
+
+      <LandingSection
+        divider
+        :eyebrow="t('home.sections.providers')"
+        :title="t('home.providers.title')"
+        :subtitle="t('home.providers.description')"
+      >
+        <LandingProviders />
+      </LandingSection>
+
+      <LandingSection
+        divider
+        :eyebrow="t('home.sections.faq')"
+        :title="t('home.faq.title')"
+        :subtitle="t('home.faq.subtitle')"
+      >
+        <LandingFaq />
+      </LandingSection>
+
+      <section class="lp-cta-section">
+        <div class="lp-shell">
+          <LandingCtaBand
+            :primary-to="primaryCtaTo"
+            :primary-label="bandCtaLabel"
+            :doc-url="docUrl"
+          />
         </div>
-      </div>
-
-      <!-- Feature Tags -->
-      <div class="landing-tags">
-        <span class="tag-chip">
-          <Icon name="swap" size="sm" class="tag-chip-icon" />
-          {{ t('home.tags.subscriptionToApi') }}
-        </span>
-        <span class="tag-chip">
-          <Icon name="shield" size="sm" class="tag-chip-icon" />
-          {{ t('home.tags.stickySession') }}
-        </span>
-        <span class="tag-chip">
-          <Icon name="chart" size="sm" class="tag-chip-icon" />
-          {{ t('home.tags.realtimeBilling') }}
-        </span>
-      </div>
-
-      <!-- Features Grid -->
-      <div class="landing-grid">
-        <div class="card card-hover landing-feature">
-          <div class="feature-icon tint-blue">
-            <Icon name="server" size="lg" />
-          </div>
-          <h3 class="feature-title">{{ t('home.features.unifiedGateway') }}</h3>
-          <p class="feature-desc">{{ t('home.features.unifiedGatewayDesc') }}</p>
-        </div>
-
-        <div class="card card-hover landing-feature">
-          <div class="feature-icon tint-purple">
-            <Icon name="users" size="lg" />
-          </div>
-          <h3 class="feature-title">{{ t('home.features.multiAccount') }}</h3>
-          <p class="feature-desc">{{ t('home.features.multiAccountDesc') }}</p>
-        </div>
-
-        <div class="card card-hover landing-feature">
-          <div class="feature-icon tint-green">
-            <Icon name="creditCard" size="lg" />
-          </div>
-          <h3 class="feature-title">{{ t('home.features.balanceQuota') }}</h3>
-          <p class="feature-desc">{{ t('home.features.balanceQuotaDesc') }}</p>
-        </div>
-      </div>
-
-      <!-- Supported Providers -->
-      <div class="landing-providers">
-        <h2 class="landing-section-title">{{ t('home.providers.title') }}</h2>
-        <p class="landing-section-sub">{{ t('home.providers.description') }}</p>
-
-        <div class="provider-list">
-          <div class="provider-chip">
-            <span class="provider-mark provider-mark-claude">C</span>
-            <span class="provider-name">{{ t('home.providers.claude') }}</span>
-            <span class="badge b-green">{{ t('home.providers.supported') }}</span>
-          </div>
-          <div class="provider-chip">
-            <span class="provider-mark provider-mark-gpt">G</span>
-            <span class="provider-name">GPT</span>
-            <span class="badge b-green">{{ t('home.providers.supported') }}</span>
-          </div>
-          <div class="provider-chip">
-            <span class="provider-mark provider-mark-gemini">G</span>
-            <span class="provider-name">{{ t('home.providers.gemini') }}</span>
-            <span class="badge b-green">{{ t('home.providers.supported') }}</span>
-          </div>
-          <div class="provider-chip">
-            <span class="provider-mark provider-mark-antigravity">A</span>
-            <span class="provider-name">{{ t('home.providers.antigravity') }}</span>
-            <span class="badge b-green">{{ t('home.providers.supported') }}</span>
-          </div>
-          <div class="provider-chip provider-chip-soon">
-            <span class="provider-mark provider-mark-more">+</span>
-            <span class="provider-name">{{ t('home.providers.more') }}</span>
-            <span class="gpill">{{ t('home.providers.soon') }}</span>
-          </div>
-        </div>
-      </div>
+      </section>
     </main>
 
     <!-- Footer -->
@@ -268,7 +240,10 @@
         <p class="landing-copy">
           &copy; {{ currentYear }} {{ siteName }}. {{ t('home.footer.allRightsReserved') }}
         </p>
-        <div class="flex items-center gap-4">
+        <div class="landing-footer-links">
+          <router-link to="/key-usage" class="landing-link">
+            {{ t('keyUsage.title') }}
+          </router-link>
           <a
             v-if="docUrl"
             :href="docUrl"
@@ -300,6 +275,19 @@ import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
 import Icon from '@/components/icons/Icon.vue'
 import { sanitizeUrl } from '@/utils/url'
 import { useTheme } from '@/composables/useTheme'
+import LandingHero from '@/components/landing/LandingHero.vue'
+import LandingTerminal from '@/components/landing/LandingTerminal.vue'
+import LandingCapabilities from '@/components/landing/LandingCapabilities.vue'
+import LandingSection from '@/components/landing/LandingSection.vue'
+import LandingReveal from '@/components/landing/LandingReveal.vue'
+import LandingConsolePreview from '@/components/landing/LandingConsolePreview.vue'
+import LandingPainPoints from '@/components/landing/LandingPainPoints.vue'
+import LandingFeatures from '@/components/landing/LandingFeatures.vue'
+import LandingSteps from '@/components/landing/LandingSteps.vue'
+import LandingComparison from '@/components/landing/LandingComparison.vue'
+import LandingProviders from '@/components/landing/LandingProviders.vue'
+import LandingFaq from '@/components/landing/LandingFaq.vue'
+import LandingCtaBand from '@/components/landing/LandingCtaBand.vue'
 
 const { t } = useI18n()
 const { isDark, toggleTheme } = useTheme()
@@ -333,6 +321,47 @@ const userInitial = computed(() => {
   if (!user || !user.email) return ''
   return user.email.charAt(0).toUpperCase()
 })
+
+/**
+ * 注册开关：registration_enabled 是既有公开设置（src/types/index.ts）。
+ * 关闭时把主 CTA 指回 /login，避免把访客送到一个"注册已关闭"的死路上，
+ * 同时不展示"送试用额度"这类承诺。
+ */
+const registrationEnabled = computed(
+  () => appStore.cachedPublicSettings?.registration_enabled === true
+)
+
+/**
+ * 公开设置是否已就位。用于门控首屏主 CTA：设置未到位时
+ * registrationEnabled 恒为 false，若直接渲染会出现「登录 → 立即开始」的文案跳变。
+ * 生产环境从 window.__APP_CONFIG__ 同步注入，挂载前即为 true。
+ */
+const settingsReady = computed(() => appStore.publicSettingsLoaded)
+
+/** 主 CTA 目标：已登录 → 控制台；可注册 → 注册页；否则 → 登录页 */
+const primaryCtaTo = computed(() => {
+  if (isAuthenticated.value) return dashboardPath.value
+  return registrationEnabled.value ? '/register' : '/login'
+})
+
+const heroCtaLabel = computed(() => {
+  if (isAuthenticated.value) return t('home.goToDashboard')
+  return registrationEnabled.value ? t('home.getStarted') : t('home.login')
+})
+
+const bandCtaLabel = computed(() => {
+  if (isAuthenticated.value) return t('home.goToDashboard')
+  return registrationEnabled.value ? t('home.cta.button') : t('home.login')
+})
+
+const showHeroNote = computed(
+  () => settingsReady.value && !isAuthenticated.value && registrationEnabled.value
+)
+
+/** 代码示例里的 Base URL：用当前站点来源，比写死示例域名更可信 */
+const baseUrl = computed(() =>
+  typeof window === 'undefined' ? 'https://your-domain.example' : window.location.origin
+)
 
 // Current year for footer
 const currentYear = computed(() => new Date().getFullYear())
@@ -441,12 +470,45 @@ onMounted(() => {
   gap: 12px;
 }
 
+/*
+  品牌区取剩余空间并允许省略号截断；操作簇 flex:none 永不收缩。
+  Phase B 教训 #7：site_name 长度不可预期，绝不能让它成为唯一可压缩项被压成 "S"。
+*/
+.landing-brand {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.landing-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+/*
+  极窄屏隐藏文档图标：操作簇是 flex:none，宽度只增不减，
+  留给品牌名的空间会被它挤没。收掉这个**可选**入口，
+  比给 wordmark 加 min-width 更安全——后者只是把溢出从品牌名转移到整行。
+  文档入口在页脚仍然可达，不会丢失。
+*/
+@media (max-width: 420px) {
+  .landing-nav-docs {
+    display: none;
+  }
+}
+
 .wordmark {
+  max-width: 100%;
   font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--text-primary);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .avatar-mini {
@@ -465,42 +527,47 @@ onMounted(() => {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 64px 20px 32px;
   flex: 1;
 }
 
+/* 紧凑首页保留自己的内容盒；完整落地页由各 section 自带内边距 */
 .landing-main-center {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 40px;
-  padding-bottom: 40px;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 40px 20px;
 }
 
-/* Hero */
-.landing-hero-split {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 48px;
-  align-items: center;
-  margin-bottom: 56px;
-}
-@media (min-width: 1024px) {
-  .landing-hero-split {
-    grid-template-columns: 1.05fr 0.95fr;
-    gap: 64px;
-  }
+/* -------- 完整落地页版式骨架 -------- */
+.lp-shell {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
+.lp-hero-section {
+  padding: 64px 0 8px;
+}
+
+.lp-caps-wrap {
+  margin-top: 56px;
+}
+
+.lp-cta-section {
+  padding: 24px 0 88px;
+}
+
+/* 锚点：留出磨砂顶栏的高度，避免标题被压在栏下 */
+#lp-console {
+  scroll-margin-top: calc(var(--gn-height, 48px) + 16px);
+}
+
+/* -------- 紧凑首页专用（.landing-compact 分支） -------- */
 .landing-hero {
   text-align: center;
-}
-@media (min-width: 1024px) {
-  .landing-hero {
-    text-align: left;
-  }
 }
 
 .landing-title {
@@ -508,6 +575,7 @@ onMounted(() => {
   font-weight: 700;
   line-height: 1.05;
   letter-spacing: -0.045em;
+  overflow-wrap: anywhere;
   background: linear-gradient(120deg, var(--blue) 10%, var(--purple) 55%, var(--teal) 90%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -520,10 +588,8 @@ onMounted(() => {
   line-height: 1.6;
   color: var(--text-secondary);
   max-width: 520px;
+  margin-inline: auto;
   overflow-wrap: anywhere;
-}
-@media (min-width: 1024px) {
-  .landing-sub { margin-inline: 0; }
 }
 
 .landing-cta-row {
@@ -531,164 +597,11 @@ onMounted(() => {
   display: flex;
   justify-content: center;
 }
-@media (min-width: 1024px) {
-  .landing-cta-row { justify-content: flex-start; }
-}
 
 .landing-cta {
   height: 46px;
   padding: 0 30px;
   font-size: 15px;
-}
-
-.landing-hero-visual {
-  display: flex;
-  justify-content: center;
-}
-
-/* Feature tags */
-.landing-tags {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 48px;
-}
-
-.tag-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 36px;
-  padding: 0 16px;
-  border-radius: var(--r-pill);
-  background: var(--fill);
-  border: 0.5px solid var(--separator);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.tag-chip-icon {
-  color: var(--blue);
-}
-
-/* Features grid */
-.landing-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 18px;
-  margin-bottom: 56px;
-}
-@media (min-width: 768px) {
-  .landing-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.landing-feature {
-  padding: 26px 24px;
-}
-
-.feature-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 16px;
-}
-
-.feature-title {
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
-  margin-bottom: 8px;
-}
-
-.feature-desc {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--text-secondary);
-}
-
-/* Providers */
-.landing-providers {
-  text-align: center;
-  margin-bottom: 24px;
-}
-
-.landing-section-title {
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--text-primary);
-}
-
-.landing-section-sub {
-  margin-top: 8px;
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.provider-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.provider-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px 10px 10px;
-  border-radius: var(--r-lg);
-  background: var(--bg-elevated);
-  border: 0.5px solid var(--separator);
-  box-shadow: var(--shadow-card);
-}
-
-.provider-chip-soon {
-  opacity: 0.6;
-}
-
-.provider-mark {
-  display: flex;
-  width: 32px;
-  height: 32px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
-}
-
-/* 品牌字形配色(Claude/GPT/Gemini/Antigravity 厂商品牌色,保留) */
-.provider-mark-claude {
-  background: linear-gradient(160deg, #d97757, #c2612f);
-}
-.provider-mark-gpt {
-  background: linear-gradient(160deg, #34c759, #28a745);
-}
-.provider-mark-gemini {
-  background: linear-gradient(160deg, #4285f4, #3b76e0);
-}
-.provider-mark-antigravity {
-  background: linear-gradient(160deg, #f43f5e, #db2777);
-}
-.provider-mark-more {
-  background: linear-gradient(160deg, #6e6e73, #3a3a3c);
-}
-
-.provider-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-primary);
 }
 
 /* Footer */
@@ -719,6 +632,14 @@ onMounted(() => {
   justify-content: center;
 }
 
+.landing-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
 .landing-copy {
   font-size: 13px;
   color: var(--text-tertiary);
@@ -734,151 +655,23 @@ onMounted(() => {
   text-decoration: none;
 }
 
-/* =========================================================================
-   Terminal 装饰窗(固定深色表面,明暗模式均保持深色终端观感)
-   ========================================================================= */
-.terminal-container {
-  position: relative;
-  display: inline-block;
-  width: min(420px, 100%);
-}
-
-.terminal-window {
-  background: linear-gradient(145deg, #1c1c1e 0%, #000000 100%);
-  border-radius: var(--r-lg);
-  border: 0.5px solid var(--separator);
-  box-shadow: var(--shadow-pop), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  overflow: hidden;
-  transform: perspective(1000px) rotateX(2deg) rotateY(-2deg);
-  transition: transform 0.3s var(--ease);
-}
-
-.terminal-window:hover {
-  transform: perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(-4px);
-}
-
-.terminal-header {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  background: rgba(28, 28, 30, 0.7);
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
-}
-
-.terminal-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.terminal-buttons span {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-
-.btn-close {
-  background: var(--red);
-}
-.btn-minimize {
-  background: var(--orange);
-}
-.btn-maximize {
-  background: var(--green);
-}
-
-.terminal-title {
-  flex: 1;
-  text-align: center;
-  font-size: 12px;
-  font-family: ui-monospace, monospace;
-  color: var(--text-tertiary);
-  margin-right: 52px;
-}
-
-.terminal-body {
-  padding: 20px 24px;
-  font-family: ui-monospace, 'Fira Code', monospace;
-  font-size: 13.5px;
-  line-height: 2;
-}
-
-.code-line {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  opacity: 0;
-  animation: line-appear 0.5s var(--ease) forwards;
-}
-
-.line-1 { animation-delay: 0.3s; }
-.line-2 { animation-delay: 1s; }
-.line-3 { animation-delay: 1.8s; }
-.line-4 { animation-delay: 2.5s; }
-
-@keyframes line-appear {
-  from {
-    opacity: 0;
-    transform: translateY(5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* 语法高亮:全部走 iOS 语义色,明暗模式均保持可读 */
-.code-prompt {
-  color: var(--green);
-  font-weight: bold;
-}
-.code-cmd {
-  color: var(--blue-ios);
-}
-.code-flag {
-  color: var(--purple);
-}
-.code-url {
-  color: var(--teal);
-}
-.code-comment {
-  color: var(--text-tertiary);
-  font-style: italic;
-}
-.code-success {
-  color: var(--green);
-  background: rgba(52, 199, 89, 0.16);
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-weight: 600;
-}
-.code-response {
-  color: var(--orange);
-}
-
-/* Blinking Cursor */
-.cursor {
-  display: inline-block;
-  width: 8px;
-  height: 16px;
-  background: var(--green);
-  animation: blink 1s step-end infinite;
-}
-
-@keyframes blink {
-  0%,
-  50% {
-    opacity: 1;
-  }
-  51%,
-  100% {
-    opacity: 0;
-  }
-}
+/* 终端装饰窗的样式已随组件迁到 components/landing/LandingTerminal.vue */
 
 @media (max-width: 768px) {
-  .landing-main {
-    padding: 40px 16px 24px;
+  .lp-shell {
+    padding: 0 16px;
+  }
+  .lp-hero-section {
+    padding: 40px 0 8px;
+  }
+  .lp-caps-wrap {
+    margin-top: 40px;
+  }
+  .lp-cta-section {
+    padding: 16px 0 64px;
+  }
+  .landing-main-center {
+    padding: 40px 16px;
   }
   .landing-title {
     font-size: 38px;
@@ -886,9 +679,7 @@ onMounted(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .landing-spot,
-  .code-line,
-  .cursor {
+  .landing-spot {
     animation: none;
   }
 }

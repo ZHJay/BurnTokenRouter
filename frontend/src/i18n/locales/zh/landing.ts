@@ -14,6 +14,80 @@ export default {
     login: '登录',
     getStarted: '立即开始',
     goToDashboard: '进入控制台',
+    // Hero 区（apple.com 产品页式：品牌名 + 大号价值主张 + 双层 CTA）
+    hero: {
+      eyebrow: '统一 AI 网关',
+      note: '注册即可获得试用额度，无需绑定信用卡',
+      secondaryCta: '了解详情',
+      visualCaption: '一次请求经网关调度到上游账号的示意',
+      terminalComment: '正在调度上游账号…',
+    },
+    // 能力条：陈述平台能力，不使用未经核实的运营数据
+    capabilities: {
+      models: { value: '4 大', label: '模型家族', desc: 'Claude · GPT · Gemini · Antigravity' },
+      protocol: { value: '原生', label: '协议兼容', desc: '沿用官方 SDK 与请求格式' },
+      billing: { value: '按量', label: '实时计费', desc: 'Token 级别用量与费用明细' },
+      selfHosted: { value: '自托管', label: '数据自主', desc: '部署在你自己的服务器上' },
+    },
+    // 控制台预览（纯 CSS 绘制的产品视觉区，非真实数据）
+    preview: {
+      title: '一个控制台，看清全部用量',
+      subtitle: '实时请求量、费用、模型分布与密钥状态，集中在同一个视图里。',
+      caption: '控制台示意图：统计卡、近 7 日用量趋势与模型明细表',
+      windowTitle: '控制台',
+      nav: { overview: '概览', keys: '密钥', usage: '用量' },
+      stats: { requests: '今日请求', tokens: '今日 Tokens', cost: '今日费用', success: '成功率' },
+      chartTitle: '近 7 日用量',
+      tableTitle: '模型明细',
+      tableHeaders: { model: '模型', requests: '请求', cost: '费用' },
+    },
+    // 三步接入
+    steps: {
+      stepLabel: '第 {index} 步',
+      codeCaption: '把请求地址指向本平台，其余代码保持不变',
+      items: {
+        register: { title: '注册账号', desc: '邮箱注册即可开始，无需绑定信用卡。' },
+        key: { title: '创建密钥', desc: '在控制台生成 API 密钥，按需设置额度上限与有效期。' },
+        call: { title: '替换请求地址', desc: '把官方 Base URL 换成本平台地址，沿用原有 SDK 调用方式。' },
+      },
+    },
+    // 常见问题
+    faq: {
+      title: '常见问题',
+      subtitle: '开始之前，你可能想确认这些',
+      items: {
+        compat: {
+          q: '需要改动现有代码吗？',
+          a: '不需要重写业务逻辑。把 SDK 的 Base URL 指向本平台、把密钥换成平台签发的密钥即可，请求与返回格式沿用官方协议。',
+        },
+        billing: {
+          q: '费用怎么计算？',
+          a: '按实际消耗的 Token 计费，输入、输出与缓存分别计价。控制台可按密钥、模型与日期查看明细，也可以为每个密钥设置额度上限。',
+        },
+        limit: {
+          q: '会触发上游限流吗？',
+          a: '平台维护由多个上游账号组成的池子，触发限流或异常时自动切换到可用账号，并保持同一会话固定在同一上游，避免上下文缓存失效。',
+        },
+        privacy: {
+          q: '请求内容会被保存吗？',
+          a: '平台默认只记录调用元数据（时间、模型、Token 数与费用）用于计费与用量统计。是否保留更详细的内容，由部署方在后台自行配置。',
+        },
+        models: {
+          q: '支持哪些模型？',
+          a: '当前已接入 Claude、GPT、Gemini 与 Antigravity 系列，后续会继续扩展。实际可用模型取决于管理员在后台配置的上游账号。',
+        },
+      },
+    },
+    // 各区块小标签（eyebrow）
+    sections: {
+      preview: '控制台',
+      painPoints: '现状',
+      solutions: '快速开始',
+      features: '核心能力',
+      comparison: '对比',
+      providers: '已接入模型',
+      faq: '答疑',
+    },
     // 新增：面向用户的价值主张
     heroSubtitle: '一个密钥，畅用多个 AI 模型',
     heroDescription: '无需管理多个订阅账号，一站式接入 Claude、GPT、Gemini 等主流 AI 服务',
@@ -55,7 +129,13 @@ export default {
       multiAccount: '稳定可靠',
       multiAccountDesc: '智能调度多个上游账号，自动切换和负载均衡，告别频繁报错。',
       balanceQuota: '用多少付多少',
-      balanceQuotaDesc: '按实际使用量计费，支持设置配额上限，团队用量一目了然。'
+      balanceQuotaDesc: '按实际使用量计费，支持设置配额上限，团队用量一目了然。',
+      observability: '用量看得见',
+      observabilityDesc: '按密钥、模型与日期查看请求数、Token 与费用明细，可导出留档。',
+      session: '会话保持',
+      sessionDesc: '同一会话固定到同一上游账号，上下文缓存不中断。',
+      security: '密钥可控',
+      securityDesc: '每个密钥独立设置额度、有效期与模型范围，随时停用不影响其他调用。'
     },
     // 优势对比
     comparison: {
@@ -107,7 +187,8 @@ export default {
     cta: {
       title: '准备好开始了吗？',
       description: '注册即可获得免费试用额度，体验一站式 AI 服务',
-      button: '免费注册'
+      button: '免费注册',
+      secondary: '先看文档'
     },
     footer: {
       allRightsReserved: '保留所有权利。'

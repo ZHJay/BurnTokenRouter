@@ -14,6 +14,80 @@ export default {
     login: 'Login',
     getStarted: 'Get Started',
     goToDashboard: 'Go to Dashboard',
+    // Hero (apple.com product-page shape: wordmark + large value prop + two-tier CTA)
+    hero: {
+      eyebrow: 'Unified AI Gateway',
+      note: 'Trial credits on signup. No credit card required.',
+      secondaryCta: 'Learn more',
+      visualCaption: 'How one request is routed to an upstream account',
+      terminalComment: 'routing to an upstream account…',
+    },
+    // Capability strip: states platform capabilities, no unverified operational metrics
+    capabilities: {
+      models: { value: '4', label: 'Model families', desc: 'Claude · GPT · Gemini · Antigravity' },
+      protocol: { value: 'Native', label: 'Protocol compatible', desc: 'Keep your official SDKs and payloads' },
+      billing: { value: 'Metered', label: 'Real-time billing', desc: 'Token-level usage and cost breakdown' },
+      selfHosted: { value: 'Self-hosted', label: 'Your infrastructure', desc: 'Runs on servers you control' },
+    },
+    // Console preview (pure-CSS product visual, not live data)
+    preview: {
+      title: 'One console for all your usage',
+      subtitle: 'Live request volume, spend, model mix and key status — all in a single view.',
+      caption: 'Console mockup: stat cards, a 7-day usage trend and a per-model breakdown',
+      windowTitle: 'Console',
+      nav: { overview: 'Overview', keys: 'Keys', usage: 'Usage' },
+      stats: { requests: 'Requests today', tokens: 'Tokens today', cost: 'Spend today', success: 'Success rate' },
+      chartTitle: 'Last 7 days',
+      tableTitle: 'By model',
+      tableHeaders: { model: 'Model', requests: 'Requests', cost: 'Cost' },
+    },
+    // Three-step onboarding
+    steps: {
+      stepLabel: 'Step {index}',
+      codeCaption: 'Point the base URL at this platform — the rest of your code stays as it is',
+      items: {
+        register: { title: 'Create an account', desc: 'Sign up with an email address. No credit card required.' },
+        key: { title: 'Issue a key', desc: 'Generate an API key in the console, with the quota and expiry you want.' },
+        call: { title: 'Swap the base URL', desc: 'Replace the official base URL with this platform and keep calling through your existing SDK.' },
+      },
+    },
+    // FAQ
+    faq: {
+      title: 'Frequently asked questions',
+      subtitle: 'A few things worth confirming before you start',
+      items: {
+        compat: {
+          q: 'Do I have to rewrite my code?',
+          a: 'No. Point your SDK at this platform\'s base URL and swap in a key issued here — request and response formats follow the official protocols.',
+        },
+        billing: {
+          q: 'How is usage billed?',
+          a: 'By tokens actually consumed, with input, output and cache priced separately. The console breaks spend down by key, model and date, and every key can carry its own quota ceiling.',
+        },
+        limit: {
+          q: 'What happens when an upstream rate-limits me?',
+          a: 'The platform keeps a pool of upstream accounts and fails over to a healthy one automatically, while pinning a conversation to the same upstream so prompt caching stays warm.',
+        },
+        privacy: {
+          q: 'Are my request payloads stored?',
+          a: 'By default only call metadata is recorded — timestamp, model, token counts and cost — for billing and usage reporting. Anything more detailed is a deployment-level setting the operator controls.',
+        },
+        models: {
+          q: 'Which models are supported?',
+          a: 'Claude, GPT, Gemini and Antigravity families today, with more planned. What you can actually call depends on the upstream accounts your administrator has configured.',
+        },
+      },
+    },
+    // Section eyebrows
+    sections: {
+      preview: 'Console',
+      painPoints: 'The status quo',
+      solutions: 'Get started',
+      features: 'Capabilities',
+      comparison: 'Comparison',
+      providers: 'Available models',
+      faq: 'Answers',
+    },
     // User-focused value proposition
     heroSubtitle: 'One Key, All AI Models',
     heroDescription: 'No need to manage multiple subscriptions. Access Claude, GPT, Gemini and more with a single API key',
@@ -55,7 +129,13 @@ export default {
       multiAccount: 'Always Reliable',
       multiAccountDesc: 'Smart routing across multiple upstream accounts with automatic failover. Say goodbye to errors.',
       balanceQuota: 'Pay What You Use',
-      balanceQuotaDesc: 'Usage-based billing with quota limits. Full visibility into team consumption.'
+      balanceQuotaDesc: 'Usage-based billing with quota limits. Full visibility into team consumption.',
+      observability: 'Usage you can see',
+      observabilityDesc: 'Requests, tokens and cost broken down by key, model and date — exportable for your records.',
+      session: 'Sticky sessions',
+      sessionDesc: 'A conversation stays pinned to one upstream account, so prompt caching is never interrupted.',
+      security: 'Keys under control',
+      securityDesc: 'Per-key quota, expiry and model scope. Revoke one without disturbing the others.'
     },
     // Comparison section
     comparison: {
@@ -107,7 +187,8 @@ export default {
     cta: {
       title: 'Ready to Get Started?',
       description: 'Sign up now and get free trial credits to experience seamless AI access',
-      button: 'Sign Up Free'
+      button: 'Sign Up Free',
+      secondary: 'Read the docs'
     },
     footer: {
       allRightsReserved: 'All rights reserved.'
