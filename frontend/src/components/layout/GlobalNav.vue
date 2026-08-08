@@ -85,9 +85,13 @@
         <button
           type="button"
           class="gn-icon-btn"
+          v-if="commandEntries.length > 0"
           :aria-label="t('nav.search')"
-          :aria-expanded="searchOpen"
-          @click="toggleSearch"
+          :title="`${t('nav.search')} · ${commandShortcut}`"
+          aria-haspopup="dialog"
+          :aria-expanded="paletteOpen"
+          aria-keyshortcuts="Meta+K Control+K"
+          @click="togglePalette"
         >
           <Icon name="search" />
         </button>
@@ -250,37 +254,25 @@
       </div>
     </div>
 
-    <!-- Expanding full-width search bar -->
-    <div class="gn-search-bar" :class="{ open: searchOpen }" role="search">
-      <div class="gn-search-inner">
-        <div class="gn-search-input">
-          <Icon name="search" />
-          <input
-            ref="searchInputRef"
-            type="search"
-            :placeholder="t('nav.searchPlaceholder')"
-            :aria-label="t('nav.search')"
-            v-model="searchQuery"
-            @keydown.esc="closeSearch"
-          />
-        </div>
-        <div v-if="searchQuery.trim()" class="gn-search-results" :aria-label="t('nav.searchResults')">
-          <router-link
-            v-for="result in searchResults"
-            :key="result.path"
-            :to="result.path"
-            @click="handleSearchResultClick"
-          >
-            {{ result.label }}
-          </router-link>
-          <div v-if="searchResults.length === 0" class="empty">{{ t('nav.searchNoResults') }}</div>
-        </div>
-      </div>
-    </div>
+    <!--
+      Global command palette (⌘K / Ctrl+K). Lives inside `<nav>` so the existing
+      outside-click handler treats it as part of the bar; its root carries
+      `.gn-search-bar`, which is the panel contract the QA harnesses assert on.
+    -->
+    <CommandPalette
+      v-if="commandEntries.length > 0"
+      v-model:open="paletteOpen"
+      :entries="commandEntries"
+      @select="handleCommandSelect"
+    />
   </nav>
 
-  <!-- Curtain: dims the page while a flyout is open -->
-  <div class="gn-curtain" :class="{ open: openFlyout !== null }" aria-hidden="true"></div>
+  <!-- Curtain: dims the page behind an open flyout or the command palette -->
+  <div
+    class="gn-curtain"
+    :class="{ open: openFlyout !== null || paletteOpen }"
+    aria-hidden="true"
+  ></div>
 
   <!-- Mobile fullscreen menu -->
   <div
@@ -344,17 +336,24 @@ import { useI18n } from 'vue-i18n'
 import '@/styles/global-nav.css'
 import { useAdminSettingsStore, useAppStore, useAuthStore, useOnboardingStore } from '@/stores'
 import AnnouncementBell from '@/components/common/AnnouncementBell.vue'
+import CommandPalette from '@/components/command/CommandPalette.vue'
 import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
 import SubscriptionProgressMini from '@/components/common/SubscriptionProgressMini.vue'
 import VersionBadge from '@/components/common/VersionBadge.vue'
 import Icon from '@/components/icons/Icon.vue'
 import { useTheme } from '@/composables/useTheme'
+import {
+  commandShortcutLabel,
+  lockBodyScroll,
+  unlockBodyScroll,
+} from '@/composables/useCommandPalette'
 import { useBatchImageAccess } from '@/composables/useBatchImageAccess'
 import { sanitizeSvg } from '@/utils/sanitize'
 import { sanitizeUrl } from '@/utils/url'
 import { FeatureFlags, isFeatureFlagEnabled, makeSidebarFlag } from '@/utils/featureFlags'
 import {
   buildAdminNavItems,
+  buildCommandEntries,
   buildSelfNavItems,
   finalizeNav,
   groupAdminNav,
@@ -362,6 +361,8 @@ import {
   resolveNavLabel,
   sortCustomItems,
   type NavDeps,
+  type CommandEntry,
+  type CommandGroupSource,
   type GroupedAdminFlyout,
 } from './navItems'
 
@@ -562,47 +563,74 @@ const pinnedFlyout = ref<string | null>(null)
 const hoverFlyout = ref<string | null>(null)
 const openFlyout = computed<string | null>(() => pinnedFlyout.value ?? hoverFlyout.value)
 const dropdownOpen = ref(false)
-const searchOpen = ref(false)
-const searchQuery = ref('')
+const paletteOpen = ref(false)
 const mobileOpen = ref(false)
 const navRef = ref<HTMLElement | null>(null)
 const dropdownRef = ref<HTMLElement | null>(null)
-const searchInputRef = ref<HTMLInputElement | null>(null)
 const mobileRef = ref<HTMLElement | null>(null)
 const mobileMenuId = 'gn-mobile-menu'
 
-const searchResults = computed(() => {
-  const query = searchQuery.value.trim().toLowerCase()
-  if (!query) return []
-  const out: { path: string; label: string }[] = []
-  const seen = new Set<string>()
-  for (const link of searchableLinks.value) {
-    if (link.label.toLowerCase().includes(query) && !seen.has(link.path)) {
-      seen.add(link.path)
-      out.push(link)
-      if (out.length >= 8) break
-    }
+/* ---------------- Command palette source (⌘K) ---------------- */
+/**
+ * The palette is fed the SAME already-filtered lists the bar renders — never
+ * the raw builders.
+ *
+ * This is a functional requirement, not a stylistic one: `featureFlag` decides
+ * whether a feature is switched on for this deployment and `hideInSimpleMode`
+ * decides whether this user's mode exposes it. Re-deriving the list for search
+ * would make disabled or unauthorized pages findable and navigable from ⌘K —
+ * a real access/UX leak, not a cosmetic bug. `groupedAdmin` / `userNavItems` /
+ * `personalNavItems` have both filters already applied, so reusing them keeps
+ * the palette and the bar honest by construction.
+ *
+ * Result grouping mirrors the bar: top-level links, then one group per flyout
+ * mega-menu column set, then the user's own account pages last.
+ */
+const commandGroupSources = computed<CommandGroupSource[]>(() => {
+  if (navKind.value === 'none') return []
+
+  if (navKind.value === 'user') {
+    // `userNavItems` is a superset of `personalNavItems` (it only adds the
+    // dashboard), so one group covers everything a user can reach.
+    return [{ key: 'pages', labelKey: 'nav.commandGroupPages', items: userNavItems.value }]
   }
-  return out
+
+  const sources: CommandGroupSource[] = []
+  const grouped = groupedAdmin.value
+  if (grouped) {
+    sources.push({
+      key: 'pages',
+      labelKey: 'nav.commandGroupPages',
+      items: [...grouped.topLevel, ...grouped.extra],
+    })
+    for (const group of grouped.groups) {
+      sources.push({
+        key: group.key,
+        labelKey: group.labelKey,
+        items: group.columns.flatMap((column) => column.items),
+      })
+    }
+  } else {
+    // Admin simple mode: flat list, no flyout groups.
+    sources.push({ key: 'pages', labelKey: 'nav.commandGroupPages', items: adminNavItems.value })
+  }
+
+  // The admin's own account pages (keys / usage / profile …). Paths already
+  // present above are deduped away by `buildCommandEntries`.
+  sources.push({
+    key: 'account',
+    labelKey: 'nav.commandGroupAccount',
+    items: personalNavItems.value,
+  })
+  return sources
 })
 
-const searchableLinks = computed(() => {
-  const links: { path: string; label: string }[] = []
-  const seen = new Set<string>()
-  const push = (path: string, label: string) => {
-    if (seen.has(path)) return
-    seen.add(path)
-    links.push({ path, label })
-  }
-  for (const item of desktopTopLinks.value) push(item.path, resolveNavLabel(item, t))
-  for (const group of desktopGroups.value) {
-    for (const column of group.columns) {
-      for (const item of column.items) push(item.path, resolveNavLabel(item, t))
-    }
-  }
-  for (const item of personalNavItems.value) push(item.path, resolveNavLabel(item, t))
-  return links
-})
+const commandEntries = computed<CommandEntry[]>(() =>
+  buildCommandEntries(commandGroupSources.value, t),
+)
+
+/** Platform-correct hint for the bar button tooltip (⌘K vs Ctrl K). */
+const commandShortcut = commandShortcutLabel()
 
 /* ---------------- Active state ---------------- */
 function isActive(path: string): boolean {
@@ -696,26 +724,33 @@ function handleFlyoutFocusOut(key: string, event: FocusEvent) {
   if (pinnedFlyout.value === key) pinnedFlyout.value = null
 }
 
-/* ---------------- Search ---------------- */
-function toggleSearch() {
-  searchOpen.value = !searchOpen.value
-  if (searchOpen.value) {
-    closeFlyout()
-    void nextTick(() => {
-      window.setTimeout(() => searchInputRef.value?.focus(), 120)
-    })
-  } else {
-    searchQuery.value = ''
+/* ---------------- Command palette ---------------- */
+function closePalette() {
+  paletteOpen.value = false
+}
+
+/**
+ * The palette is modal, so it takes over from the other transient surfaces
+ * rather than stacking on top of them. Query reset, focus capture/restore and
+ * body-scroll locking are handled inside `useCommandPalette`, keyed off this
+ * flag — so the button path and the ⌘K path behave identically.
+ */
+function togglePalette() {
+  if (paletteOpen.value) {
+    closePalette()
+    return
   }
+  closeFlyout()
+  closeDropdown()
+  closeMobileMenu()
+  paletteOpen.value = true
 }
 
-function closeSearch() {
-  searchOpen.value = false
-  searchQuery.value = ''
-}
-
-function handleSearchResultClick() {
-  closeSearch()
+function handleCommandSelect(entry: CommandEntry) {
+  // Reuses the nav-link path so the onboarding tour advances exactly as it does
+  // for a click in the bar.
+  handleLinkClick(entry)
+  void router.push(entry.path)
 }
 
 /* ---------------- Mobile menu ---------------- */
@@ -724,7 +759,7 @@ function toggleMobileMenu() {
   if (mobileOpen.value) {
     closeFlyout()
     closeDropdown()
-    closeSearch()
+    closePalette()
     void nextTick(() => {
       const first = mobileRef.value?.querySelector<HTMLElement>('a, button, summary')
       first?.focus()
@@ -788,8 +823,7 @@ function formatHeaderMoney(value: number) {
 function closeAll() {
   closeFlyout()
   dropdownOpen.value = false
-  searchOpen.value = false
-  searchQuery.value = ''
+  paletteOpen.value = false
   if (mobileOpen.value) closeMobileMenu()
 }
 
@@ -797,7 +831,7 @@ function handleDocumentClick(event: MouseEvent) {
   const target = event.target as Node
   if (navRef.value && !navRef.value.contains(target)) {
     if (dropdownOpen.value) closeDropdown()
-    if (searchOpen.value) closeSearch()
+    if (paletteOpen.value) closePalette()
     if (openFlyout.value !== null) closeFlyout()
   }
 }
@@ -806,14 +840,15 @@ function handleDocumentKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     if (openFlyout.value !== null) closeFlyout()
     if (dropdownOpen.value) closeDropdown()
-    if (searchOpen.value) closeSearch()
+    // The palette closes itself (it also has to restore focus), see
+    // useCommandPalette's global listener.
     if (mobileOpen.value) closeMobileMenu()
   }
 }
 
 /* ---------------- Nav link click: close panels + advance tour ---------------- */
 function handleLinkClick(item: { path: string }) {
-  closeSearch()
+  closePalette()
   if (mobileOpen.value) {
     window.setTimeout(() => closeMobileMenu(), 150)
   }
@@ -843,8 +878,22 @@ function flyoutIcon(path: string): NavIconName {
 }
 
 /* ---------------- Body scroll lock while mobile menu is open ---------------- */
+/**
+ * Goes through the reference-counted helper rather than writing
+ * `body.style.overflow` directly, because the command palette locks the same
+ * page. With direct writes, whichever overlay closed last unlocked the page —
+ * including while the other one was still open (the watchers fire in component
+ * creation order, not in "who is still open" order).
+ */
+let mobileHoldsScrollLock = false
 watch(mobileOpen, (open) => {
-  document.body.style.overflow = open ? 'hidden' : ''
+  if (open && !mobileHoldsScrollLock) {
+    lockBodyScroll()
+    mobileHoldsScrollLock = true
+  } else if (!open && mobileHoldsScrollLock) {
+    unlockBodyScroll()
+    mobileHoldsScrollLock = false
+  }
 })
 
 /* ---------------- Lifecycle (from AppSidebar / AppHeader) ---------------- */
@@ -868,7 +917,10 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleDocumentClick)
   document.removeEventListener('keydown', handleDocumentKeydown)
-  document.body.style.overflow = ''
+  if (mobileHoldsScrollLock) {
+    unlockBodyScroll()
+    mobileHoldsScrollLock = false
+  }
 })
 
 // Close everything on route change

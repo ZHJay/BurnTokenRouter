@@ -15,10 +15,12 @@ import { defineComponent, nextTick } from 'vue'
 import { useAppStore, useAuthStore, useAdminSettingsStore } from '@/stores'
 import type { CustomMenuItem, PublicSettings, User } from '@/types'
 import { useTheme } from '@/composables/useTheme'
+import { resetBodyScrollLock } from '@/composables/useCommandPalette'
 import {
   ADMIN_FLYOUT_GROUPS,
   applyFeatureFlags,
   buildAdminNavItems,
+  buildCommandEntries,
   buildSelfNavItems,
   finalizeNav,
   groupAdminNav,
@@ -228,6 +230,31 @@ async function mountNav(options: MountOptions = {}): Promise<{
 /** Desktop nav links only (the mobile menu duplicates the same paths). */
 function link(wrapper: VueWrapper, href: string) {
   return wrapper.find(`.gn-links a[href="${href}"]`)
+}
+
+/* ------------------------------------------------- command palette helpers */
+
+/** The bar's search button — the palette's pointer entry point. */
+function searchButton(wrapper: VueWrapper) {
+  return wrapper.find('button[aria-label="搜索"]')
+}
+
+async function openCommandPalette(wrapper: VueWrapper) {
+  await searchButton(wrapper).trigger('click')
+  await nextTick()
+}
+
+function paletteInput(wrapper: VueWrapper) {
+  return wrapper.find('input[role="combobox"]')
+}
+
+/** Every path currently offered by the palette, in render order. */
+function palettePaths(wrapper: VueWrapper): string[] {
+  return wrapper.findAll('.gn-cmdk-option').map((row) => row.attributes('href') ?? '')
+}
+
+function paletteGroupTitles(wrapper: VueWrapper): string[] {
+  return wrapper.findAll('.gn-cmdk-group-title').map((el) => el.text())
 }
 
 /* ------------------------------------------------------- pure-module tests */
@@ -728,7 +755,325 @@ describe('GlobalNav — re-homed header action cluster', () => {
 
 /* ------------------------------------------------------- module regression */
 
+/**
+ * Command palette (⌘K) integration — Phase C.
+ *
+ * The unit-level behavior (fuzzy matching, arrow keys, focus trap, scroll lock)
+ * is covered in components/command/__tests__/CommandPalette.spec.ts. What can
+ * only be verified here is the part that is a *functional* contract rather than
+ * a visual one: the palette's command source must inherit the bar's
+ * `featureFlag` / `hideInSimpleMode` filtering, so a feature that is switched
+ * off for this deployment — or hidden for this user's mode — cannot be found
+ * and navigated to through search.
+ */
+describe('GlobalNav — command palette (⌘K)', () => {
+  const pressShortcut = () =>
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'k', metaKey: true, cancelable: true }),
+    )
+
+  it('⌘K opens the palette and Escape closes it', async () => {
+    const { wrapper } = await mountNav({ path: '/dashboard', settings: {} })
+
+    expect(wrapper.find('.gn-cmdk-inner').exists()).toBe(false)
+
+    pressShortcut()
+    await nextTick()
+    expect(wrapper.find('.gn-cmdk').classes()).toContain('open')
+    expect(paletteInput(wrapper).exists()).toBe(true)
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    await nextTick()
+    expect(wrapper.find('.gn-cmdk').classes()).not.toContain('open')
+    expect(wrapper.find('.gn-cmdk-inner').exists()).toBe(false)
+
+    wrapper.unmount()
+  })
+
+  it('the bar search button toggles the palette and reports state via aria', async () => {
+    const { wrapper } = await mountNav({ path: '/dashboard', settings: {} })
+    const button = searchButton(wrapper)
+
+    expect(button.attributes('aria-expanded')).toBe('false')
+    expect(button.attributes('aria-haspopup')).toBe('dialog')
+
+    await openCommandPalette(wrapper)
+    expect(searchButton(wrapper).attributes('aria-expanded')).toBe('true')
+
+    await searchButton(wrapper).trigger('click')
+    await nextTick()
+    expect(searchButton(wrapper).attributes('aria-expanded')).toBe('false')
+
+    wrapper.unmount()
+  })
+
+  it('offers exactly the user nav the bar renders, grouped', async () => {
+    const { wrapper } = await mountNav({ path: '/dashboard', settings: {} })
+    await openCommandPalette(wrapper)
+
+    expect(palettePaths(wrapper)).toEqual([
+      '/dashboard',
+      '/keys',
+      '/usage',
+      '/monitor',
+      '/subscriptions',
+      '/purchase',
+      '/orders',
+      '/redeem',
+      '/profile',
+    ])
+    expect(paletteGroupTitles(wrapper)).toEqual(['页面'])
+
+    wrapper.unmount()
+  })
+
+  it('does NOT expose feature-flagged-off pages (opt-out flags disabled)', async () => {
+    const { wrapper } = await mountNav({
+      path: '/dashboard',
+      settings: { channel_monitor_enabled: false, payment_enabled: false },
+    })
+    await openCommandPalette(wrapper)
+
+    const paths = palettePaths(wrapper)
+    // Same three paths the bar drops for these flags.
+    expect(paths).not.toContain('/monitor')
+    expect(paths).not.toContain('/purchase')
+    expect(paths).not.toContain('/orders')
+    // ...and the rest is still searchable.
+    expect(paths).toContain('/keys')
+    expect(paths).toContain('/usage')
+
+    wrapper.unmount()
+  })
+
+  it('does NOT expose opt-in pages the backend never enabled', async () => {
+    const off = await mountNav({ path: '/dashboard', settings: {} })
+    await openCommandPalette(off.wrapper)
+    expect(palettePaths(off.wrapper)).not.toContain('/available-channels')
+    expect(palettePaths(off.wrapper)).not.toContain('/affiliate')
+    off.wrapper.unmount()
+
+    const on = await mountNav({
+      path: '/dashboard',
+      settings: { available_channels_enabled: true, affiliate_enabled: true },
+    })
+    await openCommandPalette(on.wrapper)
+    expect(palettePaths(on.wrapper)).toContain('/available-channels')
+    expect(palettePaths(on.wrapper)).toContain('/affiliate')
+    on.wrapper.unmount()
+  })
+
+  it('does NOT expose admin pages whose store flags are off', async () => {
+    const { wrapper } = await mountNav({
+      path: '/admin/dashboard',
+      admin: true,
+      opsMonitoring: false,
+      paymentEnabled: false,
+    })
+    await openCommandPalette(wrapper)
+
+    const paths = palettePaths(wrapper)
+    expect(paths).not.toContain('/admin/ops')
+    expect(paths).not.toContain('/admin/orders')
+    expect(paths).not.toContain('/admin/orders/plans')
+    expect(paths).not.toContain('/admin/orders/dashboard')
+    expect(paths).toContain('/admin/accounts')
+
+    wrapper.unmount()
+  })
+
+  it('does NOT expose hideInSimpleMode pages in user simple mode', async () => {
+    const { wrapper } = await mountNav({ path: '/dashboard', simple: true })
+    await openCommandPalette(wrapper)
+
+    const paths = palettePaths(wrapper)
+    expect(paths).toEqual(['/dashboard', '/keys', '/monitor', '/profile'])
+    for (const hidden of ['/usage', '/subscriptions', '/purchase', '/redeem', '/batch-image']) {
+      expect(paths).not.toContain(hidden)
+    }
+
+    wrapper.unmount()
+  })
+
+  it('does NOT expose hideInSimpleMode pages in admin simple mode', async () => {
+    const { wrapper } = await mountNav({ path: '/admin/dashboard', admin: true, simple: true })
+    await openCommandPalette(wrapper)
+
+    const paths = palettePaths(wrapper)
+    expect(paths).toContain('/admin/accounts')
+    expect(paths).toContain('/admin/settings')
+    expect(paths).toContain('/keys')
+    for (const hidden of [
+      '/admin/users',
+      '/admin/groups',
+      '/admin/subscriptions',
+      '/admin/redeem',
+      '/admin/audit-logs',
+    ]) {
+      expect(paths).not.toContain(hidden)
+    }
+
+    wrapper.unmount()
+  })
+
+  it('groups admin results to mirror the flyout mega-menu, account pages last', async () => {
+    const { wrapper } = await mountNav({
+      path: '/admin/dashboard',
+      admin: true,
+      settings: { risk_control_enabled: true, affiliate_enabled: true },
+    })
+    await openCommandPalette(wrapper)
+
+    expect(paletteGroupTitles(wrapper)).toEqual(['页面', '资源', '运营', '分析', '我的账户'])
+    // Container paths are not navigable and must not appear as rows.
+    const paths = palettePaths(wrapper)
+    expect(paths).not.toContain('/admin/channels')
+    expect(paths).not.toContain('/admin/security-audit')
+    expect(paths).not.toContain('/admin/affiliates')
+    expect(paths).toContain('/admin/channels/pricing')
+    expect(paths).toContain('/admin/risk-control')
+
+    wrapper.unmount()
+  })
+
+  it('fuzzy-matches labels and navigates on Enter', async () => {
+    const { wrapper, router } = await mountNav({ path: '/admin/dashboard', admin: true })
+    await openCommandPalette(wrapper)
+
+    // "账管" is a non-adjacent subsequence of 账号管理 (Accounts).
+    await paletteInput(wrapper).setValue('账管')
+    expect(palettePaths(wrapper)).toEqual(['/admin/accounts'])
+
+    await paletteInput(wrapper).trigger('keydown', { key: 'Enter' })
+    await flushPromises()
+
+    expect(router.currentRoute.value.path).toBe('/admin/accounts')
+    expect(wrapper.find('.gn-cmdk-inner').exists()).toBe(false)
+
+    wrapper.unmount()
+  })
+
+  it('arrow keys pick a lower result and Enter navigates there', async () => {
+    const { wrapper, router } = await mountNav({ path: '/dashboard', settings: {} })
+    await openCommandPalette(wrapper)
+
+    await paletteInput(wrapper).trigger('keydown', { key: 'ArrowDown' })
+    await paletteInput(wrapper).trigger('keydown', { key: 'Enter' })
+    await flushPromises()
+
+    // Row 0 is /dashboard, row 1 is /keys.
+    expect(router.currentRoute.value.path).toBe('/keys')
+
+    wrapper.unmount()
+  })
+
+  it('raises the curtain and locks body scroll while open', async () => {
+    const { wrapper } = await mountNav({ path: '/dashboard', settings: {} })
+    expect(wrapper.find('.gn-curtain').classes()).not.toContain('open')
+    expect(document.body.style.overflow).toBe('')
+
+    await openCommandPalette(wrapper)
+    expect(wrapper.find('.gn-curtain').classes()).toContain('open')
+    expect(document.body.style.overflow).toBe('hidden')
+
+    await searchButton(wrapper).trigger('click')
+    await nextTick()
+    expect(wrapper.find('.gn-curtain').classes()).not.toContain('open')
+    expect(document.body.style.overflow).toBe('')
+
+    wrapper.unmount()
+  })
+
+  it('opening the palette closes an open flyout', async () => {
+    const { wrapper } = await mountNav({ path: '/admin/dashboard', admin: true })
+    await wrapper.find('[data-flyout-key="resources"] button.gn-link').trigger('click')
+    expect(wrapper.find('[data-flyout-key="resources"]').classes()).toContain('open')
+
+    await openCommandPalette(wrapper)
+    expect(wrapper.find('[data-flyout-key="resources"]').classes()).not.toContain('open')
+    expect(wrapper.find('.gn-cmdk').classes()).toContain('open')
+
+    wrapper.unmount()
+  })
+
+  it('closes on route change', async () => {
+    const { wrapper, router } = await mountNav({ path: '/dashboard', settings: {} })
+    await openCommandPalette(wrapper)
+    expect(wrapper.find('.gn-cmdk').classes()).toContain('open')
+
+    await router.push('/keys')
+    await flushPromises()
+
+    expect(wrapper.find('.gn-cmdk').classes()).not.toContain('open')
+    expect(document.body.style.overflow).toBe('')
+
+    wrapper.unmount()
+  })
+
+  it('is absent entirely when the user has no nav (backend mode)', async () => {
+    const { wrapper } = await mountNav({
+      path: '/dashboard',
+      settings: { backend_mode_enabled: true },
+    })
+
+    expect(searchButton(wrapper).exists()).toBe(false)
+    expect(wrapper.find('.gn-cmdk').exists()).toBe(false)
+
+    // The shortcut must be a no-op rather than opening an empty palette.
+    pressShortcut()
+    await nextTick()
+    expect(wrapper.find('.gn-cmdk').exists()).toBe(false)
+
+    wrapper.unmount()
+  })
+})
+
 describe('navItems — flyout spec regression (admin grouping)', () => {
+  it('buildCommandEntries flattens groups, drops containers and dedupes paths', () => {
+    const entries = buildCommandEntries(
+      [
+        {
+          key: 'pages',
+          labelKey: 'nav.commandGroupPages',
+          items: [
+            { path: '/admin/dashboard', labelKey: 'nav.dashboard' },
+            // expandOnly containers have no navigable route — never emit them,
+            // but their children must still be reachable.
+            {
+              path: '/admin/channels',
+              labelKey: 'nav.channelManagement',
+              expandOnly: true,
+              children: [{ path: '/admin/channels/pricing', labelKey: 'nav.channelPricing' }],
+            },
+          ],
+        },
+        {
+          key: 'account',
+          labelKey: 'nav.commandGroupAccount',
+          items: [
+            // duplicate of a path already claimed by the first group
+            { path: '/admin/dashboard', labelKey: 'nav.dashboard' },
+            { path: '/keys', labelKey: 'nav.apiKeys' },
+            { path: '/custom/x', label: 'Literal Label' },
+          ],
+        },
+      ],
+      (key) => key,
+    )
+
+    expect(entries.map((e) => e.path)).toEqual([
+      '/admin/dashboard',
+      '/admin/channels/pricing',
+      '/keys',
+      '/custom/x',
+    ])
+    // first group wins the duplicate
+    expect(entries.find((e) => e.path === '/admin/dashboard')?.groupKey).toBe('pages')
+    expect(entries.find((e) => e.path === '/keys')?.groupKey).toBe('account')
+    // custom items keep their literal (untranslated) label
+    expect(entries.find((e) => e.path === '/custom/x')?.label).toBe('Literal Label')
+  })
+
   it('maps every admin route to its handoff group and column', () => {
     const expected = new Map<string, string>([
       // resources
@@ -776,4 +1121,5 @@ beforeEach(() => {
   useTheme().setTheme('light')
   document.documentElement.classList.remove('dark')
   document.body.style.overflow = ''
+  resetBodyScrollLock()
 })
