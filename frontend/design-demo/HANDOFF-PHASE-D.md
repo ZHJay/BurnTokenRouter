@@ -165,6 +165,42 @@ Phase C 用 5 个 agent（各自又拉了子 agent）并行改前端，**零文�
 
 **provider 502 会打断 agent 的回合，但盘上的产出会留下。** 重试时要明确告诉它"你的文件还在，接着验证别重写"，否则它会从头再做一遍。
 
+### 4.1 Phase C 实际用的分区表（可直接照抄改造）
+
+这是产生零冲突的那张表。**注意 i18n 一列** —— 那是唯一真正会打起来的地方。
+
+| agent | 独占文件 | 独占 i18n |
+| --- | --- | --- |
+| `phase_c_landing`（Mill） | `views/HomeView.vue`、新建 `components/landing/**` | `locales/{zh,en}/landing.ts` |
+| `phase_c_plaza`（Einstein） | `views/ModelPlazaView.vue`、`components/modelPlaza/**` | 新建 `locales/{zh,en}/modelPlaza.ts` + **独占 `index.ts`** |
+| `phase_c_cmdk`（Carson） | 新建 `components/command/**`、`composables/useCommandPalette.ts`、`components/layout/{GlobalNav.vue,navItems.ts}`、`styles/global-nav.css` | **独占 `locales/{zh,en}/common.ts`** |
+| `phase_c_notify`（Faraday） | `components/common/{AnnouncementBell,AnnouncementPopup}.vue`、`components/admin/announcements/**`、`views/admin/AnnouncementsView.vue`、`views/admin/settings/EmailTemplateEditor.vue`、`styles/announcement-markdown.css` | `locales/{zh,en}/admin/settings.ts`、`misc.ts` |
+| `phase_c_badge`（Socrates） | `style.css`、`components/common/GroupBadge.vue`、`i18n/__tests__/localesNoKeyCollision.spec.ts` | 无（只改 spec，不碰 locale 本体） |
+
+三条支撑它的规则：
+
+- **`index.ts` 只能有一个 owner。** 它是所有 locale 模块的汇合点，两个 agent 同时加一行必冲突
+- **`common.ts` 只能有一个 owner。** 它是 key 最密集的公共文件。其余 agent 需要 key 时把「key 名 + zh/en 文案」发给 root，由 root 转给 owner
+- **`components/common/` 不整体划给任何人。** Phase C 只把其中两个具名文件（两个 Announcement 组件）划给 notify、一个（GroupBadge）划给 badge，其余保持无主 —— 大家都能用，谁都不能改
+
+### 4.2 拉起 agent 的参数
+
+```
+model            burndario/claude-opus-5
+reasoning_effort xhigh
+fork_turns       none          # 设了 model/reasoning_effort 就必须是 none
+```
+
+`fork_turns=none` 意味着 **agent 拿不到任何上下文**，所以任务消息必须自包含。Phase C 每条派活消息都包含：仓库绝对路径 + 分支、必读文档清单（本文档 + `HANDOFF.md` 第 1 节锁定决策 + `HANDOFF-PHASE-C.md`）、任务本体、独占文件清单 + 明确的「碰别人文件会冲突」、第 8 节铁律、验收标准与实测基线数字。
+
+**给基线数字这件事被证明特别值钱。** 例如告诉 cmdk「`src/components/layout` 当前 51/51，这个数字只能增不能减」，它交付时报的是「51 → 67」并逐项说明增量来源；如果只说「别搞坏测试」，就没有可对账的东西。
+
+### 4.3 一个会误导你的故障形态
+
+**agent 的回合有时会退化成一个裸 "OK"，但盘上的工作其实已经做完了。** Phase C 有三个 agent（notify、cmdk、render_verify）各自遇到过一到两次，都是在下一回合自己说明「上一条是故障，不是任务状态」然后补交完整报告。
+
+所以收到裸 "OK" 时：**先 `git status` / `git diff` 看盘上有没有产出，再决定是要它重新汇报还是真的重做。** 直接判定失败并让它重做，会白扔掉一轮完整工作。
+
 ---
 
 ## 5. 交给 Phase D 的待决策项（**全部需要用户拍板，我没擅自动**）
