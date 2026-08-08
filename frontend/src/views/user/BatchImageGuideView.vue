@@ -37,17 +37,16 @@
 
           <div
             v-if="selectedJobIds.size"
-            class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-sm dark:border-dark-700 dark:bg-dark-800"
+            class="bulk-bar flex-wrap justify-between"
           >
             <i18n-t
               keypath="batchImage.list.selectedJobs"
               tag="span"
               scope="global"
               :plural="selectedJobIds.size"
-              class="text-sm text-gray-600 dark:text-gray-300"
             >
               <template #count>
-                <span class="font-medium text-gray-900 dark:text-white">{{ selectedJobIds.size }}</span>
+                <span class="count">{{ selectedJobIds.size }}</span>
               </template>
             </i18n-t>
             <div class="flex flex-wrap items-center gap-2">

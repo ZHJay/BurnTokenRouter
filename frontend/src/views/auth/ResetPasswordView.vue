@@ -85,7 +85,7 @@
               type="email"
               readonly
               disabled
-              class="input pl-11 bg-gray-50 dark:bg-dark-700"
+              class="input pl-11"
             />
           </div>
         </div>
@@ -108,6 +108,8 @@
               :disabled="isLoading"
               class="input pl-11 pr-11"
               :class="{ 'input-error': errors.password }"
+              :aria-invalid="!!errors.password"
+              :aria-describedby="errors.password ? 'reset-password-error' : undefined"
               :placeholder="t('auth.newPasswordPlaceholder')"
             />
             <button
@@ -119,6 +121,9 @@
               <Icon v-else name="eye" size="md" />
             </button>
           </div>
+          <p v-if="errors.password" id="reset-password-error" class="input-error-text">
+            {{ errors.password }}
+          </p>
         </div>
 
         <!-- Confirm Password Input -->
@@ -139,6 +144,10 @@
               :disabled="isLoading"
               class="input pl-11 pr-11"
               :class="{ 'input-error': errors.confirmPassword }"
+              :aria-invalid="!!errors.confirmPassword"
+              :aria-describedby="
+                errors.confirmPassword ? 'reset-confirm-password-error' : undefined
+              "
               :placeholder="t('auth.confirmPasswordPlaceholder')"
             />
             <button
@@ -150,13 +159,20 @@
               <Icon v-else name="eye" size="md" />
             </button>
           </div>
+          <p
+            v-if="errors.confirmPassword"
+            id="reset-confirm-password-error"
+            class="input-error-text"
+          >
+            {{ errors.confirmPassword }}
+          </p>
         </div>
 
         <!-- Submit Button -->
         <button
           type="submit"
           :disabled="isLoading"
-          class="btn btn-primary w-full"
+          class="btn btn-primary btn-block"
         >
           <svg
             v-if="isLoading"
