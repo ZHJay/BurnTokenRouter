@@ -33,7 +33,7 @@ Phase A 提交记录：
 3. 主题色苹果蓝：亮 #0071e3 / 暗 #0a84ff；语义色用 iOS 系统色（绿 #34c759 / 橙 #ff9f0a / 红 #ff3b30 / 紫 #af52de / 青 #30b0c7）
 4. 明暗双模式：都必须是成品级。默认跟随系统，手动切换持久化
 5. 浮出层不透明 + 纱幕：浮出菜单/下拉卡片/搜索条为不透明面板（用户明确拒绝半透明透出下层文字）；浮出菜单展开时页面用纱幕压暗（亮 18% / 暗 45% 黑）
-6. 玻璃质感保留位置：顶栏（0.72 透明 + saturate(180%) blur(20px)）、登录页玻璃卡、ambient 环境渐变
+6. 玻璃质感保留位置：顶栏（0.72 透明 + saturate(180%) blur(20px)）、登录页玻璃卡、ambient 环境渐变。**（2026-08-09 用户追加确认第 4 处：DataTable 固定列 —— 详见本文档末尾「Phase D 追加锁定决策」）**
 7. 动效：统一 iOS 弹簧曲线 cubic-bezier(0.32, 0.72, 0, 1)；按钮 :active 缩放 0.97；卡片 hover 上浮 2px；尊重 prefers-reduced-motion
 8. 语言：UI 中文。i18n 已有 zh/en 两套 locale，Phase B 不得硬编码中文，用 t('nav.*') 等现有 key
 
@@ -186,3 +186,54 @@ B5 · 收尾：全局搜索 teal/旧 token 残留；pnpm test 全绿；pnpm buil
 3. 通读 apple-theme.css（约 900 行，含全部契约）
 4. 读 3.1 节现状地图列的文件，重点 AppSidebar.vue 的导航过滤逻辑
 5. 从 B0 开始。祝顺利
+
+---
+
+## 8. Phase D 追加锁定决策（2026-08-09，用户逐条确认）
+
+### 8.1 玻璃质感增加第 4 处：DataTable 固定列
+
+第 1 节第 6 条原本把玻璃限定在三处（顶栏 / 登录玻璃卡 / ambient）。**用户已确认固定列毛玻璃保留**，因此玻璃合法位置变为 **4 处**。
+
+实现位置：`src/components/common/DataTable.vue`，仅在 `.is-scrollable`（真的出现横向溢出）时启用：
+
+```
+--sticky-glass-bg:   rgba(255, 255, 255, 0.82)   /* 暗色 rgba(28, 28, 30, 0.82) */
+--sticky-glass-blur: saturate(180%) blur(28px)
+```
+
+比顶栏更厚的底 + 更强的模糊是刻意的：顶栏身后是页面留白，固定列身后是密排表格文字，需要更重的材质才能把穿透文字揉成看不出字形的雾面。
+
+**这条决策是在知情下做出的，两项代价已实测并被接受**：
+
+| 项 | 实测值 |
+| --- | --- |
+| 滚动性能（600 行虚拟化 × 横向滚动 5s） | 玻璃态 p50 15.8ms / **p95 24.9ms** / 1.3% 帧 >25ms；去玻璃态 p50 8.3ms / p95 9.2ms / 0% |
+| 文字可读性 | **达标**：滚动穿过 + hover + 选中三态实测 11.2–16.8:1，远超 AA |
+| 模糊强度 | 达标：背后文字边缘存活率 0–3%（A/B 对照组同位置可读出 "ou" 残片，真实渲染为纯白雾面） |
+
+已有的三层减害措施**不要拆掉**：
+
+1. **只在 `.is-scrollable` 时启用** —— 表格不横向溢出时固定列身后本无穿透内容，用不透明底既正确又免掉合成开销
+2. **`@supports not (backdrop-filter)` 退不透明底** —— 可读性优先于材质
+3. **`@media (prefers-reduced-transparency: reduce)` 退不透明底** —— 尊重系统偏好
+
+状态色（hover / 选中）一律用 `background-image` 叠在底色**之上**，绝不替换底色 —— 否则任何状态下固定列都会只剩半透明底、横向滚动的文字直接透出来。这是本轮修掉的原始缺陷，别退回去。
+
+防回归：`DataTable.spec.ts` 的 `stylesheet structure` 组锁住了 token 地板（alpha ≥ 0.82、blur ≥ 28px）、双兜底存在性、以及规则源顺序。
+
+### 8.2 其余五条待决项的处置
+
+用户指示「其他五条修了的保留」，即**已落地的修复一律保留，不回退**；未落地的仍是待决项：
+
+| 项 | 状态 |
+| --- | --- |
+| rollback spec 断言修正（Phase D 文档原写「别去修」） | **保留**。实测判定修法正当：API 在 HEAD 就带 `{timeout: 15*60*1000}` 第三参，旧断言缺参才是基线 2 红的根因。项目基线已变为**零失败** |
+| pnpm overrides 迁 `pnpm-workspace.yaml` + 钉 `packageManager` | 仍待决（需跑 `pnpm install` 重写锁文件） |
+| `formatCost` 的 `toFixed(4)`（实测 15 处，非文档所说 8 处） | 仍待决（金额显示语义变更） |
+| `.b-purple` 暗色对比度 | 无解，除非偏离第 1 节第 3 条锁定的 iOS 系统色 |
+| DOMPurify 是否全站 `FORBID_ATTR: ['style']` | 仍待决（站点级安全策略变更） |
+
+### 8.3 一条必须知道的构建事实
+
+`frontend/vite.config.js` 曾是被 gitignore 的 tsc 产物，而 Vite 5 **优先解析 `.js`**，导致 `vite.config.ts` 的 `manualChunks` 从未生效（Phase C 全部构建都是如此）。该产物已移除。以后看到构建行为与 `vite.config.ts` 不符，**先查 `frontend/` 下有没有重新生成 `vite.config.js` / `vite.config.d.ts`**。

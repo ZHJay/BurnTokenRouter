@@ -7,17 +7,20 @@
       :disabled="disabled"
       :aria-expanded="isOpen"
       :aria-haspopup="true"
+      :role="isSearchable ? undefined : 'combobox'"
+      :aria-controls="isSearchable ? undefined : listboxId"
+      :aria-activedescendant="triggerActiveDescendant"
       :id="id"
-      :aria-label="ariaLabel ?? 'Select option'"
+      :aria-label="ariaLabel ?? t('common.selectOption')"
       :aria-describedby="ariaDescribedby"
       :class="[
         'select-trigger',
+        variant === 'filter' && 'select-trigger-filter',
         isOpen && 'select-trigger-open',
         error && 'select-trigger-error',
         disabled && 'select-trigger-disabled'
       ]"
-      @keydown.down.prevent="onTriggerKeyDown"
-      @keydown.up.prevent="onTriggerKeyDown"
+      @keydown="onKeydown"
     >
       <span class="select-value" :class="{ 'is-placeholder': !hasValue }">
         <slot name="selected" :option="selectedOption">
@@ -28,11 +31,12 @@
         v-if="clearable && hasValue && !disabled"
         class="select-clear"
         role="button"
-        tabindex="-1"
-        aria-label="Clear selection"
+        tabindex="0"
+        :aria-label="t('common.clearSelection')"
         @click.stop="clearSelection"
         @mousedown.stop
         @keydown.enter.stop.prevent="clearSelection"
+        @keydown.space.stop.prevent="clearSelection"
       >
         <Icon name="x" size="sm" />
       </span>
@@ -51,13 +55,13 @@
         <div
           v-if="isOpen"
           ref="dropdownRef"
+          :id="listboxId"
           class="select-dropdown-portal"
           :class="[instanceId]"
           :style="dropdownStyle"
           role="listbox"
           @click.stop
           @mousedown.stop
-          @keydown="onDropdownKeyDown"
         >
           <!-- Search input -->
           <div v-if="isSearchable" class="select-search">
@@ -66,10 +70,16 @@
               ref="searchInputRef"
               v-model="searchQuery"
               type="text"
+              role="combobox"
+              :aria-expanded="isOpen"
+              :aria-controls="listboxId"
+              :aria-activedescendant="searchActiveDescendant"
+              aria-autocomplete="list"
               :placeholder="searchPlaceholderText"
               :aria-label="searchPlaceholderText"
               class="select-search-input"
               @click.stop
+              @keydown="onSearchKeydown"
             />
           </div>
 
@@ -77,11 +87,12 @@
           <div class="select-options" ref="optionsListRef">
             <div
               v-for="(option, index) in filteredOptions"
+              :id="optionId(option)"
               :key="`${typeof getOptionValue(option)}:${String(getOptionValue(option) ?? '')}`"
-              role="option"
-              :aria-selected="isSelected(option)"
+              :role="isGroupHeaderOption(option) ? 'presentation' : 'option'"
+              :aria-selected="isGroupHeaderOption(option) ? undefined : isSelected(option)"
               :aria-disabled="isOptionDisabled(option)"
-              @click.stop="!isOptionDisabled(option) && selectOption(option)"
+              @click.stop="!isOptionDisabled(option) && !isGroupHeaderOption(option) && selectOption(option)"
               @mouseenter="handleOptionMouseEnter(option, index)"
               :class="[
                 'select-option',
@@ -124,6 +135,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
+import { useListboxKeyboard } from '@/composables/useListboxKeyboard'
 
 const { t } = useI18n()
 
@@ -158,6 +170,8 @@ interface Props {
   remote?: boolean
   /** 远程搜索模式下的加载态：options 为空时下拉显示 loading 文案 */
   loading?: boolean
+  /** 'default' = 44px 表单内控件（与 Input 对齐）；'filter' = 36px 筛选栏控件（与 SearchInput 对齐） */
+  variant?: 'default' | 'filter'
 }
 
 interface Emits {
@@ -176,7 +190,8 @@ const props = withDefaults(defineProps<Props>(), {
   valueKey: 'value',
   labelKey: 'label',
   remote: false,
-  loading: false
+  loading: false,
+  variant: 'default'
 })
 
 const emit = defineEmits<Emits>()
@@ -193,6 +208,32 @@ const dropdownPosition = ref<'bottom' | 'top'>('bottom')
 const triggerRect = ref<DOMRect | null>(null)
 const dropdownViewportPadding = 8
 const dropdownMinimumWidth = 200
+
+// Unique ids for the WAI-ARIA listbox/combobox wiring (aria-controls +
+// aria-activedescendant need real, stable ids on the options).
+const listboxId = `${instanceId}-listbox`
+
+const optionId = (option: any): string => {
+  const value = getOptionValue(option)
+  const creatable = option && typeof option === 'object' && option._creatable ? '-creatable' : ''
+  return `${instanceId}-option-${String(value)}${creatable}`
+}
+
+const activeOptionId = computed(() => {
+  if (!isOpen.value) return undefined
+  const index = focusedIndex.value
+  if (index < 0 || index >= filteredOptions.value.length) return undefined
+  return optionId(filteredOptions.value[index])
+})
+
+// Select-only combobox: the trigger stays focused and is the activedescendant
+// host. Editable combobox: the search input is the host.
+const triggerActiveDescendant = computed(() =>
+  isSearchable.value ? undefined : activeOptionId.value
+)
+const searchActiveDescendant = computed(() =>
+  isSearchable.value ? activeOptionId.value : undefined
+)
 
 // i18n placeholders
 const placeholderText = computed(() => props.placeholder ?? t('common.selectOption'))
@@ -323,19 +364,28 @@ const findNextEnabledIndex = (startIndex: number): number => {
   return -1
 }
 
-const findPrevEnabledIndex = (startIndex: number): number => {
-  const opts = filteredOptions.value
-  if (opts.length === 0) return -1
-  for (let offset = 0; offset < opts.length; offset++) {
-    const idx = (startIndex - offset + opts.length) % opts.length
-    if (!isOptionDisabled(opts[idx])) return idx
-  }
-  return -1
+const isNavigableOption = (option: any): boolean => {
+  return !isOptionDisabled(option) && !isGroupHeaderOption(option)
 }
 
 const handleOptionMouseEnter = (option: any, index: number) => {
   if (isOptionDisabled(option) || isGroupHeaderOption(option)) return
   focusedIndex.value = index
+}
+
+const scrollToFocused = () => {
+  nextTick(() => {
+    const list = optionsListRef.value
+    if (!list) return
+    const focusedEl = list.children[focusedIndex.value] as HTMLElement
+    if (!focusedEl) return
+
+    if (focusedEl.offsetTop < list.scrollTop) {
+      list.scrollTop = focusedEl.offsetTop
+    } else if (focusedEl.offsetTop + focusedEl.offsetHeight > list.scrollTop + list.offsetHeight) {
+      list.scrollTop = focusedEl.offsetTop + focusedEl.offsetHeight - list.offsetHeight
+    }
+  })
 }
 
 // Update trigger rect periodically while open to follow scroll/resize
@@ -377,9 +427,9 @@ watch(isOpen, (open) => {
     } else {
       const selectedIdx = filteredOptions.value.findIndex(isSelected)
       const initialIdx = selectedIdx >= 0 ? selectedIdx : 0
-      focusedIndex.value = isOptionDisabled(filteredOptions.value[initialIdx])
-        ? findNextEnabledIndex(initialIdx + 1)
-        : initialIdx
+      focusedIndex.value = isNavigableOption(filteredOptions.value[initialIdx])
+        ? initialIdx
+        : findNextEnabledIndex(initialIdx + 1)
     }
 
     if (isSearchable.value) {
@@ -425,56 +475,47 @@ const clearSelection = () => {
   emit('change', null, null)
 }
 
-// Keyboards
-const onTriggerKeyDown = () => {
-  if (!isOpen.value) {
+/*
+ * Keyboard contract (shared with ProxySelector via useListboxKeyboard).
+ * Attached to the trigger AND the search input - the two elements that can
+ * actually hold focus while the popup is open. The old handler lived on the
+ * panel, so the non-searchable branch (<= 5 options) never received events:
+ * ArrowDown only opened, Enter toggled closed via the native button click,
+ * and Escape was unreachable.
+ */
+const listboxKeyboard = useListboxKeyboard({
+  isOpen,
+  focusedIndex,
+  open: () => {
+    if (props.disabled) return
     isOpen.value = true
-  }
-}
+  },
+  close: () => {
+    isOpen.value = false
+  },
+  restoreFocus: () => {
+    triggerRef.value?.focus()
+  },
+  isOptionNavigable: (index) => {
+    if (index < 0 || index >= filteredOptions.value.length) return false
+    return isNavigableOption(filteredOptions.value[index])
+  },
+  optionCount: () => filteredOptions.value.length,
+  selectIndex: (index) => {
+    const opt = filteredOptions.value[index]
+    if (opt) selectOption(opt)
+  },
+  scrollToFocused,
+  spaceSelects: true
+})
 
-const onDropdownKeyDown = (e: KeyboardEvent) => {
-  switch (e.key) {
-    case 'ArrowDown':
-      e.preventDefault()
-      focusedIndex.value = findNextEnabledIndex(focusedIndex.value + 1)
-      if (focusedIndex.value >= 0) scrollToFocused()
-      break
-    case 'ArrowUp':
-      e.preventDefault()
-      focusedIndex.value = findPrevEnabledIndex(focusedIndex.value - 1)
-      if (focusedIndex.value >= 0) scrollToFocused()
-      break
-    case 'Enter':
-      e.preventDefault()
-      if (focusedIndex.value >= 0 && focusedIndex.value < filteredOptions.value.length) {
-        const opt = filteredOptions.value[focusedIndex.value]
-        if (!isOptionDisabled(opt)) selectOption(opt)
-      }
-      break
-    case 'Escape':
-      e.preventDefault()
-      isOpen.value = false
-      triggerRef.value?.focus()
-      break
-    case 'Tab':
-      isOpen.value = false
-      break
-  }
-}
+const onKeydown = listboxKeyboard.handleKeydown
 
-const scrollToFocused = () => {
-  nextTick(() => {
-    const list = optionsListRef.value
-    if (!list) return
-    const focusedEl = list.children[focusedIndex.value] as HTMLElement
-    if (!focusedEl) return
-
-    if (focusedEl.offsetTop < list.scrollTop) {
-      list.scrollTop = focusedEl.offsetTop
-    } else if (focusedEl.offsetTop + focusedEl.offsetHeight > list.scrollTop + list.offsetHeight) {
-      list.scrollTop = focusedEl.offsetTop + focusedEl.offsetHeight - list.offsetHeight
-    }
-  })
+// The search input shares the listbox keyboard contract, except Space must
+// type a character into the query instead of selecting the highlighted option.
+const onSearchKeydown = (event: KeyboardEvent) => {
+  if (event.key === ' ' || event.key === 'Spacebar') return
+  onKeydown(event)
 }
 
 const handleClickOutside = (event: MouseEvent) => {
@@ -505,7 +546,7 @@ onUnmounted(() => {
 
 <style scoped>
 .select-trigger {
-  /* 契约镜像：.input 外观（44px、r-md、发丝线、蓝色聚焦环） */
+  /* 契约镜像：.input 外观（44px、r-control、发丝线、蓝色聚焦环） */
   display: flex;
   width: 100%;
   align-items: center;
@@ -513,7 +554,7 @@ onUnmounted(() => {
   gap: 8px;
   height: 44px;
   padding: 0 14px;
-  border-radius: var(--r-md);
+  border-radius: var(--r-control);
   border: 0.5px solid var(--separator-strong);
   background: var(--bg-elevated);
   color: var(--text-primary);
@@ -550,6 +591,41 @@ onUnmounted(() => {
 .select-trigger-disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+/* 筛选栏变体：与同排的 SearchInput 归为同一控件族（36px、灰底、无发丝线、同圆角）。
+   表单内的 Select 保持 default（44px + 发丝线），以便和带 label 的 .input 对齐。 */
+.select-trigger-filter {
+  height: 36px;
+  border-color: transparent;
+  background: var(--fill);
+  font-size: 14px;
+  transition: background 0.18s var(--ease), box-shadow 0.18s var(--ease),
+    border-color 0.18s var(--ease), opacity 0.18s var(--ease);
+}
+
+.select-trigger-filter:hover {
+  border-color: transparent;
+  background: var(--fill-hover);
+}
+
+.select-trigger-filter:focus-visible,
+.select-trigger-filter.select-trigger-open {
+  border-color: transparent;
+  background: var(--bg-elevated);
+  /* 聚焦环：2px 实色 --blue 内核保证 >=3:1（WCAG 2.4.11），外圈 --blue-soft
+     柔光环保留与同排 SearchInput 的同族观感（纯 10% 蓝环实测仅 1.14:1）。 */
+  box-shadow: 0 0 0 2px var(--blue), 0 0 0 4px var(--blue-soft), var(--shadow-card);
+}
+
+/* 错误态在筛选变体里必须仍然可见（提高一级特异性压过上面的 open 规则） */
+.select-trigger-filter.select-trigger-error {
+  border-color: var(--red);
+}
+
+.select-trigger-filter.select-trigger-error.select-trigger-open {
+  border-color: var(--red);
+  box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.12);
 }
 
 .select-value {
@@ -594,6 +670,12 @@ onUnmounted(() => {
 .select-clear:hover {
   background: var(--fill);
   color: var(--text-primary);
+}
+
+.select-clear:focus-visible {
+  background: var(--fill);
+  color: var(--text-primary);
+  box-shadow: 0 0 0 2px var(--blue);
 }
 </style>
 

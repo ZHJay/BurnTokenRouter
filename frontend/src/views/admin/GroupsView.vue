@@ -20,6 +20,7 @@
               v-model="filters.platform"
               :options="platformFilterOptions"
               :placeholder="t('admin.groups.allPlatforms')"
+              variant="filter"
               class="w-44"
               @change="loadGroups"
             />
@@ -27,6 +28,7 @@
               v-model="filters.status"
               :options="statusOptions"
               :placeholder="t('admin.groups.allStatus')"
+              variant="filter"
               class="w-40"
               @change="loadGroups"
             />
@@ -34,6 +36,7 @@
               v-model="filters.is_exclusive"
               :options="exclusiveOptions"
               :placeholder="t('admin.groups.allGroups')"
+              variant="filter"
               class="w-44"
               @change="loadGroups"
             />

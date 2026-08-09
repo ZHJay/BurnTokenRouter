@@ -48,7 +48,7 @@ const handleInput = (event: Event) => {
   gap: 8px;
   height: 36px;
   padding: 0 14px;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-control);
   background: var(--fill);
   min-width: 240px;
   transition: background 0.18s var(--ease), box-shadow 0.18s var(--ease);
