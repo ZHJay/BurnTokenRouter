@@ -19,6 +19,7 @@
               v-model="filters.status"
               :options="statusFilterOptions"
               :placeholder="t('admin.channels.allStatus', 'All Status')"
+              variant="filter"
               class="w-40"
               @change="loadChannels"
             />

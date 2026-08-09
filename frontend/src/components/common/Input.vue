@@ -107,7 +107,7 @@ defineExpose({
 .input {
   height: 44px;
   padding: 0 14px;
-  border-radius: var(--r-md);
+  border-radius: var(--r-control);
   border: 0.5px solid var(--separator-strong);
   background: var(--bg-elevated);
   color: var(--text-primary);

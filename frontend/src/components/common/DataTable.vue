@@ -51,7 +51,7 @@
         class="mobile-card"
         :class="{
           'cursor-pointer': clickableRows,
-          'border-primary-300 bg-primary-50/40 dark:border-primary-700 dark:bg-primary-900/10': selectable && isRowSelected(row, index)
+          'border-primary-300 bg-primary-50/40 dark:border-primary-700 dark:bg-primary-900/10': (selectable || highlightSelectedRows) && isRowSelected(row, index)
         }"
         @click="clickableRows && emit('rowClick', row)"
       >
@@ -99,7 +99,8 @@
       'is-scrollable': isScrollable
     }"
   >
-    <table class="w-full min-w-max">
+    <table ref="tableRef" class="w-full min-w-max">
+      <caption v-if="tableCaption" class="sr-only">{{ tableCaption }}</caption>
       <thead class="table-header">
         <tr>
           <th
@@ -122,14 +123,17 @@
             :key="column.key"
             scope="col"
             :aria-sort="column.sortable ? getColumnAriaSort(column.key) : undefined"
+            :tabindex="column.sortable ? 0 : undefined"
             :class="[
               'sticky-header-cell text-left tracking-wider',
               getAdaptivePaddingClass(),
               { 'cursor-pointer hover:bg-gray-100 dark:hover:bg-dark-700': column.sortable },
+              { 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500 dark:focus-visible:ring-primary-400': column.sortable },
               getStickyColumnClass(column, index),
               column.class
             ]"
             @click="column.sortable && handleSort(column.key)"
+            @keydown="onSortHeaderKeydown(column, $event)"
           >
             <div :class="['flex items-center space-x-1', getHeaderContentAlignmentClass(column)]">
               <slot
@@ -215,7 +219,8 @@
             :ref="item.measure ? measureElement : undefined"
             :class="{
               'cursor-pointer': clickableRows,
-              'bg-primary-50/40 dark:bg-primary-900/10': selectable && isRowSelected(item.row, item.index)
+              'bg-primary-50/40 dark:bg-primary-900/10': (selectable || highlightSelectedRows) && isRowSelected(item.row, item.index),
+              'is-row-selected': (selectable || highlightSelectedRows) && isRowSelected(item.row, item.index)
             }"
             @click="clickableRows && emit('rowClick', item.row)"
           >
@@ -284,6 +289,8 @@ const emit = defineEmits<{
 
 // 表格容器引用
 const tableWrapperRef = ref<HTMLElement | null>(null)
+// 内部 <table> 元素：内容宽度变化的真实信号源（表格是 w-full min-w-max 的内容驱动布局）
+const tableRef = ref<HTMLElement | null>(null)
 const isScrollable = ref(false)
 const actionsColumnNeedsExpanding = ref(false)
 
@@ -369,27 +376,75 @@ const checkActionsColumnWidth = () => {
 // 监听尺寸变化
 let resizeObserver: ResizeObserver | null = null
 let resizeHandler: (() => void) | null = null
+let scrollableRafId: number | null = null
 let desktopViewportMediaQuery: MediaQueryList | null = null
 let desktopViewportListener: ((event: MediaQueryListEvent) => void) | null = null
 
+/**
+ * 把测量类 RO 回调批到 rAF（与 virtualizer 的 useAnimationFrameWithResizeObserver
+ * 同一思路）：读取 scrollWidth/clientWidth 属于几何读取，若逐帧同步执行，
+ * 虚拟滚动中每一帧都可能强制一次 layout。合并到下一帧，一次回调只读一次几何。
+ */
+const scheduleScrollableCheck = () => {
+  if (scrollableRafId !== null) return
+  if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') {
+    checkScrollable()
+    return
+  }
+  scrollableRafId = window.requestAnimationFrame(() => {
+    scrollableRafId = null
+    checkScrollable()
+  })
+}
+
 const detachDesktopTableTracking = () => {
+  if (scrollableRafId !== null) {
+    window.cancelAnimationFrame(scrollableRafId)
+    scrollableRafId = null
+  }
   resizeObserver?.disconnect()
   resizeObserver = null
+  lastObservedWidths.clear()
   if (resizeHandler) {
     window.removeEventListener('resize', resizeHandler)
     resizeHandler = null
   }
 }
 
+// 每个被观察元素最近一次观察到的宽度，用于过滤纯高度变化（虚拟滚动中表格高度
+// 逐帧变化、宽度不变；高度变化不影响横向溢出判定，不必触发重测）
+const lastObservedWidths = new Map<Element, number>()
+
 const attachDesktopTableTracking = () => {
   checkScrollable()
   checkActionsColumnWidth()
-  if (tableWrapperRef.value && typeof ResizeObserver !== 'undefined') {
-    resizeObserver = new ResizeObserver(() => {
-      checkScrollable()
-      checkActionsColumnWidth()
+  if (tableWrapperRef.value && tableRef.value && typeof ResizeObserver !== 'undefined') {
+    // 同时观察 wrapper（容器尺寸）与 table（内容宽度）：
+    // 表格是 w-full min-w-max + 单元格 whitespace-nowrap 的内容驱动布局，内容变宽、
+    // 虚拟窗口换入更宽的行时只有 table 元素尺寸变化，wrapper 盒子尺寸不动——
+    // 只观察 wrapper 会漏掉这些信号（`.is-scrollable` 双向陈旧）。
+    // table 变化只重测滚动态；wrapper 变化才顺带重测操作列宽度
+    // （checkActionsColumnWidth 内部有临时展开-测量-还原循环，不适合逐帧跑）。
+    resizeObserver = new ResizeObserver((entries) => {
+      let wrapperResized = false
+      for (const entry of entries) {
+        const width = entry.contentRect?.width ?? entry.borderBoxSize?.[0]?.inlineSize ?? 0
+        const last = lastObservedWidths.get(entry.target)
+        if (last === width) continue
+        lastObservedWidths.set(entry.target, width)
+        if (entry.target === tableWrapperRef.value) {
+          wrapperResized = true
+        } else {
+          scheduleScrollableCheck()
+        }
+      }
+      if (wrapperResized) {
+        scheduleScrollableCheck()
+        checkActionsColumnWidth()
+      }
     })
     resizeObserver.observe(tableWrapperRef.value)
+    resizeObserver.observe(tableRef.value)
   } else {
     // 降级方案：不支持 ResizeObserver 时使用 window resize
     resizeHandler = () => {
@@ -466,10 +521,20 @@ interface Props {
   virtualizeThreshold?: number
   /** Enable controlled row selection. Stable row keys are strongly recommended. */
   selectable?: boolean
+  /**
+   * Highlight rows whose keys are in `selectedKeys` even when the selection
+   * checkboxes are rendered by the consumer (slot-based `header-select` /
+   * `cell-select` columns) instead of by this component. Without this flag the
+   * row-selected tint is gated on `selectable`, so a slot-managed selection
+   * column could never light up `is-row-selected`.
+   */
+  highlightSelectedRows?: boolean
   /** Selected row keys. Keys outside the current data page are preserved. */
   selectedKeys?: Array<string | number>
   /** Accessible label for a row selection checkbox. */
   selectionLabel?: string | ((row: any) => string)
+  /** Accessible table name rendered as an sr-only <caption>. */
+  tableCaption?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -480,6 +545,7 @@ const props = withDefaults(defineProps<Props>(), {
   defaultSortOrder: 'asc',
   serverSideSort: false,
   selectable: false,
+  highlightSelectedRows: false,
   selectedKeys: () => []
 })
 
@@ -651,6 +717,8 @@ watch(
 
 // 数据/列变化时重新检查滚动状态
 // 注意：不能监听 actionsExpanded，因为 checkActionsColumnWidth 会临时修改它，会导致无限循环
+// 同长度数据换宽内容 / 列宽变化 / 虚拟窗口换行：由 attachDesktopTableTracking 的
+// table 元素 ResizeObserver 覆盖（table 是内容驱动宽度，尺寸一变即触发重测）。
 watch(
   [() => props.data.length, columnsSignature],
   async () => {
@@ -682,6 +750,21 @@ const handleSort = (key: string) => {
     // Client-side sort mode: just update internal state
     sortKey.value = key
     sortOrder.value = newOrder
+  }
+}
+
+/**
+ * Keyboard activation for sortable column headers (the <th> itself is the
+ * focus target — the audit's accepted alternative to an inner button, chosen
+ * because sortable header slots may legally contain non-sort controls such as
+ * help tooltips, and because aria-sort must stay on the columnheader cell).
+ * Enter/Space toggle the sort exactly like a click.
+ */
+const onSortHeaderKeydown = (column: Column, event: KeyboardEvent) => {
+  if (!column.sortable) return
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault()
+    handleSort(column.key)
   }
 }
 
@@ -953,6 +1036,15 @@ defineExpose({
 /* 表格横向滚动 */
 .table-wrapper {
   --select-col-width: 52px; /* 勾选列宽度：px-6 (24px*2) + checkbox (16px) */
+  /* 固定列毛玻璃（本组件局部令牌，不改动 apple-tokens.css）：
+     与顶栏 .gn 的 --glass-bg / --glass-blur 同族，但 alpha 抬到 0.82、模糊加到 28px。
+     理由：顶栏身后是页面留白，固定列身后是密排表格文字，需要更厚的底 + 更强的模糊
+     才能把穿透文字彻底揉成看不出字形的雾面（用户诉求「非常模糊」，同时可读性优先）。 */
+  --sticky-glass-bg: rgba(255, 255, 255, 0.82);
+  --sticky-glass-blur: saturate(180%) blur(28px);
+  /* 状态色：与非固定单元格取同一视觉来源，保证整行观感一致 */
+  --sticky-hover-tint: var(--fill); /* 与 tbody tr:hover 的 --fill 同值 */
+  --sticky-selected-tint: rgba(234, 244, 255, 0.4); /* = Tailwind bg-primary-50/40 */
   position: relative;
   overflow-x: auto;
   overflow-y: auto;
@@ -964,6 +1056,12 @@ defineExpose({
   border: 0.5px solid var(--separator);
   border-radius: var(--r-xl);
   box-shadow: var(--shadow-card), var(--glass-highlight);
+}
+
+/* 暗色：底色跟随 --glass-bg 的暗色族（rgb(28,28,30)），同样抬高 alpha */
+.dark .table-wrapper {
+  --sticky-glass-bg: rgba(28, 28, 30, 0.82);
+  --sticky-selected-tint: rgba(0, 49, 102, 0.1); /* = Tailwind bg-primary-900/10 */
 }
 
 /* 表头容器，确保在滚动时覆盖表体内容 */
@@ -1053,14 +1151,63 @@ defineExpose({
   z-index: 220; /* 高于普通表头单元格和表体固定列 */
 }
 
-/* 表体 sticky 列背景 */
+/* ==========================================================================
+   固定列材质：不可滚动时不透明，可滚动时「非常模糊的毛玻璃」
+   --------------------------------------------------------------------------
+   原缺陷：固定列 hover 时把不透明的 --bg-elevated 换成了半透明的 --fill
+   (rgba(120,120,128,0.08))，横向滚动的单元格直接透过固定列显形，文字重叠。
+   根治思路：底层永远是「毛玻璃(高 alpha + 强模糊)」或「不透明兜底」，
+   状态色（hover / 选中）一律用 background-image 叠加在底层之上，
+   绝不替换底色 —— 从而不存在任何状态下固定列只剩半透明底色的情况。
+   ========================================================================== */
+
+/* 表体 sticky 列背景：默认（无横向溢出）保持不透明，最省合成开销 */
 tbody .sticky-col {
   background-color: var(--bg-elevated);
 }
 
-/* hover 状态保持 */
+/* hover 状态：色调叠加在底色之上（background-image 绘制于 background-color 之上） */
 tbody tr:hover .sticky-col {
-  background-color: var(--fill);
+  background-image: linear-gradient(var(--sticky-hover-tint), var(--sticky-hover-tint));
+}
+
+/* 选中状态：与行的 bg-primary-50/40 观感对齐（此前固定列会盖掉整行选中色） */
+tbody tr.is-row-selected .sticky-col {
+  background-image: linear-gradient(var(--sticky-selected-tint), var(--sticky-selected-tint));
+}
+
+/* 选中 + hover：hover 优先，与非固定单元格行为一致 */
+tbody tr.is-row-selected:hover .sticky-col {
+  background-image: linear-gradient(var(--sticky-hover-tint), var(--sticky-hover-tint));
+}
+
+/* 仅在真正出现横向溢出时才启用毛玻璃：
+   行是虚拟化的，给每一行的固定列都挂 backdrop-filter 是实打实的合成成本；
+   而不可滚动时固定列身后本就没有内容穿透，不透明底色既正确又便宜。 */
+.is-scrollable .sticky-header-cell.sticky-col,
+.is-scrollable tbody .sticky-col {
+  background-color: var(--sticky-glass-bg);
+  backdrop-filter: var(--sticky-glass-blur);
+  -webkit-backdrop-filter: var(--sticky-glass-blur);
+}
+
+/* backdrop-filter 不可用时退回完全不透明底，保证固定列文字始终可读
+   —— 可读性优先于材质观感 */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .is-scrollable .sticky-header-cell.sticky-col,
+  .is-scrollable tbody .sticky-col {
+    background-color: var(--bg-elevated);
+  }
+}
+
+/* 用户要求降低透明度时同样退回不透明底，仅保留状态色叠加 */
+@media (prefers-reduced-transparency: reduce) {
+  .is-scrollable .sticky-header-cell.sticky-col,
+  .is-scrollable tbody .sticky-col {
+    background-color: var(--bg-elevated);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 /* 阴影只在可滚动时显示 */

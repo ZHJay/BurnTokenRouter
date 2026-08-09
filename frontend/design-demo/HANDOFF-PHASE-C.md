@@ -48,7 +48,7 @@
 
 1. **全站禁止渲染 logo 图片**。品牌 = 站点名纯文本 wordmark。favicon 是唯一例外（`utils/branding.ts#updateFavicon`）。规范写法：`appStore.cachedPublicSettings?.site_name || appStore.siteName || 'Sub2API'`
 2. **浮出层/下拉/弹窗必须不透明**（`var(--glass-bg-strong)`）+ 纱幕压暗（亮 18% / 暗 45% 黑）。用户明确否决过半透明——密集文字会透出来，调多高不透明度都不够
-3. **玻璃质感只保留三处**：顶栏（0.72 + `saturate(180%) blur(20px)`）、登录页玻璃卡、ambient 环境渐变
+3. **玻璃质感只保留四处**：顶栏（0.72 + `saturate(180%) blur(20px)`）、登录页玻璃卡、ambient 环境渐变、**DataTable 固定列**（第 4 处于 2026-08-09 经用户确认加入，见 `HANDOFF.md` §8.1）
 4. **主题色苹果蓝**：亮 `#0071e3` / 暗 `#0a84ff`；语义色用 iOS 系统色
 5. **明暗双模式都必须是成品级**，默认跟随系统，手动切换持久化
 6. **i18n 禁止硬编码中文**，走现有 key

@@ -118,9 +118,15 @@
     cursor: not-allowed;
     transform: none;
   }
+  /* 焦点环用 outline（不参与 box-shadow 合并）：
+     ring 若用 box-shadow 实现，会被同特异性、源序靠后的变体装饰投影
+     （.btn-primary/.btn-secondary 的 box-shadow）与 hover:shadow-* 覆盖，
+     且 4px --blue-soft 环只有 ~1.2:1 不可见（audit_a11y P2#8）。
+     outline-offset 让环与按钮留 2px 间隙，环全部邻接页面背景，
+     亮暗主题下 --blue 环对 --bg 均 >= 3:1（WCAG 2.4.11，哨兵实测）。 */
   .btn:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 4px var(--blue-soft);
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
   }
 
   .btn-primary {
@@ -237,7 +243,7 @@
     width: 100%;
     height: 44px;
     padding: 0 14px;
-    border-radius: var(--r-md);
+    border-radius: var(--r-control);
     border: 0.5px solid var(--separator-strong);
     background: var(--bg-elevated);
     color: var(--text-primary);
@@ -245,6 +251,10 @@
     font-family: inherit;
     outline: none;
     transition: box-shadow 0.18s var(--ease), border-color 0.18s var(--ease);
+  }
+  /* 例外：复用 .input 的多行 textarea 保持非药丸圆角 */
+  textarea.input {
+    border-radius: var(--r-control-multiline);
   }
   .input::placeholder {
     color: var(--text-tertiary);
@@ -1559,7 +1569,7 @@
     gap: 8px;
     height: 36px;
     padding: 0 14px;
-    border-radius: var(--r-pill);
+    border-radius: var(--r-control);
     background: var(--fill);
     min-width: 240px;
     transition: background 0.18s var(--ease), box-shadow 0.18s var(--ease);

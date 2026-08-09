@@ -1,5 +1,17 @@
+<!--
+  `.gn-user` is set for non-admin navKinds: the user nav renders 11-12
+  self-service links (~1128px of min-content) which cannot share the 1360px
+  measure with the full action cluster, so the class switches the bar to the
+  compact-cluster / burger layout described in global-nav.css ("User nav
+  bands").
+-->
 <template>
-  <nav class="gn" :aria-label="t('nav.mainNavigation')" ref="navRef">
+  <nav
+    class="gn"
+    :class="{ 'gn-switching': flyoutSwitching, 'gn-user': navKind === 'user' }"
+    :aria-label="t('nav.mainNavigation')"
+    ref="navRef"
+  >
     <div class="gn-inner">
       <!-- Mobile burger -->
       <button
@@ -558,10 +570,23 @@ const displayName = computed(() => {
  *  - `pinnedFlyout`  : explicitly opened by click or keyboard focus; survives
  *                      the cursor leaving.
  *  - `hoverFlyout`   : transiently opened by a mouse hover; closes on leave.
+ *
+ * `hoverFlyout` is only ever written through the hover-timing helpers below
+ * (open-intent delay / close grace period), never straight from a handler.
  */
 const pinnedFlyout = ref<string | null>(null)
 const hoverFlyout = ref<string | null>(null)
 const openFlyout = computed<string | null>(() => pinnedFlyout.value ?? hoverFlyout.value)
+/**
+ * Set when the currently open flyout moves from one group straight to another,
+ * cleared on any other change (open from closed / close to nothing). Drives
+ * `.gn-switching`, which drops the panels' transitions so the swap reads as a
+ * content change rather than a cross-fade. It stays set while the destination
+ * panel is open, which is harmless: a transition only matters at the instant
+ * the classes change, and every change re-evaluates this flag in the same DOM
+ * patch.
+ */
+const flyoutSwitching = ref(false)
 const dropdownOpen = ref(false)
 const paletteOpen = ref(false)
 const mobileOpen = ref(false)
@@ -667,23 +692,110 @@ function isGroupActive(group: GroupedAdminFlyout): boolean {
  * `focusin` can interfere — and hover/pin are kept in separate refs:
  *   hover  = transient, dies on mouseleave
  *   pinned = explicit intent (click / keyboard focus), survives mouseleave
+ *
+ * On top of that, hover is *intent-gated* rather than immediate: see the hover
+ * timing block below. An open waits out a debounce, a close waits out a grace
+ * period, and moving between two groups while one is already open bypasses both
+ * and swaps the panel contents with the transitions suppressed.
  */
 /** Was this flyout already pinned when the current gesture started? */
 const pinnedAtGestureStart = ref<string | null>(null)
 
+/* ---------------- Flyout hover timing ---------------- */
+/**
+ * Hover *intent*, not raw hover.
+ *
+ * `FLYOUT_OPEN_DELAY_MS` (120ms): the cursor crosses every trigger on its way
+ * between the wordmark and the action cluster, so opening on the bare
+ * `pointerenter` made the bar strobe on the way past. 120ms rejects a
+ * pass-through while still reading as instant on a deliberate stop — past
+ * ~150ms a hover response starts to feel laggy, so this sits just under that.
+ *
+ * `FLYOUT_CLOSE_GRACE_MS` (200ms): leaving a trigger must not close the panel,
+ * or the cursor cannot survive the 2px gap between sibling triggers on its way
+ * to the next group. 200ms covers an ordinary sideways move without making a
+ * deliberate exit feel sticky.
+ *
+ * Neither value is an animation, so both stay in force under
+ * `prefers-reduced-motion` — they are pointer-precision affordances, and the
+ * token layer already zeroes the panel's transition *durations* there.
+ */
+const FLYOUT_OPEN_DELAY_MS = 120
+const FLYOUT_CLOSE_GRACE_MS = 200
+
+let flyoutOpenTimer: ReturnType<typeof setTimeout> | null = null
+let flyoutCloseTimer: ReturnType<typeof setTimeout> | null = null
+
+function cancelFlyoutOpenTimer() {
+  if (flyoutOpenTimer === null) return
+  clearTimeout(flyoutOpenTimer)
+  flyoutOpenTimer = null
+}
+
+function cancelFlyoutCloseTimer() {
+  if (flyoutCloseTimer === null) return
+  clearTimeout(flyoutCloseTimer)
+  flyoutCloseTimer = null
+}
+
+/** Every path that settles flyout state clears both timers through here. */
+function cancelFlyoutTimers() {
+  cancelFlyoutOpenTimer()
+  cancelFlyoutCloseTimer()
+}
+
+/** Is keyboard focus parked inside this group's item? */
+function flyoutHoldsFocus(key: string): boolean {
+  const item = navRef.value?.querySelector(`[data-flyout-key="${key}"]`)
+  return !!item && item.contains(document.activeElement)
+}
+
 function closeFlyout() {
+  cancelFlyoutTimers()
   pinnedFlyout.value = null
   hoverFlyout.value = null
 }
 
-/** Mouse hover reveals a flyout transiently. Touch/pen never uses this path. */
+/**
+ * Mouse hover reveals a flyout transiently. Touch/pen never uses this path.
+ *
+ * Three cases, in order: this group is already showing (nothing to do), another
+ * group is showing (swap now, no delay — this is what the user sees as "the
+ * window stays put and only its contents change"), or nothing is showing (wait
+ * out the open delay, so brushing past opens nothing).
+ */
 function handleFlyoutPointerEnter(key: string, event: PointerEvent) {
   if (event.pointerType && event.pointerType !== 'mouse') return
-  hoverFlyout.value = key
+  // Arriving anywhere cancels a pending close for the group we came from and a
+  // pending open for a group we only brushed.
+  cancelFlyoutTimers()
+  if (openFlyout.value === key) return
+  if (openFlyout.value !== null) {
+    // A *pinned* flyout (explicit click — or keyboard focus) survives the
+    // cursor crossing other triggers. "Pin" means "stays until click/Esc":
+    // releasing it on a stray sweep would contradict the tested contract that
+    // a pinned flyout survives `mouseleave`, and would silently discard an
+    // explicit choice the moment the pointer passes over a neighbour.
+    if (pinnedFlyout.value !== null) return
+    // A group holding keyboard focus keeps its panel: `:focus-within` would
+    // otherwise keep the old panel rendered alongside the new one.
+    if (flyoutHoldsFocus(openFlyout.value)) return
+    // Hand the open panel to the new group in a single mutation. Both sides
+    // here are hover-driven (nothing pinned), so the swap is pure preview.
+    hoverFlyout.value = key
+    return
+  }
+  flyoutOpenTimer = setTimeout(() => {
+    flyoutOpenTimer = null
+    hoverFlyout.value = key
+  }, FLYOUT_OPEN_DELAY_MS)
 }
 
 /** Snapshot pinned state before `focusin`/`click` can mutate it. */
 function handleFlyoutPointerDown(key: string) {
+  // This click is about to settle the flyout, so no pending hover timer may
+  // land afterwards and re-open or re-close it behind the click's back.
+  cancelFlyoutTimers()
   pinnedAtGestureStart.value = pinnedFlyout.value === key ? key : null
 }
 
@@ -691,11 +803,18 @@ function handleFlyoutPointerDown(key: string) {
  * Keyboard focus pins the flyout open. Clicking also focuses, but `click`
  * runs afterwards and is authoritative, so a mouse gesture is not affected.
  */
+/** One-shot: set while Esc's focus restore is focusing the trigger, so that
+ *  the focusin that restore fires cannot re-pin the flyout we just closed. */
+let suppressFlyoutFocusOpen = false
 function openFlyoutByFocus(key: string) {
+  cancelFlyoutTimers()
+  if (suppressFlyoutFocusOpen) return
   pinnedFlyout.value = key
+  hoverFlyout.value = null
 }
 
 function toggleFlyout(key: string) {
+  cancelFlyoutTimers()
   // Decide from the pre-gesture snapshot, not from live state that `focusin`
   // may have already changed: a second click on a pinned flyout closes it,
   // anything else pins it open.
@@ -706,15 +825,39 @@ function toggleFlyout(key: string) {
     return
   }
   pinnedFlyout.value = key
+  hoverFlyout.value = null
 }
 
 function handleFlyoutMouseLeave(key: string) {
-  if (hoverFlyout.value === key) hoverFlyout.value = null
-  // A pinned flyout survives the cursor leaving; keyboard focus keeps it too.
-  if (pinnedFlyout.value !== key) return
-  const item = navRef.value?.querySelector(`[data-flyout-key="${key}"]`)
-  if (item && item.contains(document.activeElement)) return
+  // A group the cursor has already left must never open behind it.
+  cancelFlyoutOpenTimer()
+  // A pinned flyout survives the cursor leaving; keyboard focus keeps it too —
+  // both live in `pinnedFlyout`, which this path deliberately never clears.
+  if (hoverFlyout.value !== key) return
+  // Grace period: the cursor needs room to cross the gap to the next trigger,
+  // or to travel down into this panel, before the panel may collapse.
+  cancelFlyoutCloseTimer()
+  flyoutCloseTimer = setTimeout(() => {
+    flyoutCloseTimer = null
+    if (hoverFlyout.value === key) hoverFlyout.value = null
+  }, FLYOUT_CLOSE_GRACE_MS)
 }
+
+/**
+ * Suppress the cross-dissolve when an open flyout moves between groups.
+ *
+ * Every group owns its own panel, so a group→group move fades A out over 300ms
+ * while B fades in from `translateY(-8px)` — two panels dissolving past each
+ * other, which is the flash. This watcher is pre-flush, so it runs in the same
+ * scheduler flush as the render it precedes: `.gn-switching` therefore lands in
+ * the *same* DOM patch that moves the `open` class, so A vanishes and B appears
+ * in one frame with no fade and no entry transform. Opening from closed and
+ * closing to nothing still animate, because there one side of the change is
+ * `null`.
+ */
+watch(openFlyout, (next, previous) => {
+  flyoutSwitching.value = next !== null && previous !== null && next !== previous
+})
 
 function handleFlyoutFocusOut(key: string, event: FocusEvent) {
   const item = navRef.value?.querySelector(`[data-flyout-key="${key}"]`)
@@ -832,17 +975,49 @@ function handleDocumentClick(event: MouseEvent) {
   if (navRef.value && !navRef.value.contains(target)) {
     if (dropdownOpen.value) closeDropdown()
     if (paletteOpen.value) closePalette()
-    if (openFlyout.value !== null) closeFlyout()
+    // Unconditional: a click outside must also kill a hover-open timer that is
+    // still in flight, or the flyout would appear after the click that
+    // dismissed the bar.
+    closeFlyout()
   }
 }
 
 function handleDocumentKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape') {
-    if (openFlyout.value !== null) closeFlyout()
-    if (dropdownOpen.value) closeDropdown()
-    // The palette closes itself (it also has to restore focus), see
-    // useCommandPalette's global listener.
-    if (mobileOpen.value) closeMobileMenu()
+  if (event.key !== 'Escape') return
+  // Unconditional for the same reason as the outside click: Escape also has
+  // to cancel a pending hover-open timer, not just a visible panel.
+  const flyoutBefore = openFlyout.value
+  closeFlyout()
+  if (dropdownOpen.value) closeDropdown()
+  // Esc from inside a flyout panel (keyboard users Tab past the trigger into
+  // the links) must hand focus back to the trigger: the panel is about to be
+  // `visibility: hidden`, and leaving focus on an invisible element strands
+  // the user (a11y audit A7). If focus was never inside the panel — e.g. a
+  // mouse user who opened it by hover — Esc just closes and leaves focus be.
+  if (flyoutBefore !== null && flyoutHoldsFocus(flyoutBefore)) {
+    const trigger = navRef.value
+      ?.querySelector<HTMLElement>(`[data-flyout-key="${flyoutBefore}"] > .gn-link`)
+    if (trigger) {
+      // Focusing the trigger fires `@focusin`, which would re-pin the panel
+      // we just closed. `focus()` dispatches focusin synchronously, so the
+      // suppression can be scoped to this one call.
+      suppressFlyoutFocusOpen = true
+      trigger.focus()
+      suppressFlyoutFocusOpen = false
+    }
+  }
+  // The palette closes itself (it also has to restore focus), see
+  // useCommandPalette's global listener.
+  if (mobileOpen.value) {
+    closeMobileMenu()
+    // Esc must return focus to the burger that opened the menu (a11y audit
+    // A7: focus fell to <body>). Deterministic restore to the trigger rather
+    // than "whatever had focus on open": browsers disagree about whether a
+    // click moves focus onto a button, and the audit's contract is explicit
+    // ("还给触发它的汉堡按钮").
+    if (mobileRef.value?.contains(document.activeElement)) {
+      navRef.value?.querySelector<HTMLElement>('.gn-burger')?.focus()
+    }
   }
 }
 
@@ -917,6 +1092,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleDocumentClick)
   document.removeEventListener('keydown', handleDocumentKeydown)
+  // No pending hover timer may survive teardown and write to a dead component.
+  cancelFlyoutTimers()
   if (mobileHoldsScrollLock) {
     unlockBodyScroll()
     mobileHoldsScrollLock = false
@@ -927,6 +1104,28 @@ onBeforeUnmount(() => {
 watch(
   () => route.fullPath,
   () => closeAll(),
+)
+
+/**
+ * On user nav the links strip scrolls internally when the full row cannot fit
+ * next to the action cluster (see `.gn-links` in global-nav.css). Keep the
+ * active link in view: without this, a user on a trailing route (e.g.
+ * /profile) would see the strip parked on the leading links with the current
+ * page hidden behind the strip edge — the highlight would be invisible.
+ * `inline: 'nearest'` means a fully-visible active link (admin nav, wide
+ * viewports) never scrolls at all.
+ */
+watch(
+  () => route.fullPath,
+  () => {
+    void nextTick(() => {
+      navRef.value?.querySelector<HTMLElement>('.gn-links a.active')?.scrollIntoView({
+        block: 'nearest',
+        inline: 'nearest',
+      })
+    })
+  },
+  { immediate: true },
 )
 </script>
 
@@ -979,6 +1178,14 @@ watch(
 @media (max-width: 1279px) {
   .gn-header-link .gn-header-label { display: none; }
 }
+/*
+ * User nav runs a permanently compact action cluster. The 11-12 self-service
+ * links (measured ~1128px of min-content at /keys) cannot share the 1360px
+ * measure with the full cluster (measured 734px at 1440), so for users the
+ * secondary actions stay icon-only at *every* width. The admin nav keeps the
+ * width ladder above (its 5 links + flyouts fit).
+ */
+.gn-user .gn-header-link .gn-header-label { display: none; }
 @media (max-width: 768px) {
   /* Re-homed into the hamburger menu (see the mobile menu template). */
   .gn-header-link { display: none; }
@@ -988,33 +1195,40 @@ watch(
 .gn-balance .gn-balance-ico { width: 15px; height: 15px; flex-shrink: 0; }
 .gn-balance-wrap:not(:hover) .gn-balance-pop { pointer-events: none; }
 
-.gn-pop .gn-pop-mobile-balance { display: none; }
+.gn-pop .gn-pop-mobile-balance {
+  display: none;
+  border-bottom: 0.5px solid var(--separator);
+  padding: 10px 12px;
+}
+.gn-pop .gn-pop-mobile-balance .label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.gn-pop .gn-pop-mobile-balance .amount {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--blue);
+  margin-top: 2px;
+}
+.gn-pop .gn-pop-mobile-balance .frozen {
+  font-size: 12px;
+  color: var(--orange);
+  margin-top: 2px;
+}
 /* The balance chip is 230px — the single widest action. Keeping it in the bar
    below 1280px overflowed the viewport (measured scrollWidth 1257 @1024px and
    801 @768px), so it moves into the avatar dropdown from here down. */
 @media (max-width: 1279px) {
   .gn-balance-wrap { display: none; }
-  .gn-pop .gn-pop-mobile-balance {
-    display: block;
-    border-bottom: 0.5px solid var(--separator);
-    padding: 10px 12px;
-  }
-  .gn-pop .gn-pop-mobile-balance .label {
-    font-size: 12px;
-    color: var(--text-secondary);
-  }
-  .gn-pop .gn-pop-mobile-balance .amount {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--blue);
-    margin-top: 2px;
-  }
-  .gn-pop .gn-pop-mobile-balance .frozen {
-    font-size: 12px;
-    color: var(--orange);
-    margin-top: 2px;
-  }
+  .gn-pop .gn-pop-mobile-balance { display: block; }
 }
+/*
+ * User nav: the chip stays in the dropdown at every width — the 230px chip
+ * never fits next to 1128px of links inside the 1360px measure, and the link
+ * row is the primary surface (see the `.gn-user` cluster comment above).
+ */
+.gn-user .gn-balance-wrap { display: none; }
+.gn-user .gn-pop .gn-pop-mobile-balance { display: block; }
 
 .gn-pop .gn-pop-contact {
   display: flex;

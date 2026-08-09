@@ -18,12 +18,16 @@ export function useAutoRefresh(options: UseAutoRefreshOptions) {
     shouldPause,
   } = options
 
+  // 调用方未显式提供 shouldPause 时，默认在页面隐藏（后台标签页）时暂停刷新
+  const pauseWhenHidden = shouldPause ?? (() => document.hidden)
+
   const enabled = ref(false)
   const intervalSeconds = ref(defaultInterval ?? intervals[intervals.length - 1])
   const countdown = ref(0)
   const fetching = ref(false)
 
   let timerId: number | undefined
+  let visibilityListenerAttached = false
 
   function loadFromStorage() {
     try {
@@ -47,7 +51,7 @@ export function useAutoRefresh(options: UseAutoRefreshOptions) {
 
   async function tick() {
     if (!enabled.value) return
-    if (shouldPause?.()) return
+    if (pauseWhenHidden()) return
     if (fetching.value) return
 
     if (countdown.value <= 0) {
@@ -59,8 +63,36 @@ export function useAutoRefresh(options: UseAutoRefreshOptions) {
     countdown.value -= 1
   }
 
+  /**
+   * 页面可见性变化：hidden 时停表（后台标签页不再空转），visible 时恢复
+   */
+  function handleVisibilityChange(): void {
+    if (typeof document === 'undefined') return
+    if (document.hidden) {
+      if (timerId !== undefined) {
+        clearInterval(timerId)
+        timerId = undefined
+      }
+    } else if (enabled.value) {
+      start()
+    }
+  }
+
+  function attachVisibilityListener(): void {
+    if (visibilityListenerAttached || typeof document === 'undefined') return
+    visibilityListenerAttached = true
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+  }
+
+  function detachVisibilityListener(): void {
+    if (!visibilityListenerAttached || typeof document === 'undefined') return
+    visibilityListenerAttached = false
+    document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }
+
   function start() {
     if (timerId !== undefined) return
+    attachVisibilityListener()
     timerId = setInterval(tick, 1000) as unknown as number
   }
 
@@ -69,6 +101,7 @@ export function useAutoRefresh(options: UseAutoRefreshOptions) {
       clearInterval(timerId)
       timerId = undefined
     }
+    detachVisibilityListener()
   }
 
   function setEnabled(value: boolean) {

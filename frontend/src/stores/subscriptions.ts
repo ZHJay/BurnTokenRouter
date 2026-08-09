@@ -10,6 +10,8 @@ import type { UserSubscription } from '@/types'
 
 // Cache TTL: 60 seconds
 const CACHE_TTL_MS = 60_000
+// 订阅列表轮询间隔（5 分钟）。后台标签页会暂停，见 startPolling。
+const POLL_INTERVAL_MS = 5 * 60 * 1000
 
 // Request generation counter to invalidate stale in-flight responses
 let requestGeneration = 0
@@ -83,22 +85,59 @@ export const useSubscriptionStore = defineStore('subscriptions', () => {
   }
 
   /**
-   * Start auto-refresh polling 
+   * Start auto-refresh polling
+   * 页面隐藏（后台标签页）时暂停轮询，恢复可见时继续（审计 PF4）。
+   * 与 stores/auth.ts 的 60s 轮询同一套模式：listener 由 start/stop 成对挂卸，
+   * 定时器单独由 *Timer 函数管理，避免可见性恢复时重复挂监听。
    */
   function startPolling() {
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange)
+    }
+    startPollingTimer()
+  }
+
+  /**
+   * 仅启动 5min 轮询定时器（不重复挂 visibilitychange 监听）
+   */
+  function startPollingTimer() {
     if (pollerInterval) return
+    // 页面已在后台时不起表，等回到前台由 handleVisibilityChange 启动
+    if (typeof document !== 'undefined' && document.hidden) return
 
     pollerInterval = setInterval(() => {
       fetchActiveSubscriptions(true).catch((error) => {
         console.error('Subscription polling failed:', error)
       })
-    }, 5 * 60 * 1000)
+    }, POLL_INTERVAL_MS)
+  }
+
+  /**
+   * 页面可见性变化：后台标签页暂停轮询，回到前台恢复
+   */
+  function handleVisibilityChange() {
+    if (typeof document === 'undefined') return
+    if (document.hidden) {
+      stopPollingTimer()
+    } else {
+      startPollingTimer()
+    }
   }
 
   /**
    * Stop auto-refresh polling
    */
   function stopPolling() {
+    stopPollingTimer()
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }
+
+  /**
+   * 仅清掉轮询定时器（保留 visibilitychange 监听，供恢复时重启）
+   */
+  function stopPollingTimer() {
     if (pollerInterval) {
       clearInterval(pollerInterval)
       pollerInterval = null

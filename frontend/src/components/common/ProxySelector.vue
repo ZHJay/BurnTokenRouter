@@ -1,14 +1,19 @@
 <template>
   <div class="relative" ref="containerRef">
     <button
+      ref="triggerRef"
       type="button"
       @click="toggle"
       :disabled="disabled"
+      :aria-expanded="isOpen"
+      :aria-haspopup="true"
+      :aria-controls="listboxId"
       :class="[
         'select-trigger',
         isOpen && 'select-trigger-open',
         disabled && 'select-trigger-disabled'
       ]"
+      @keydown="onKeydown"
     >
       <span class="select-value">
         {{ selectedLabel }}
@@ -23,7 +28,13 @@
     </button>
 
     <Transition name="select-dropdown">
-      <div v-if="isOpen" class="select-dropdown">
+      <div
+        v-if="isOpen"
+        :id="listboxId"
+        class="select-dropdown"
+        role="listbox"
+        :aria-label="t('admin.proxies.searchProxies')"
+      >
         <!-- Search and Batch Test Header -->
         <div class="select-header">
           <div class="select-search">
@@ -32,9 +43,15 @@
               ref="searchInputRef"
               v-model="searchQuery"
               type="text"
+              role="combobox"
+              :aria-expanded="isOpen"
+              :aria-controls="listboxId"
+              :aria-activedescendant="activeOptionId"
+              aria-autocomplete="list"
               :placeholder="t('admin.proxies.searchProxies')"
               class="select-search-input"
               @click.stop
+              @keydown="onSearchKeydown"
             />
           </div>
           <button
@@ -68,8 +85,16 @@
         <div class="select-options">
           <!-- No Proxy option -->
           <div
+            :id="optionId(null)"
+            role="option"
+            :aria-selected="modelValue === null"
             @click="selectOption(null)"
-            :class="['select-option', modelValue === null && 'select-option-selected']"
+            @mouseenter="focusedIndex = 0"
+            :class="[
+              'select-option',
+              modelValue === null && 'select-option-selected',
+              focusedIndex === 0 && 'select-option-focused'
+            ]"
           >
             <span class="select-option-label">{{ t('admin.accounts.noProxy') }}</span>
             <Icon v-if="modelValue === null" name="check" size="sm" class="text-primary-500" />
@@ -77,10 +102,18 @@
 
           <!-- Proxy options -->
           <div
-            v-for="proxy in filteredProxies"
+            v-for="(proxy, index) in filteredProxies"
             :key="proxy.id"
+            :id="optionId(proxy.id)"
+            role="option"
+            :aria-selected="modelValue === proxy.id"
             @click="selectOption(proxy.id)"
-            :class="['select-option', modelValue === proxy.id && 'select-option-selected']"
+            @mouseenter="focusedIndex = index + 1"
+            :class="[
+              'select-option',
+              modelValue === proxy.id && 'select-option-selected',
+              focusedIndex === index + 1 && 'select-option-focused'
+            ]"
           >
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2">
@@ -173,6 +206,7 @@ import { useI18n } from 'vue-i18n'
 import { adminAPI } from '@/api/admin'
 import Icon from '@/components/icons/Icon.vue'
 import type { Proxy } from '@/types'
+import { useListboxKeyboard } from '@/composables/useListboxKeyboard'
 
 const { t } = useI18n()
 
@@ -202,8 +236,26 @@ const emit = defineEmits<{
 
 const isOpen = ref(false)
 const searchQuery = ref('')
+const focusedIndex = ref(-1)
 const containerRef = ref<HTMLElement | null>(null)
+const triggerRef = ref<HTMLButtonElement | null>(null)
 const searchInputRef = ref<HTMLInputElement | null>(null)
+
+// Unique ids for the WAI-ARIA combobox wiring.
+const instanceId = `proxy-select-${Math.random().toString(36).substring(2, 9)}`
+const listboxId = `${instanceId}-listbox`
+
+const optionId = (value: number | null): string => {
+  return `${instanceId}-option-${String(value)}`
+}
+
+const activeOptionId = computed(() => {
+  if (!isOpen.value) return undefined
+  if (focusedIndex.value < 0 || focusedIndex.value > filteredProxies.value.length) return undefined
+  if (focusedIndex.value === 0) return optionId(null)
+  const proxy = filteredProxies.value[focusedIndex.value - 1]
+  return proxy ? optionId(proxy.id) : undefined
+})
 
 // Test state
 const testResults = reactive<Record<number, ProxyTestResult>>({})
@@ -235,20 +287,87 @@ const filteredProxies = computed(() => {
   })
 })
 
+const openDropdown = () => {
+  if (props.disabled) return
+  isOpen.value = true
+  // Highlight the current selection (index 0 = "No Proxy").
+  if (props.modelValue === null) {
+    focusedIndex.value = 0
+  } else {
+    const idx = filteredProxies.value.findIndex((p) => p.id === props.modelValue)
+    focusedIndex.value = idx >= 0 ? idx + 1 : 0
+  }
+  nextTick(() => {
+    searchInputRef.value?.focus()
+  })
+}
+
+const closeDropdown = () => {
+  isOpen.value = false
+  searchQuery.value = ''
+  focusedIndex.value = -1
+}
+
 const toggle = () => {
   if (props.disabled) return
-  isOpen.value = !isOpen.value
   if (isOpen.value) {
-    nextTick(() => {
-      searchInputRef.value?.focus()
-    })
+    closeDropdown()
+  } else {
+    openDropdown()
   }
 }
 
 const selectOption = (value: number | null) => {
   emit('update:modelValue', value)
-  isOpen.value = false
-  searchQuery.value = ''
+  closeDropdown()
+  triggerRef.value?.focus()
+}
+
+/*
+ * Keyboard contract, shared with Select via useListboxKeyboard (see the
+ * composable for the rationale: the handler must live on the focus-holding
+ * element, not on the panel).
+ */
+const listboxKeyboard = useListboxKeyboard({
+  isOpen,
+  focusedIndex,
+  open: openDropdown,
+  close: closeDropdown,
+  restoreFocus: () => {
+    triggerRef.value?.focus()
+  },
+  isOptionNavigable: (index) => index >= 0 && index <= filteredProxies.value.length,
+  optionCount: () => filteredProxies.value.length + 1,
+  selectIndex: (index) => {
+    if (index === 0) {
+      selectOption(null)
+    } else {
+      const proxy = filteredProxies.value[index - 1]
+      if (proxy) selectOption(proxy.id)
+    }
+  },
+  scrollToFocused: () => {
+    nextTick(() => {
+      const list = containerRef.value?.querySelector('.select-options') as HTMLElement | null | undefined
+      if (!list) return
+      const focusedEl = list.children[focusedIndex.value] as HTMLElement | undefined
+      if (!focusedEl) return
+      if (focusedEl.offsetTop < list.scrollTop) {
+        list.scrollTop = focusedEl.offsetTop
+      } else if (focusedEl.offsetTop + focusedEl.offsetHeight > list.scrollTop + list.offsetHeight) {
+        list.scrollTop = focusedEl.offsetTop + focusedEl.offsetHeight - list.offsetHeight
+      }
+    })
+  },
+  spaceSelects: true
+})
+
+const onKeydown = listboxKeyboard.handleKeydown
+
+// The search input shares the contract, but Space must type into the query.
+const onSearchKeydown = (event: KeyboardEvent) => {
+  if (event.key === ' ' || event.key === 'Spacebar') return
+  onKeydown(event)
 }
 
 const handleTestProxy = async (proxy: Proxy) => {
@@ -295,15 +414,13 @@ const handleBatchTest = async () => {
 
 const handleClickOutside = (event: MouseEvent) => {
   if (containerRef.value && !containerRef.value.contains(event.target as Node)) {
-    isOpen.value = false
-    searchQuery.value = ''
+    closeDropdown()
   }
 }
 
 const handleEscape = (event: KeyboardEvent) => {
   if (event.key === 'Escape' && isOpen.value) {
-    isOpen.value = false
-    searchQuery.value = ''
+    closeDropdown()
   }
 }
 
@@ -328,7 +445,7 @@ onUnmounted(() => {
   gap: 8px;
   height: 44px;
   padding: 0 14px;
-  border-radius: var(--r-md);
+  border-radius: var(--r-control);
   border: 0.5px solid var(--separator-strong);
   background: var(--bg-elevated);
   color: var(--text-primary);
@@ -463,6 +580,10 @@ onUnmounted(() => {
 
 .select-option:hover {
   background: var(--fill);
+}
+
+.select-option-focused {
+  background: var(--fill-hover);
 }
 
 .select-option-selected {

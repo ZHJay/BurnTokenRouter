@@ -8,8 +8,8 @@
       class="h-screen w-full border-0"
       allowfullscreen
     ></iframe>
-    <!-- HTML mode - SECURITY: homeContent is admin-only setting, XSS risk is acceptable -->
-    <div v-else v-html="homeContent"></div>
+    <!-- HTML mode - homeContent 经 marked + DOMPurify 默认 config 消毒（与公告/法律路径一致） -->
+    <div v-else v-html="homeContentHtml"></div>
   </div>
 
   <!-- Compact Home Page -->
@@ -274,6 +274,7 @@ import { useAuthStore, useAppStore } from '@/stores'
 import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
 import Icon from '@/components/icons/Icon.vue'
 import { sanitizeUrl } from '@/utils/url'
+import { renderMarkdown } from '@/utils/markdown'
 import { useTheme } from '@/composables/useTheme'
 import LandingHero from '@/components/landing/LandingHero.vue'
 import LandingTerminal from '@/components/landing/LandingTerminal.vue'
@@ -300,6 +301,8 @@ const siteName = computed(() => appStore.cachedPublicSettings?.site_name || appS
 const siteSubtitle = computed(() => appStore.cachedPublicSettings?.site_subtitle || 'AI API Gateway Platform')
 const docUrl = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.doc_url || appStore.docUrl || ''))
 const homeContent = computed(() => appStore.cachedPublicSettings?.home_content || '')
+// 管理员配置的 markdown/HTML 内容，渲染前一律过 DOMPurify（S2：此前是全站唯一未消毒的 v-html 点）
+const homeContentHtml = computed(() => renderMarkdown(homeContent.value))
 const hasHomeContent = computed(() => homeContent.value.trim().length > 0)
 const compactHomeEnabled = computed(() => appStore.cachedPublicSettings?.compact_home_enabled === true)
 

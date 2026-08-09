@@ -85,7 +85,8 @@ defineExpose({
 .input {
   min-height: 80px;
   padding: 12px 14px;
-  border-radius: var(--r-md);
+  /* 例外：多行框保持非药丸圆角（见 --r-control-multiline 注释） */
+  border-radius: var(--r-control-multiline);
   border: 0.5px solid var(--separator-strong);
   background: var(--bg-elevated);
   color: var(--text-primary);

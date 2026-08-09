@@ -14,7 +14,6 @@ export default {
   modelPlaza: {
     title: '模型广场',
     description: '按分组浏览可用模型与价格',
-    loading: '加载中...',
     empty: '暂无可展示的分组',
     loadFailed: '加载模型广场失败',
     noSearchResult: '没有匹配的模型',
@@ -23,7 +22,6 @@ export default {
       platformLabel: '平台',
       groupLabel: '分组',
       rateLabel: '倍率',
-      modelLabel: '模型',
       searchPlaceholder: '搜索模型名称',
       all: '全部',
       clearSearch: '清除搜索'
@@ -34,7 +32,6 @@ export default {
     },
     detail: {
       noModels: '该分组暂未配置模型',
-      noPricing: '未配置定价',
       peakNote: '高峰时段 {window} 计费倍率 ×{multiplier}'
     },
     table: {

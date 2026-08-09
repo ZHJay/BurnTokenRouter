@@ -750,7 +750,11 @@ let authInitialized = false
 const navigationLoading = useNavigationLoadingState()
 // 延迟初始化预加载，传入 router 实例
 let routePrefetch: ReturnType<typeof useRoutePrefetch> | null = null
-const BACKEND_MODE_ALLOWED_PATHS = ['/login', '/key-usage', '/setup', '/payment/result', '/payment/airwallex', '/legal']
+// 注意：守卫用 startsWith 匹配（见 isBackendModePublicRouteAllowed），
+// 绝不能加 '/'（任何路径的前缀，会废掉整个公共拦截）。
+// 首页真实 path 是 '/home'（'/' 仅作 redirect），因此加 '/home' 即可让
+// backend mode 下未登录用户看到 Landing 营销页（审计 S8）。
+const BACKEND_MODE_ALLOWED_PATHS = ['/login', '/key-usage', '/setup', '/payment/result', '/payment/airwallex', '/legal', '/home']
 const BACKEND_MODE_CALLBACK_PATHS = [
   '/auth/callback',
   '/auth/linuxdo/callback',

@@ -59,7 +59,7 @@ describe.each(Object.keys(locales))('%s modelPlaza key 齐全', (name) => {
 
     const filters = plaza.filters as Dict
     for (const key of [
-      'platformLabel', 'groupLabel', 'rateLabel', 'modelLabel',
+      'platformLabel', 'groupLabel', 'rateLabel',
       'searchPlaceholder', 'all'
     ]) {
       expect(filters[key], `modelPlaza.filters.${key} 丢失`).toBeTruthy()

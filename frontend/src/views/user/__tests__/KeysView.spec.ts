@@ -179,6 +179,9 @@ const DataTableStub = {
         >
           <slot name="cell-last_used_ip" :value="row.last_used_ip" :row="row" />
         </div>
+        <div data-test="key-status">
+          <slot name="cell-status" :value="row.status" :row="row" />
+        </div>
       </div>
       <slot name="empty" />
     </div>
@@ -437,5 +440,47 @@ describe('user KeysView column settings', () => {
       },
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     )
+  })
+
+  // 契约内的四个 status 值有 keys.status.* 文案；契约外的值（后端新增状态或坏数据）
+  // 此前会把裸 i18n key 直接渲染进徽标。这里锁住「已知值走翻译、未知值退回原值」。
+  it('renders translated labels for known key statuses', async () => {
+    listKeys.mockResolvedValue({
+      items: [
+        { ...createApiKey(), id: 1, status: 'active' },
+        { ...createApiKey(), id: 2, status: 'inactive' },
+        { ...createApiKey(), id: 3, status: 'quota_exhausted' },
+        { ...createApiKey(), id: 4, status: 'expired' },
+      ],
+      total: 4,
+      page: 1,
+      page_size: 20,
+      pages: 1,
+    })
+
+    const wrapper = await mountView()
+    const badges = wrapper.findAll('[data-test="key-status"]').map((node) => node.text())
+
+    expect(badges).toEqual(['Active', 'Inactive', 'Quota exhausted', 'Expired'])
+    // 任何 badge 都不应出现裸 key
+    expect(badges.some((text) => text.includes('keys.status.'))).toBe(false)
+  })
+
+  it('falls back to the raw value instead of a bare i18n key for out-of-contract statuses', async () => {
+    listKeys.mockResolvedValue({
+      items: [{ ...createApiKey(), status: 'suspended' as ApiKey['status'] }],
+      total: 1,
+      page: 1,
+      page_size: 20,
+      pages: 1,
+    })
+
+    const wrapper = await mountView()
+    const badge = wrapper.get('[data-test="key-status"]')
+
+    expect(badge.text()).toBe('suspended')
+    expect(badge.text()).not.toContain('keys.status.')
+    // 未知值走中性灰，不冒充成功/警告/危险语义
+    expect(badge.get('span').classes()).toContain('badge-gray')
   })
 })

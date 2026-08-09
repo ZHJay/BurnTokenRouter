@@ -653,17 +653,33 @@ func compareVersions(current, latest string) int {
 	return 0
 }
 
+// parseVersion 解析形如 "0.1.172" 的版本号为三段数字用于比较。
+//
+// 版本号可能带构建/预发布后缀：本 fork 给展示版本号追加 "_burntoken"
+// （见 cmd/server/main.go），上游也可能出现 "-rc.1" / "+build" 这类形式。
+// 这些后缀对版本先后没有意义，必须在取数字前剥掉 —— 否则
+// strconv.Atoi("172_burntoken") 会失败并静默退化成 0，
+// 让 "0.1.172_burntoken" 被当成 0.1.0：管理面板会永远提示有新版本，
+// 回滚列表也会因为"没有比当前更旧的版本"而被清空。
 func parseVersion(v string) [3]int {
-	v = strings.TrimPrefix(v, "v")
-	if idx := strings.IndexByte(v, '-'); idx != -1 {
-		v = v[:idx]
-	}
+	v = strings.TrimPrefix(strings.TrimSpace(v), "v")
 	parts := strings.Split(v, ".")
 	result := [3]int{0, 0, 0}
 	for i := 0; i < len(parts) && i < 3; i++ {
-		if parsed, err := strconv.Atoi(parts[i]); err == nil {
+		if parsed, err := strconv.Atoi(trimVersionSegmentSuffix(parts[i])); err == nil {
 			result[i] = parsed
 		}
 	}
 	return result
+}
+
+// trimVersionSegmentSuffix 截掉某一段版本号里第一个非数字字符及其后内容，
+// 例如 "172_burntoken" -> "172"、"0-rc" -> "0"、"3+build5" -> "3"。
+func trimVersionSegmentSuffix(part string) string {
+	for i := 0; i < len(part); i++ {
+		if part[i] < '0' || part[i] > '9' {
+			return part[:i]
+		}
+	}
+	return part
 }

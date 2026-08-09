@@ -74,15 +74,16 @@
             <div
               v-if="row.upstream_model_mismatch === true && row.upstream_response_model"
               class="break-all pl-3 text-[11px]"
-              :class="isLikelyModelVariant(row) ? 'text-amber-600 dark:text-amber-400' : 'text-orange-600 dark:text-orange-400'"
+              :class="isLikelyModelVariant(row) ? 'text-[color:var(--orange)]' : 'text-[color:var(--red)]'"
               :title="modelAuditTitle(row)"
             >
               <span class="mr-1">↳ {{ t('usage.upstreamResponseModel') }}:</span>{{ row.upstream_response_model }}
+              <!-- 走设计系统的 .badge 原语（token 化配色），仅用 utilities 压回密集表格所需的紧凑尺寸。
+                   语义分级：疑似版本变体=warning（无害），模型不一致=danger（真问题）。
+                   上游原始实现写死 amber-50/orange-50 + ring-*，不响应本 fork 的 token 层。 -->
               <span
-                class="ml-1 inline-flex rounded px-1 py-px text-[10px] font-medium ring-1 ring-inset"
-                :class="isLikelyModelVariant(row)
-                  ? 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/30'
-                  : 'bg-orange-50 text-orange-700 ring-orange-200 dark:bg-orange-500/10 dark:text-orange-300 dark:ring-orange-500/30'"
+                class="badge ml-1 gap-0 px-1 py-px text-[10px] font-medium"
+                :class="isLikelyModelVariant(row) ? 'badge-warning' : 'badge-danger'"
               >
                 {{ isLikelyModelVariant(row) ? t('usage.modelVariant') : t('usage.modelMismatch') }}
               </span>

@@ -12,12 +12,14 @@
             />
             <Select
               :model-value="filterGroupId"
+              variant="filter"
               class="w-40"
               :options="groupFilterOptions"
               @update:model-value="onGroupFilterChange"
             />
             <Select
               :model-value="filterStatus"
+              variant="filter"
               class="w-40"
               :options="statusFilterOptions"
               @update:model-value="onStatusFilterChange"
@@ -340,14 +342,8 @@
           </template>
 
           <template #cell-status="{ value }">
-            <span :class="[
-              'badge',
-              value === 'active' ? 'badge-success' :
-              value === 'quota_exhausted' ? 'badge-warning' :
-              value === 'expired' ? 'badge-danger' :
-              'badge-gray'
-            ]">
-              {{ t('keys.status.' + value) }}
+            <span :class="['badge', keyStatusBadgeClass(value)]">
+              {{ keyStatusLabel(value) }}
             </span>
           </template>
 
@@ -1067,7 +1063,7 @@
             <input
               v-model="groupSearchQuery"
               type="text"
-              class="w-full rounded-lg border border-gray-200 bg-gray-50 py-1.5 pl-8 pr-3 text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-300 dark:border-dark-600 dark:bg-dark-700 dark:text-white dark:placeholder-gray-500 dark:focus:border-primary-600 dark:focus:ring-primary-600"
+              class="w-full rounded-[var(--r-control)] border border-gray-200 bg-gray-50 py-1.5 pl-8 pr-3 text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-300 dark:border-dark-600 dark:bg-dark-700 dark:text-white dark:placeholder-gray-500 dark:focus:border-primary-600 dark:focus:ring-primary-600"
               :placeholder="t('keys.searchGroup')"
               @click.stop
             />
@@ -1369,6 +1365,32 @@ const statusOptions = computed(() => [
   { value: 'active', label: t('common.active') },
   { value: 'inactive', label: t('common.inactive') }
 ])
+
+// `keys.status.*` 只覆盖契约内的四个值。契约外的值（后端新增状态或坏数据）
+// 此前会把裸 i18n key 直接渲染进徽标（例如显示 "keys.status.suspended"）。
+// 收成映射 + 原值兜底：翻译不存在时退回展示原始值，至少是可读信息而非 key。
+const KEY_STATUS_VALUES = ['active', 'inactive', 'quota_exhausted', 'expired'] as const
+
+const keyStatusLabel = (value: unknown): string => {
+  const raw = typeof value === 'string' ? value : ''
+  if (!raw) return '-'
+  return (KEY_STATUS_VALUES as readonly string[]).includes(raw) ? t('keys.status.' + raw) : raw
+}
+
+const keyStatusBadgeClass = (value: unknown): string => {
+  switch (value) {
+    case 'active':
+      return 'badge-success'
+    case 'quota_exhausted':
+      return 'badge-warning'
+    case 'expired':
+      return 'badge-danger'
+    // inactive 与契约外的值同走中性灰（原实现的隐式行为，这里显式化）
+    case 'inactive':
+    default:
+      return 'badge-gray'
+  }
+}
 
 const shouldSubmitEditStatus = (key: ApiKey, status: 'active' | 'inactive') => {
   if (key.status === 'quota_exhausted' || key.status === 'expired') {

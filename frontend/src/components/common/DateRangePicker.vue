@@ -1,8 +1,13 @@
 <template>
   <div class="relative" ref="containerRef">
     <button
+      ref="triggerRef"
       type="button"
       @click="toggle"
+      @keydown="onTriggerKeydown"
+      :aria-expanded="isOpen"
+      aria-haspopup="dialog"
+      :aria-controls="isOpen ? dropdownId : undefined"
       :class="['date-picker-trigger', isOpen && 'date-picker-trigger-open']"
     >
       <span class="date-picker-icon">
@@ -21,13 +26,22 @@
     </button>
 
     <Transition name="date-picker-dropdown">
-      <div v-if="isOpen" class="date-picker-dropdown">
+      <div
+        v-if="isOpen"
+        :id="dropdownId"
+        class="date-picker-dropdown"
+        role="dialog"
+        aria-modal="false"
+        :aria-label="t('dates.selectDateRange')"
+      >
         <!-- Quick presets -->
-        <div class="date-picker-presets">
+        <div class="date-picker-presets" role="group" @keydown="onPresetsKeydown">
           <button
-            v-for="preset in presets"
+            v-for="(preset, index) in presets"
             :key="preset.value"
             @click="selectPreset(preset)"
+            :tabindex="index === presetFocusIndex ? 0 : -1"
+            :aria-pressed="isPresetActive(preset)"
             :class="['date-picker-preset', isPresetActive(preset) && 'date-picker-preset-active']"
           >
             {{ t(preset.labelKey) }}
@@ -104,6 +118,10 @@ const { t, locale } = useI18n()
 
 const isOpen = ref(false)
 const containerRef = ref<HTMLElement | null>(null)
+const triggerRef = ref<HTMLButtonElement | null>(null)
+/** Roving-tabindex host: which preset is in the Tab order / arrow focus. */
+const presetFocusIndex = ref(0)
+const dropdownId = 'date-range-dropdown'
 const localStartDate = ref(props.startDate)
 const localEndDate = ref(props.endDate)
 const activePreset = ref<string | null>('last24Hours')
@@ -244,11 +262,66 @@ const isPresetActive = (preset: DatePreset): boolean => {
   return activePreset.value === preset.value
 }
 
+const activePresetIndex = (): number => {
+  const index = presets.findIndex((p) => p.value === activePreset.value)
+  return index >= 0 ? index : 0
+}
+
+function focusPreset(index: number): void {
+  const button =
+    containerRef.value?.querySelectorAll<HTMLButtonElement>('.date-picker-preset')[index]
+  button?.focus()
+}
+
+/** Move the roving focus (grid: 2 columns, clamped at both edges). */
+function movePresetFocus(next: number): void {
+  const clamped = Math.max(0, Math.min(presets.length - 1, next))
+  presetFocusIndex.value = clamped
+  focusPreset(clamped)
+}
+
+/**
+ * ArrowDown/ArrowUp on the trigger: closed -> open the popup (standard
+ * combobox entry); open -> jump focus into the preset grid.
+ */
+function onTriggerKeydown(event: KeyboardEvent): void {
+  if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+  event.preventDefault()
+  if (!isOpen.value) {
+    presetFocusIndex.value = activePresetIndex()
+    isOpen.value = true
+    return
+  }
+  movePresetFocus(event.key === 'ArrowDown' ? presetFocusIndex.value : presets.length - 1)
+}
+
+/**
+ * Roving-tabindex navigation over the preset grid. Enter/Space are left to the
+ * native button activation (@click -> selectPreset). Only handled while the
+ * popup is open and focus is inside the presets region; date inputs and Apply
+ * keep their native keyboard behavior.
+ */
+function onPresetsKeydown(event: KeyboardEvent): void {
+  if (!isOpen.value) return
+  const key = event.key
+  let next: number | null = null
+  if (key === 'Home') next = 0
+  else if (key === 'End') next = presets.length - 1
+  else if (key === 'ArrowRight') next = presetFocusIndex.value + 1
+  else if (key === 'ArrowLeft') next = presetFocusIndex.value - 1
+  else if (key === 'ArrowDown') next = presetFocusIndex.value + 2
+  else if (key === 'ArrowUp') next = presetFocusIndex.value - 2
+  if (next === null) return
+  event.preventDefault()
+  movePresetFocus(next)
+}
+
 const selectPreset = (preset: DatePreset) => {
   const range = preset.getRange()
   localStartDate.value = range.start
   localEndDate.value = range.end
   activePreset.value = preset.value
+  presetFocusIndex.value = presets.indexOf(preset)
 }
 
 const onDateChange = () => {
@@ -264,7 +337,12 @@ const onDateChange = () => {
 }
 
 const toggle = () => {
-  isOpen.value = !isOpen.value
+  if (isOpen.value) {
+    isOpen.value = false
+  } else {
+    presetFocusIndex.value = activePresetIndex()
+    isOpen.value = true
+  }
 }
 
 const apply = () => {
@@ -276,6 +354,7 @@ const apply = () => {
     preset: activePreset.value
   })
   isOpen.value = false
+  triggerRef.value?.focus()
 }
 
 const handleClickOutside = (event: MouseEvent) => {
@@ -287,6 +366,9 @@ const handleClickOutside = (event: MouseEvent) => {
 const handleEscape = (event: KeyboardEvent) => {
   if (event.key === 'Escape' && isOpen.value) {
     isOpen.value = false
+    // The dropdown unmounts — hand focus back to the anchor button so the
+    // keyboard user is not left on a hidden element.
+    triggerRef.value?.focus()
   }
 }
 
@@ -328,7 +410,7 @@ onUnmounted(() => {
   gap: 8px;
   height: 44px;
   padding: 0 14px;
-  border-radius: var(--r-md);
+  border-radius: var(--r-control);
   border: 0.5px solid var(--separator-strong);
   background: var(--bg-elevated);
   color: var(--text-primary);

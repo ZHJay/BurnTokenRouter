@@ -46,6 +46,13 @@
   --r-xl: 24px;
   --r-pill: 980px;
 
+  /* 控件圆角：单一事实来源。
+     --r-control          → 所有单行文本输入框 / 下拉触发器（基准 = 搜索框药丸，
+                            用户指定「都换成搜索账号文本框一样的」）
+     --r-control-multiline → 多行 textarea（药丸在 80px 高的多行框上会明显失真） */
+  --r-control: var(--r-pill);
+  --r-control-multiline: var(--r-md);
+
   /* 阴影 */
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.05);
   --shadow-pop: 0 12px 40px rgba(0, 0, 0, 0.14);

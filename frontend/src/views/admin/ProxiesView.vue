@@ -19,6 +19,7 @@
               v-model="filters.protocol"
               :options="protocolOptions"
               :placeholder="t('admin.proxies.allProtocols')"
+              variant="filter"
               @change="loadProxies"
             />
           </div>
@@ -27,6 +28,7 @@
               v-model="filters.status"
               :options="statusOptions"
               :placeholder="t('admin.proxies.allStatus')"
+              variant="filter"
               @change="loadProxies"
             />
           </div>
