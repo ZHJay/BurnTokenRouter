@@ -125,8 +125,15 @@ export default defineConfig(({ mode }) => {
             }
 
             // UI 工具库（较大，单独分离）
-            if (id.includes('/@vueuse/') || id.includes('/xlsx/')) {
+            if (id.includes('/@vueuse/')) {
               return 'vendor-ui'
+            }
+
+            // xlsx 仅由 UsageView 的导出功能动态 import 触发。
+            // 必须与 @vueuse 分块：否则 xlsx 顶层代码会随 vendor-ui
+            // 进入每个登录页面的加载路径，动态导入形同虚设（审计 PF1）。
+            if (id.includes('/xlsx/')) {
+              return 'vendor-xlsx'
             }
 
             // 图表库

@@ -48,6 +48,11 @@
   text-overflow: ellipsis;
   min-width: 0;
   flex-shrink: 0;
+  /* Arbitrary-length site_name: without an upper bound the wordmark (shrink 0)
+     would push the action cluster out of the viewport for long names — the
+     Phase B "collapsed to a single character" bug in reverse. The cap keeps
+     the bar structurally overflow-proof; long names ellipsis here. */
+  max-width: min(320px, 45vw);
 }
 .gn-wordmark:hover { text-decoration: none; opacity: 0.8; }
 
@@ -57,7 +62,19 @@
   gap: 2px;
   margin: 0 auto;
   height: 100%;
+  /* The user nav has 11-12 links (~1128px of min-content), which cannot fit
+     beside the action cluster inside the 1360px measure (audit C1: docSW
+     1569 @1024 / 1958-2033 @1440, actions pushed off-screen). `min-width: 0`
+     is what lets flex actually shrink this region — without it the default
+     min-content floor defeats the shrink — and the strip then scrolls
+     internally (hidden scrollbar) instead of overflowing the document. The
+     wordmark and the actions keep `flex-shrink: 0`, so the links are the only
+     flexible element: the row is structurally overflow-proof. */
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.gn-links::-webkit-scrollbar { display: none; }
 
 .gn-item {
   height: 100%;
@@ -139,6 +156,33 @@
   visibility: visible;
   transform: translateY(0);
   transition: opacity 0.3s var(--ease), transform 0.3s var(--ease), visibility 0s;
+}
+
+/*
+ * Group -> group swap: no cross-dissolve.
+ *
+ * Each group owns its own panel, so moving an open flyout from group A to
+ * group B fades A out while B fades in from `translateY(-8px)`. Two panels
+ * dissolving past each other reads as a flash/jump, not as a menu whose
+ * contents changed. `.gn-switching` is set by GlobalNav for exactly the one DOM
+ * patch that moves the `open` class (a pre-flush watcher, so the class and the
+ * swap land in the same frame): A disappears and B appears instantly, with no
+ * fade and no entry transform, so the panel appears stationary while only its
+ * contents change.
+ *
+ * Both selectors are deliberately more specific than the pair above so they win
+ * regardless of source order. Opening from closed and closing to nothing are
+ * untouched and still animate.
+ *
+ * Known limitation: because the panels are separate absolutely-positioned
+ * elements sharing one top edge, the *bottom* edge steps to the new panel's
+ * height in that frame instead of animating. The top edge and the horizontal
+ * extent never move, so there is no position jump and no opacity dip.
+ */
+.gn.gn-switching .gn-flyout,
+.gn.gn-switching .gn-item.open .gn-flyout,
+.gn.gn-switching .gn-item:focus-within .gn-flyout {
+  transition: none;
 }
 
 .gn-flyout-inner {
@@ -393,7 +437,11 @@ html.dark .gn-curtain { background: rgba(0, 0, 0, 0.45); }
   gap: 8px;
   height: 44px;
   padding: 0 14px;
-  border-radius: var(--r-pill);
+  /* Shares --r-control with every other single-line text control (see
+     apple-tokens.css). The radius is deliberately not restated as --r-pill
+     here: "all text boxes use the same corner radius" has to survive a change
+     to that one token. */
+  border-radius: var(--r-control);
   background: var(--fill);
   transition: background 0.18s var(--ease), box-shadow 0.18s var(--ease);
 }
@@ -638,6 +686,25 @@ html.dark .gn-curtain { background: rgba(0, 0, 0, 0.45); }
   /* Which action items survive at each width is decided in GlobalNav.vue's
      scoped block: a global rule here ties on specificity with the scoped
      `[data-v-*]` selector and loses on injection order. */
+}
+
+/*
+ * User nav bands (`.gn-user` is set by GlobalNav for non-admin navKinds).
+ *
+ * The user link row is ~1128px of min-content (11-12 self-service links) and
+ * the action cluster is 385px even in its icon-only form, so below 1280px the
+ * links cannot fit at all: the whole 769-1279 band is the icon-only-actions
+ * band from the Phase B ladder, and the user links live in the hamburger menu
+ * there instead of in a scroll sliver. From 1280px up the links render inline
+ * and shrink/scroll inside `.gn-links` (see its rule above) if the full
+ * cluster still does not fit. The admin nav is untouched: its 5 links +
+ * flyouts fit and keep the original <= 768px breakpoint.
+ */
+@media (max-width: 1279px) {
+  .gn.gn-user .gn-links { display: none; }
+  .gn.gn-user .gn-burger { display: grid; }
+  /* No links in this band either, so a long site name may truncate. */
+  .gn.gn-user .gn-wordmark { flex-shrink: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {

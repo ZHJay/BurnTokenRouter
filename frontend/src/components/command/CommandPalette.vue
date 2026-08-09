@@ -41,7 +41,7 @@
           autocomplete="off"
           spellcheck="false"
           aria-autocomplete="list"
-          :aria-expanded="resultCount > 0"
+          :aria-expanded="isOpen"
           :aria-controls="listboxId"
           :aria-activedescendant="activeItem ? optionId(activeItem.index) : undefined"
           :aria-label="t('nav.search')"
@@ -106,8 +106,24 @@
             </span>
           </a>
         </div>
-        <div v-if="resultCount === 0" class="gn-cmdk-empty">{{ t('nav.searchNoResults') }}</div>
+        <!--
+          role=status (implies aria-live=polite): the empty state mounts after
+          the query stops matching, so a screen reader hears "no results"
+          exactly once, not on every keystroke.
+        -->
+        <div v-if="resultCount === 0" class="gn-cmdk-empty" role="status">
+          {{ t('nav.searchNoResults') }}
+        </div>
       </div>
+
+      <!--
+        Visually hidden result-count announcement. The text only changes when
+        the count actually changes (an identical string is not re-announced),
+        so typing inside the same result set stays silent.
+      -->
+      <p id="gn-cmdk-live" class="gn-cmdk-live" role="status" aria-live="polite">
+        {{ liveMessage }}
+      </p>
 
       <div class="gn-cmdk-foot">
         <span class="gn-cmdk-hint">
@@ -153,6 +169,27 @@ const { t } = useI18n()
 const listboxId = 'gn-cmdk-listbox'
 const rootRef = ref<HTMLElement | null>(null)
 const inputRef = ref<HTMLInputElement | null>(null)
+
+/**
+ * Announcement text for the result-count live region.
+ *
+ * Empty while the query is empty or zero results — opening the palette is
+ * silent, and the no-results state is announced by the `role=status` empty
+ * node instead, so the two live regions never double-announce.
+ *
+ * The count is announced through `nav.searchResultCount` ({count}
+ * interpolation). Until that key lands in the locales (fix_cmdk handoff),
+ * fall back to composing the existing `nav.searchResults` label so the
+ * region never reads a raw i18n key out loud.
+ */
+const liveMessage = computed(() => {
+  if (!query.value.trim()) return ''
+  const count = resultCount.value
+  if (count === 0) return ''
+  const localized = t('nav.searchResultCount', { count })
+  if (localized !== 'nav.searchResultCount') return localized
+  return `${t('nav.searchResults')} ${count}`
+})
 
 const isOpen = computed({
   get: () => props.open,
@@ -227,3 +264,39 @@ function handleFocusTrap(event: KeyboardEvent): void {
   }
 }
 </script>
+
+<style scoped>
+/*
+ * 390px overflow fix (audit P3): `global-nav.css` caps `.gn-cmdk-path` at 45%
+ * and ellipsizes the box, but the inline segment spans inside it still lay out
+ * at full text width — `/admin/affiliates/transfers` measured right edge 394 >
+ * viewport 390. Making the path a flex container lets the segments actually
+ * shrink (flex items refuse to go below content width unless `min-width: 0`)
+ * and ellipsize inside the box, so no descendant element spills past the
+ * panel. Base rules (max-width 45%, colors) stay owned by global-nav.css.
+ */
+.gn-cmdk-path {
+  display: flex;
+  min-width: 0;
+}
+
+.gn-cmdk-path > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Visually hidden live region for result-count announcements. */
+.gn-cmdk-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+</style>

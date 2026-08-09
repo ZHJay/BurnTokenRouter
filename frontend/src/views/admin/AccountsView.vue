@@ -206,6 +206,9 @@
           :estimate-row-height="156"
           :overscan="5"
           :virtualize-threshold="50"
+          :selected-keys="selIds"
+          :highlight-selected-rows="true"
+          :table-caption="t('admin.accounts.title')"
         >
           <template #header-select>
             <input

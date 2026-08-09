@@ -6,10 +6,13 @@
         class="ann-overlay"
       >
         <div
+          ref="panelRef"
           class="ann-panel w-full max-w-[680px]"
           role="dialog"
           aria-modal="true"
           aria-labelledby="announcement-popup-title"
+          aria-describedby="announcement-popup-desc"
+          tabindex="-1"
           @click.stop
         >
           <!-- Header：发丝线分隔，无渐变无光斑（浮出层是不透明面板） -->
@@ -36,7 +39,7 @@
           </div>
 
           <!-- Body：不设自己的底色，继承不透明面板 -->
-          <div class="ann-body">
+          <div id="announcement-popup-desc" class="ann-body">
             <div
               class="markdown-body"
               v-html="renderedContent"
@@ -66,13 +69,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { useAnnouncementStore } from '@/stores/announcements'
 import { formatRelativeWithDateTime } from '@/utils/format'
 import { lockBodyScroll, unlockBodyScroll } from '@/composables/useCommandPalette'
+import { useFocusTrap } from '@/composables/useFocusTrap'
 import type { Announcement, UserAnnouncement } from '@/types'
 import '@/styles/announcement-markdown.css'
 
@@ -95,6 +99,8 @@ const announcementStore = useAnnouncementStore()
 const displayedAnnouncement = computed(() => (
   props.preview ? props.announcement : announcementStore.currentPopup
 ))
+const panelRef = ref<HTMLElement | null>(null)
+const isPopupActive = computed(() => !!displayedAnnouncement.value)
 
 marked.setOptions({
   breaks: true,
@@ -115,6 +121,51 @@ function handleDismiss() {
   }
   announcementStore.dismissPopup()
 }
+
+/*
+ * 真 modal：焦点进入 / Tab 陷阱 / Esc 关闭并还焦给触发元素 / 背景对读屏隐藏。
+ * 契约与 ⌘K 命令面板一致（那是全仓库 a11y 实测全过的参考实现）；滚动锁仍由
+ * 下面的 watch 单独持有，二者互不干扰。
+ *
+ * Esc 由本组件唯一的一个文档监听处理（不再依赖属性层）：stopImmediate-
+ * Propagation 保证同一按键不会连带关掉下层浮层（例如弹窗盖在铃铛列表上时，
+ * 弹窗后注册先执行，铃铛的监听被挡住，列表保持打开）。
+ */
+useFocusTrap({
+  containerRef: panelRef,
+  isActive: isPopupActive,
+})
+
+let escListenerAttached = false
+
+function handlePopupKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Escape') return
+  event.preventDefault()
+  event.stopImmediatePropagation()
+  handleDismiss()
+}
+
+watch(
+  isPopupActive,
+  (active) => {
+    if (active && !escListenerAttached) {
+      document.addEventListener('keydown', handlePopupKeydown)
+      escListenerAttached = true
+    } else if (!active && escListenerAttached) {
+      document.removeEventListener('keydown', handlePopupKeydown)
+      escListenerAttached = false
+    }
+  },
+  { immediate: true },
+)
+
+onBeforeUnmount(() => {
+  if (escListenerAttached) {
+    document.removeEventListener('keydown', handlePopupKeydown)
+    escListenerAttached = false
+  }
+  releaseLock()
+})
 
 /*
  * 滚动锁定走 useCommandPalette 的引用计数锁，不再直写 body.style.overflow。
@@ -149,7 +200,6 @@ watch(
   { immediate: true },
 )
 
-onBeforeUnmount(releaseLock)
 </script>
 
 <style scoped>

@@ -16,6 +16,7 @@
         v-model="provider"
         :options="providerFilterOptions"
         :placeholder="t('admin.channelMonitor.allProviders')"
+        variant="filter"
         class="w-44"
         @change="$emit('reload')"
       />
@@ -24,6 +25,7 @@
         v-model="enabled"
         :options="enabledFilterOptions"
         :placeholder="t('admin.channelMonitor.enabledFilter')"
+        variant="filter"
         class="w-40"
         @change="$emit('reload')"
       />

@@ -17,7 +17,6 @@ export default {
   modelPlaza: {
     title: 'Model Plaza',
     description: 'Browse available models and pricing by group',
-    loading: 'Loading...',
     empty: 'No groups to display',
     loadFailed: 'Failed to load model plaza',
     noSearchResult: 'No matching models',
@@ -26,7 +25,6 @@ export default {
       platformLabel: 'Platform',
       groupLabel: 'Group',
       rateLabel: 'Rate',
-      modelLabel: 'Model',
       searchPlaceholder: 'Search models',
       all: 'All',
       clearSearch: 'Clear search'
@@ -37,7 +35,6 @@ export default {
     },
     detail: {
       noModels: 'No models configured for this group',
-      noPricing: 'Pricing not configured',
       peakNote: 'Peak hours {window}: billing rate ×{multiplier}'
     },
     table: {

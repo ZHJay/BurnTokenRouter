@@ -304,7 +304,7 @@ overrides:
 2. **绝不碰 pnpm CLI**，含 `pnpm exec`。用 `./node_modules/.bin/*`（见 2.1）
 3. **`display:flex` / `display:grid` 的类绝不能直接挂在 `<td>` / `<th>` 上** —— 会覆盖 `display: table-cell` 破坏表格布局。必须在单元格内包一层 `<div>`
 4. **浮出层/下拉/弹窗必须不透明**（`var(--glass-bg-strong)`）+ 纱幕压暗（亮 18% / 暗 45% 黑）。用户明确否决过半透明
-5. **玻璃质感只保留三处**：顶栏、登录页玻璃卡、ambient 环境渐变。`backdrop-filter` 不要嵌套依赖
+5. **玻璃质感只保留四处**：顶栏、登录页玻璃卡、ambient 环境渐变、**DataTable 固定列**（第 4 处于 2026-08-09 经用户确认加入，实现细节与已接受的性能代价见 `HANDOFF.md` §8.1；那里的三层减害措施不要拆）。`backdrop-filter` 不要嵌套依赖，也不要再擅自增加第 5 处
 6. **全站禁止渲染 logo 图片**。品牌 = 站点名纯文本 wordmark，favicon 是唯一例外。`site_name` 管理员可配、长度不可预期，**别让它成为 flex 唯一可压缩项**（Phase B 曾被压成单个字符 "S"）
 7. **禁止硬编码颜色**，一律消费 CSS 变量。唯一例外是**邮件 HTML 正文**（收件端不支持变量），但色值要对应设计 token
 8. **禁止硬编码中文**，走 i18n key，zh/en 同步

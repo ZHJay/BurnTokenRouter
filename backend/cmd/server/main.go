@@ -29,6 +29,14 @@ import (
 //go:embed VERSION
 var embeddedVersion string
 
+// forkVersionSuffix 标记本 fork（BurnTokenRouter）构建出的二进制，
+// 使管理面板与公开配置永远不会显示成裸的上游版本号。
+//
+// 该后缀仅用于展示：cmd/server/VERSION 始终保持上游原始版本号，
+// 这样发布 tag、Docker tag 与回滚版本匹配仍可与上游直接比较；
+// 更新检查在比较前会剥掉非数字后缀（见 internal/service.parseVersion）。
+const forkVersionSuffix = "_burntoken"
+
 // Build-time variables (can be set by ldflags)
 var (
 	Version   = ""
@@ -38,16 +46,34 @@ var (
 )
 
 func init() {
-	// 如果 Version 已通过 ldflags 注入（例如 -X main.Version=...），则不要覆盖。
-	if strings.TrimSpace(Version) != "" {
-		return
-	}
+	Version = resolveVersion(Version, embeddedVersion)
+}
 
-	// 默认从 embedded VERSION 文件读取版本号（编译期打包进二进制）。
-	Version = strings.TrimSpace(embeddedVersion)
-	if Version == "" {
-		Version = "0.0.0-dev"
+// resolveVersion 决定最终展示的版本号，并统一打上 fork 后缀。
+//
+// injected 优先于 embedded：ldflags（-X main.Version=...）注入的值来自
+// 发布 tag 或 scripts/resolve-version.sh；未注入时回落到编译期打包进
+// 二进制的 VERSION 文件。两条路径都会经过 withForkSuffix，
+// 因此源码构建、Docker 构建与 CI 发布构建显示的版本格式完全一致。
+func resolveVersion(injected, embedded string) string {
+	version := strings.TrimSpace(injected)
+	if version == "" {
+		// 默认从 embedded VERSION 文件读取版本号（编译期打包进二进制）。
+		version = strings.TrimSpace(embedded)
 	}
+	if version == "" {
+		version = "0.0.0-dev"
+	}
+	return withForkSuffix(version)
+}
+
+// withForkSuffix 追加 fork 后缀；若来源值已带该后缀则不重复追加，
+// 避免 VERSION 文件或 ldflags 已写入后缀时出现 "..._burntoken_burntoken"。
+func withForkSuffix(version string) string {
+	if strings.HasSuffix(version, forkVersionSuffix) {
+		return version
+	}
+	return version + forkVersionSuffix
 }
 
 // initLogger configures the default slog handler based on gin.Mode().

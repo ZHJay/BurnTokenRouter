@@ -21,10 +21,13 @@
           @click="closeModal"
         >
           <div
+            ref="listPanelRef"
             class="ann-panel w-full max-w-[620px]"
             role="dialog"
             aria-modal="true"
             aria-labelledby="announcement-list-title"
+            aria-describedby="announcement-list-desc"
+            tabindex="-1"
             @click.stop
           >
             <!-- Header：发丝线分隔，无渐变无光斑 -->
@@ -65,7 +68,7 @@
             </div>
 
             <!-- Body -->
-            <div class="ann-list">
+            <div id="announcement-list-desc" class="ann-list">
               <!-- Loading -->
               <div v-if="loading" class="ann-state">
                 <span class="ann-spinner"></span>
@@ -78,7 +81,11 @@
                   :key="item.id"
                   class="ann-row"
                   :class="{ 'is-unread': !item.read_at }"
+                  role="button"
+                  tabindex="0"
                   @click="openDetail(item)"
+                  @keydown.enter.prevent="openDetail(item)"
+                  @keydown.space.prevent="openDetail(item)"
                 >
                   <!-- Status Indicator -->
                   <span class="ann-row-mark" :class="item.read_at ? 'is-read' : 'is-unread'">
@@ -133,10 +140,13 @@
           @click="closeDetail"
         >
           <div
+            ref="detailPanelRef"
             class="ann-panel w-full max-w-[780px]"
             role="dialog"
             aria-modal="true"
             aria-labelledby="announcement-detail-title"
+            aria-describedby="announcement-detail-desc"
+            tabindex="-1"
             @click.stop
           >
             <!-- Header：发丝线分隔，无渐变无光斑 -->
@@ -187,7 +197,7 @@
             </div>
 
             <!-- Body：继承不透明面板底色 -->
-            <div class="ann-body ann-body-tall">
+            <div id="announcement-detail-desc" class="ann-body ann-body-tall">
               <div
                 class="markdown-body"
                 v-html="renderMarkdown(selectedAnnouncement.content)"
@@ -226,7 +236,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onBeforeUnmount, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { marked } from 'marked'
@@ -235,6 +245,7 @@ import { useAppStore } from '@/stores/app'
 import { useAnnouncementStore } from '@/stores/announcements'
 import { formatRelativeTime, formatRelativeWithDateTime } from '@/utils/format'
 import { lockBodyScroll, unlockBodyScroll } from '@/composables/useCommandPalette'
+import { useFocusTrap } from '@/composables/useFocusTrap'
 import type { UserAnnouncement } from '@/types'
 import Icon from '@/components/icons/Icon.vue'
 import '@/styles/announcement-markdown.css'
@@ -257,6 +268,8 @@ const unreadCount = computed(() => announcementStore.unreadCount)
 const isModalOpen = ref(false)
 const detailModalOpen = ref(false)
 const selectedAnnouncement = ref<UserAnnouncement | null>(null)
+const listPanelRef = ref<HTMLElement | null>(null)
+const detailPanelRef = ref<HTMLElement | null>(null)
 
 // Methods
 function renderMarkdown(content: string): string {
@@ -309,24 +322,46 @@ async function markAllAsRead() {
   }
 }
 
-function handleEscape(e: KeyboardEvent) {
-  if (e.key === 'Escape') {
-    if (detailModalOpen.value) {
-      closeDetail()
-    } else if (isModalOpen.value) {
-      closeModal()
-    }
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('keydown', handleEscape)
-})
-
 onBeforeUnmount(() => {
-  document.removeEventListener('keydown', handleEscape)
+  if (escListenerAttached) {
+    document.removeEventListener('keydown', handleLayerKeydown)
+    escListenerAttached = false
+  }
   releaseLock()
 })
+
+/*
+ * 两层浮层的真 modal 焦点管理：列表与详情各一个焦点陷阱。
+ *
+ * Esc 不放进陷阱：两个浮层共用一个组件级文档监听，按自身层栈路由到最顶层
+ * （详情 → 列表），再 stopImmediatePropagation 挡住其他组件注册的 Esc
+ * 监听 —— 例如全局公告弹窗盖在列表上时，弹窗后注册先执行，本组件不会在同
+ * 一次按键里把列表一起关掉。只关详情时列表保持打开、滚动锁保持持有。
+ *
+ * 详情关闭后焦点还给触发行（列表仍在陷阱内），列表关闭后焦点还给铃铛。
+ */
+useFocusTrap({
+  containerRef: listPanelRef,
+  isActive: isModalOpen,
+})
+
+useFocusTrap({
+  containerRef: detailPanelRef,
+  isActive: detailModalOpen,
+})
+
+let escListenerAttached = false
+
+function handleLayerKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Escape') return
+  event.preventDefault()
+  event.stopImmediatePropagation()
+  if (detailModalOpen.value) {
+    closeDetail()
+  } else if (isModalOpen.value) {
+    closeModal()
+  }
+}
 
 /*
  * 滚动锁定走 useCommandPalette 的引用计数锁，不再直写 body.style.overflow。
@@ -353,6 +388,14 @@ watch([isModalOpen, detailModalOpen], ([modal, detail]) => {
     holdsLock = true
   } else if (!wantsLock) {
     releaseLock()
+  }
+
+  if (wantsLock && !escListenerAttached) {
+    document.addEventListener('keydown', handleLayerKeydown)
+    escListenerAttached = true
+  } else if (!wantsLock && escListenerAttached) {
+    document.removeEventListener('keydown', handleLayerKeydown)
+    escListenerAttached = false
   }
 })
 </script>
@@ -561,6 +604,11 @@ watch([isModalOpen, detailModalOpen], ([modal, detail]) => {
 
 .ann-row:hover {
   background: var(--fill);
+}
+
+.ann-row:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 3px var(--blue-soft);
 }
 
 .ann-row.is-unread {

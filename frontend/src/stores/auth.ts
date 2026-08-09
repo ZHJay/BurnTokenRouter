@@ -143,11 +143,24 @@ export const useAuthStore = defineStore('auth', () => {
   /**
    * Start auto-refresh interval for user data
    * Refreshes user data every 60 seconds
+   * 页面隐藏（后台标签页）时暂停轮询，恢复可见时继续（审计 PF4）。
    */
   function startAutoRefresh(): void {
     // Clear existing interval if any
     stopAutoRefresh()
 
+    // 监听页面可见性：hidden 时停表，visible 时重启
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange)
+    }
+    startAutoRefreshTimer()
+  }
+
+  /**
+   * 仅启动 60s 轮询定时器（不重复挂 visibilitychange 监听）
+   */
+  function startAutoRefreshTimer(): void {
+    if (refreshIntervalId) return
     refreshIntervalId = setInterval(() => {
       if (token.value) {
         refreshUser().catch((error) => {
@@ -158,9 +171,31 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
+   * 页面可见性变化：后台标签页暂停轮询，回到前台恢复
+   */
+  function handleVisibilityChange(): void {
+    if (typeof document === 'undefined') return
+    if (document.hidden) {
+      stopAutoRefreshTimer()
+    } else if (token.value) {
+      startAutoRefreshTimer()
+    }
+  }
+
+  /**
    * Stop auto-refresh interval
    */
   function stopAutoRefresh(): void {
+    stopAutoRefreshTimer()
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }
+
+  /**
+   * 仅清掉 60s 轮询定时器（保留 visibilitychange 监听，供恢复时重启）
+   */
+  function stopAutoRefreshTimer(): void {
     if (refreshIntervalId) {
       clearInterval(refreshIntervalId)
       refreshIntervalId = null
