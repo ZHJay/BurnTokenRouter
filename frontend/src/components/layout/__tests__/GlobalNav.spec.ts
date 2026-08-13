@@ -411,6 +411,9 @@ describe('navItems module — filtering', () => {
     expect(paths).toContain('/keys')
     expect(paths).toContain('/admin/settings')
     expect(paths).toContain('/custom/x')
+    expect(paths).toContain('/admin/risk-control')
+    expect(paths).toContain('/admin/prompt-audit')
+    expect(paths).not.toContain('/admin/security-audit')
     expect(paths).not.toContain('/admin/users')
     expect(paths).not.toContain('/admin/groups')
 
