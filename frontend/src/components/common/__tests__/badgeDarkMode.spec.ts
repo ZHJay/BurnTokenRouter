@@ -166,7 +166,7 @@ const AA = 4.5
  * 这三个是硬编码品牌色（设计系统里 token 化的既有例外），暗值取法 = 保住品牌色相、
  * 只为暗底提亮，并把底色不透明度从 0.12 略抬（暗底上 0.12 偏闷）。
  */
-const TUNED = ['b-openai', 'b-gemini', 'b-teal'] as const
+const TUNED = ['b-openai', 'b-gemini', 'b-teal', 'b-pink', 'b-indigo', 'b-cyan'] as const
 
 /**
  * 走品牌色/语义色硬编码、本轮未改动的徽标。它们在主表面（`--bg` / `--bg-elevated`）

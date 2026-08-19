@@ -72,7 +72,7 @@
       </div>
       <div class="stat-label">{{ t('dashboard.todayTokens') }}</div>
       <div class="stat-value">{{ formatTokens(stats?.today_tokens || 0) }}</div>
-      <div class="stat-trend muted">{{ t('dashboard.input') }}: {{ formatTokens(stats?.today_input_tokens || 0) }} / {{ t('dashboard.output') }}: {{ formatTokens(stats?.today_output_tokens || 0) }}</div>
+      <div class="stat-trend muted">{{ t('dashboard.input') }}: {{ formatTokens(stats?.today_input_tokens || 0) }} / {{ t('dashboard.output') }}: {{ formatTokens(stats?.today_output_tokens || 0) }} / {{ t('dashboard.cache') }}: {{ formatTokens((stats?.today_cache_creation_tokens || 0) + (stats?.today_cache_read_tokens || 0)) }}</div>
     </div>
 
     <!-- Total Tokens -->
@@ -84,7 +84,7 @@
       </div>
       <div class="stat-label">{{ t('dashboard.totalTokens') }}</div>
       <div class="stat-value">{{ formatTokens(stats?.total_tokens || 0) }}</div>
-      <div class="stat-trend muted">{{ t('dashboard.input') }}: {{ formatTokens(stats?.total_input_tokens || 0) }} / {{ t('dashboard.output') }}: {{ formatTokens(stats?.total_output_tokens || 0) }}</div>
+      <div class="stat-trend muted">{{ t('dashboard.input') }}: {{ formatTokens(stats?.total_input_tokens || 0) }} / {{ t('dashboard.output') }}: {{ formatTokens(stats?.total_output_tokens || 0) }} / {{ t('dashboard.cache') }}: {{ formatTokens((stats?.total_cache_creation_tokens || 0) + (stats?.total_cache_read_tokens || 0)) }}</div>
     </div>
 
     <!-- Performance (RPM/TPM) -->

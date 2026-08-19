@@ -173,6 +173,15 @@ const badgeClass = computed(() => {
   if (props.platform === 'grok') {
     return 'b-grok'
   }
+  if (props.platform === 'kimi') {
+    return 'b-pink'
+  }
+  if (props.platform === 'zhipu') {
+    return 'b-indigo'
+  }
+  if (props.platform === 'deepseek') {
+    return 'b-cyan'
+  }
   if (props.platform === 'composite') {
     return 'b-teal'
   }
