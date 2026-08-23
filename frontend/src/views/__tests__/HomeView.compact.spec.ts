@@ -170,6 +170,11 @@ describe('HomeView compact mode', () => {
     })
 
     expect(modelPlazaDestination(wrapper)).toBe('/model-plaza')
+    const plazaLink = wrapper
+      .findAllComponents(RouterLinkStub)
+      .find((link) => link.props('to') === '/model-plaza')
+
+    expect(plazaLink?.attributes('aria-label')).toBe('nav.modelPlaza')
   })
 
   it('hides the model plaza link when the feature is disabled', () => {
