@@ -97,8 +97,10 @@ describe('CN provider cells v3 styling', () => {
     })
     await nextTick()
 
-    expect(wrapper.get('button').classes()).toContain('quota-probe')
-    expect(wrapper.get('button').classes()).toContain('gpill')
+    expect(wrapper.get('[data-test="cn-provider-balance-value"]').element.tagName).toBe('SPAN')
+    expect(
+      wrapper.get('[data-test="cn-provider-balance-probe"]').classes()
+    ).toEqual(expect.arrayContaining(['quota-probe', 'gpill', 'b-blue']))
     expect(wrapper.get('[data-balance-state="low"]').classes()).toContain('b-red')
   })
 })
