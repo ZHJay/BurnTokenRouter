@@ -174,19 +174,13 @@ const badgeClass = computed(() => {
     return 'b-grok'
   }
   if (props.platform === 'kimi') {
-    return isSubscription.value
-      ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400'
-      : 'bg-pink-50 text-pink-700 dark:bg-pink-900/20 dark:text-pink-400'
+    return 'b-pink'
   }
   if (props.platform === 'zhipu') {
-    return isSubscription.value
-      ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
-      : 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400'
+    return 'b-indigo'
   }
   if (props.platform === 'deepseek') {
-    return isSubscription.value
-      ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400'
-      : 'bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-400'
+    return 'b-cyan'
   }
   if (props.platform === 'composite') {
     return 'b-teal'

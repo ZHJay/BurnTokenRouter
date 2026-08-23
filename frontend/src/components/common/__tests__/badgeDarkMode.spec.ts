@@ -1,7 +1,20 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-import { describe, expect, it } from 'vitest'
+import { mount } from '@vue/test-utils'
+import { describe, expect, it, vi } from 'vitest'
+
+import type { GroupPlatform } from '@/types'
+import GroupBadge from '../GroupBadge.vue'
+
+vi.mock('vue-i18n', async () => {
+  const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')
+  return { ...actual, useI18n: () => ({ t: (key: string) => key }) }
+})
+
+vi.mock('@/stores/app', () => ({
+  useAppStore: () => ({ cachedPublicSettings: {} }),
+}))
 
 /**
  * `.badge .b-*` 暗色可读性的可执行闸门。
@@ -166,7 +179,7 @@ const AA = 4.5
  * 这三个是硬编码品牌色（设计系统里 token 化的既有例外），暗值取法 = 保住品牌色相、
  * 只为暗底提亮，并把底色不透明度从 0.12 略抬（暗底上 0.12 偏闷）。
  */
-const TUNED = ['b-openai', 'b-gemini', 'b-teal'] as const
+const TUNED = ['b-openai', 'b-gemini', 'b-teal', 'b-pink', 'b-indigo', 'b-cyan'] as const
 
 /**
  * 走品牌色/语义色硬编码、本轮未改动的徽标。它们在主表面（`--bg` / `--bg-elevated`）
@@ -185,7 +198,7 @@ const LEGACY_BRAND = ['b-claude', 'b-grok', 'b-green', 'b-orange'] as const
 const TOKEN_DRIVEN = ['b-blue', 'b-red', 'b-purple'] as const
 
 describe('.b-* 暗色模式可读性', () => {
-  it('style.css 为本轮三个品牌色徽标提供了 html.dark 覆盖', () => {
+  it('style.css 为本轮品牌色徽标提供了 html.dark 覆盖', () => {
     for (const cls of TUNED) {
       expect(RULES[cls]?.dark.fg, `.${cls} 缺少 html.dark 前景覆盖`).toBeTruthy()
       expect(RULES[cls]?.dark.bg, `.${cls} 缺少 html.dark 底色覆盖`).toBeTruthy()
@@ -264,5 +277,24 @@ describe('.b-* 单一事实来源', () => {
       const styleBlock = src.match(/<style[\s\S]*?<\/style>/)?.[0] ?? ''
       expect(styleBlock, `${rel} 含 .b-* scoped 定义`).not.toMatch(/\.b-[\w-]+\s*\{/)
     }
+  })
+})
+
+describe('GroupBadge CN platform classes', () => {
+  it.each([
+    ['kimi', 'b-pink'],
+    ['zhipu', 'b-indigo'],
+    ['deepseek', 'b-cyan'],
+  ] as const)('%s renders with the shared %s class', (platform, expectedClass) => {
+    const wrapper = mount(GroupBadge, {
+      props: {
+        name: platform,
+        platform: platform as GroupPlatform,
+        rateMultiplier: 1,
+      },
+      global: { stubs: { PlatformIcon: true } },
+    })
+
+    expect(wrapper.get('.badge').classes()).toContain(expectedClass)
   })
 })
