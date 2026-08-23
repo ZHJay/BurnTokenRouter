@@ -1,36 +1,23 @@
 <template>
-  <div v-if="visible" class="space-y-1">
-    <div class="flex flex-wrap items-center gap-1.5">
-      <button
-        type="button"
-        class="quota-probe gpill"
-        :class="platformTextClass(account.platform)"
-        :disabled="loading"
-        :title="t('admin.accounts.cnProviders.probeTooltip')"
-        @click="handleProbe()"
-      >
-        <svg
-          class="h-2.5 w-2.5"
-          :class="{ 'animate-spin': loading }"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-          />
-        </svg>
-        {{ t('admin.accounts.cnProviders.window5h') }}/{{ t('admin.accounts.cnProviders.windowWeekly') }}
-      </button>
-    </div>
-
+  <div
+    v-if="visible"
+    data-test="cn-provider-quota"
+    class="min-w-[220px] space-y-1"
+  >
     <!-- Tier rows: 5h + weekly utilization bars -->
     <div v-if="data?.success && data.tiers?.length" class="space-y-1">
-      <div v-for="tier in data.tiers" :key="tier.window" class="quota-row">
-        <span class="quota-label">{{ windowLabel(tier.window) }}</span>
+      <div
+        v-for="tier in data.tiers"
+        :key="tier.window"
+        data-test="cn-provider-quota-tier"
+        class="quota-row"
+      >
+        <span
+          data-test="cn-provider-quota-label"
+          class="quota-label quota-label-wide"
+        >
+          {{ windowLabel(tier.window) }}
+        </span>
         <div class="meter quota-meter">
           <div class="track">
             <div
@@ -49,6 +36,33 @@
       </div>
     </div>
 
+    <div class="flex flex-wrap items-center gap-1.5">
+      <button
+        type="button"
+        data-test="cn-provider-quota-probe"
+        class="quota-probe gpill b-blue whitespace-nowrap"
+        :disabled="loading"
+        :title="t('admin.accounts.cnProviders.probeTooltip')"
+        @click="handleProbe()"
+      >
+        <svg
+          class="h-2.5 w-2.5"
+          :class="{ 'animate-spin': loading }"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          />
+        </svg>
+        {{ t('admin.accounts.cnProviders.probe') }}
+      </button>
+    </div>
+
     <div v-if="error" class="quota-error" :title="error">
       {{ truncatedError }}
     </div>
@@ -61,7 +75,6 @@ import { useI18n } from 'vue-i18n'
 import { adminAPI } from '@/api/admin'
 import type { CNProviderQuotaProbeResult } from '@/api/admin/cnProviders'
 import type { Account } from '@/types'
-import { platformTextClass } from '@/utils/platformColors'
 import { cnQuotaCellVisible } from './credentialsBuilder'
 
 const props = defineProps<{

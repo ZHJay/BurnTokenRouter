@@ -51,24 +51,23 @@ describe('CNProviderQuotaCell', () => {
     const root = wrapper.get('[data-test="cn-provider-quota"]')
     expect(root.classes()).toContain('min-w-[220px]')
 
-    const probeButton = root.get('button')
-    expect(probeButton.classes()).toContain('whitespace-nowrap')
-    expect(probeButton.classes()).toContain('leading-4')
+    const probeButton = root.get('[data-test="cn-provider-quota-probe"]')
+    expect(probeButton.classes()).toEqual(
+      expect.arrayContaining(['quota-probe', 'gpill', 'b-blue', 'whitespace-nowrap'])
+    )
     await probeButton.trigger('click')
     await flushPromises()
 
     const tiers = root.findAll('[data-test="cn-provider-quota-tier"]')
     expect(tiers).toHaveLength(2)
     for (const tier of tiers) {
-      expect(tier.classes()).toContain('min-w-0')
-      expect(tier.classes()).toContain('leading-4')
+      expect(tier.classes()).toContain('quota-row')
     }
 
     const labels = root.findAll('[data-test="cn-provider-quota-label"]')
     expect(labels).toHaveLength(2)
     for (const label of labels) {
-      expect(label.classes()).toContain('w-14')
-      expect(label.classes()).toContain('whitespace-nowrap')
+      expect(label.classes()).toEqual(expect.arrayContaining(['quota-label', 'quota-label-wide']))
     }
 
     expect(queryQuota).toHaveBeenCalledWith(account.id)
