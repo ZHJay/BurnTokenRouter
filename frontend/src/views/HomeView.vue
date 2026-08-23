@@ -36,6 +36,15 @@
           >
             <Icon name="book" size="md" />
           </a>
+          <router-link
+            v-if="showModelPlazaEntry"
+            to="/model-plaza"
+            class="icon-btn"
+            :aria-label="t('nav.modelPlaza')"
+            :title="t('nav.modelPlaza')"
+          >
+            <Icon name="grid" size="md" />
+          </router-link>
           <button
             class="icon-btn"
             :aria-label="isDark ? t('home.switchToLight') : t('home.switchToDark')"
@@ -106,6 +115,15 @@
           >
             <Icon name="book" size="md" />
           </a>
+          <router-link
+            v-if="showModelPlazaEntry"
+            to="/model-plaza"
+            class="icon-btn"
+            :aria-label="t('nav.modelPlaza')"
+            :title="t('nav.modelPlaza')"
+          >
+            <Icon name="grid" size="md" />
+          </router-link>
 
           <button
             class="icon-btn"
@@ -275,6 +293,7 @@ import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
 import Icon from '@/components/icons/Icon.vue'
 import { sanitizeUrl } from '@/utils/url'
 import { renderMarkdown } from '@/utils/markdown'
+import { FeatureFlags, isFeatureFlagEnabled } from '@/utils/featureFlags'
 import { useTheme } from '@/composables/useTheme'
 import LandingHero from '@/components/landing/LandingHero.vue'
 import LandingTerminal from '@/components/landing/LandingTerminal.vue'
@@ -318,6 +337,13 @@ const githubUrl = 'https://github.com/Wei-Shaw/sub2api'
 // Auth state
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const isAdmin = computed(() => authStore.isAdmin)
+const modelPlazaEnabled = computed(() => isFeatureFlagEnabled(FeatureFlags.modelPlaza))
+const modelPlazaRequiresAuth = computed(
+  () => appStore.cachedPublicSettings?.model_plaza_require_auth === true
+)
+const showModelPlazaEntry = computed(
+  () => modelPlazaEnabled.value && (isAuthenticated.value || !modelPlazaRequiresAuth.value)
+)
 const dashboardPath = computed(() => isAdmin.value ? '/admin/dashboard' : '/dashboard')
 const userInitial = computed(() => {
   const user = authStore.user
