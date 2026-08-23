@@ -1,32 +1,10 @@
 <template>
-  <div
-    v-if="visible"
-    data-test="cn-provider-quota"
-    class="min-w-[220px] space-y-1"
-  >
-    <!-- Tier rows: 5h + weekly utilization bars (snapshot renders on mount).
-         复用账号页 UsageProgressBar：同阈值配色、同倒计时格式。 -->
-    <div v-if="data?.success && data.tiers?.length" class="space-y-1">
-      <UsageProgressBar
-        v-for="tier in data.tiers"
-        :key="tier.window"
-        data-test="cn-provider-quota-tier"
-        :label="windowLabel(tier.window)"
-        :color="tier.window === 'weekly' ? 'emerald' : 'indigo'"
-        :utilization="tier.used_percent"
-        :resets-at="tier.reset_at"
-      />
-    </div>
-
-    <!-- Explicit refresh action (aligned with the OpenAI "Query" / Grok "Probe"
-         buttons): a verb label tells users this chip is clickable. The previous
-         noun label ("5h/weekly") read as a passive caption and users could not
-         discover the manual refresh. -->
+  <div v-if="visible" class="space-y-1">
     <div class="flex flex-wrap items-center gap-1.5">
       <button
         type="button"
-        data-test="cn-provider-quota-probe"
-        class="inline-flex items-center gap-0.5 whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] font-medium leading-4 text-blue-600 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-400 dark:hover:bg-blue-900/30"
+        class="quota-probe gpill"
+        :class="platformTextClass(account.platform)"
         :disabled="loading"
         :title="t('admin.accounts.cnProviders.probeTooltip')"
         @click="handleProbe()"
@@ -45,15 +23,33 @@
             d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
           />
         </svg>
-        {{ t('admin.accounts.cnProviders.probe') }}
+        {{ t('admin.accounts.cnProviders.window5h') }}/{{ t('admin.accounts.cnProviders.windowWeekly') }}
       </button>
     </div>
 
-    <div
-      v-if="error"
-      class="truncate text-[10px] leading-4 text-red-600 dark:text-red-400"
-      :title="error"
-    >
+    <!-- Tier rows: 5h + weekly utilization bars -->
+    <div v-if="data?.success && data.tiers?.length" class="space-y-1">
+      <div v-for="tier in data.tiers" :key="tier.window" class="quota-row">
+        <span class="quota-label">{{ windowLabel(tier.window) }}</span>
+        <div class="meter quota-meter">
+          <div class="track">
+            <div
+              class="fill"
+              :class="utilizationClass(tier.used_percent)"
+              :style="{ width: `${Math.min(100, Math.max(0, tier.used_percent))}%` }"
+            />
+          </div>
+        </div>
+        <span class="quota-value" :data-usage-state="utilizationState(tier.used_percent)">
+          {{ Math.round(tier.used_percent) }}%
+        </span>
+        <span v-if="tier.reset_at" class="quota-reset" :title="tier.reset_at">
+          · {{ formatReset(tier.reset_at) }}
+        </span>
+      </div>
+    </div>
+
+    <div v-if="error" class="quota-error" :title="error">
       {{ truncatedError }}
     </div>
   </div>
@@ -65,8 +61,8 @@ import { useI18n } from 'vue-i18n'
 import { adminAPI } from '@/api/admin'
 import type { CNProviderQuotaProbeResult } from '@/api/admin/cnProviders'
 import type { Account } from '@/types'
+import { platformTextClass } from '@/utils/platformColors'
 import { cnQuotaCellVisible } from './credentialsBuilder'
-import UsageProgressBar from './UsageProgressBar.vue'
 
 const props = defineProps<{
   account: Account
@@ -166,6 +162,26 @@ const windowLabel = (window: string) =>
     ? t('admin.accounts.cnProviders.windowWeekly')
     : t('admin.accounts.cnProviders.window5h')
 
+const utilizationState = (pct: number) => pct >= 90 ? 'high' : pct >= 75 ? 'warn' : 'normal'
+const utilizationClass = (pct: number) => {
+  const state = utilizationState(pct)
+  return state === 'normal' ? '' : state
+}
+
+// 重置时间相对/绝对简短显示。
+const formatReset = (iso: string) => {
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return iso
+  const now = Date.now()
+  const diffMs = d.getTime() - now
+  if (diffMs <= 0) return t('admin.accounts.cnProviders.resetSoon')
+  if (diffMs < 3_600_000) return `${Math.max(1, Math.round(diffMs / 60_000))}m`
+  const hours = Math.round(diffMs / 3_600_000)
+  if (hours < 48) return `${hours}h`
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${mm}-${dd}`
+}
 const handleProbe = async () => {
   if (loading.value) return
   loading.value = true
