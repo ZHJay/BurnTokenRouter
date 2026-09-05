@@ -290,6 +290,8 @@ html.dark .gn-curtain { background: rgba(0, 0, 0, 0.45); }
   border-radius: var(--r-lg);
   box-shadow: var(--glass-highlight), var(--shadow-pop);
   padding: 8px;
+  max-height: calc(100vh - var(--gn-height, 48px) - 12px);
+  overflow-y: auto;
   opacity: 0;
   visibility: hidden;
   transform: translateY(-6px) scale(0.98);

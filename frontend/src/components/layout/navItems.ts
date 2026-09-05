@@ -195,7 +195,6 @@ export function buildAdminNavItems(deps: NavDeps): NavItem[] {
     {
       path: '/admin/security-audit',
       labelKey: 'nav.securityAudit',
-      hideInSimpleMode: true,
       expandOnly: true,
       featureFlag: deps.flags.riskControl,
       children: [
@@ -237,7 +236,9 @@ export function buildAdminNavItems(deps: NavDeps): NavItem[] {
 
   // Simple mode: drop hidden items, then re-append /keys + settings + admin custom items.
   if (deps.isSimpleMode) {
-    const filtered = visible.filter((item) => !item.hideInSimpleMode)
+    const filtered = visible
+      .filter((item) => !item.hideInSimpleMode)
+      .flatMap((item) => (item.expandOnly ? (item.children ?? []) : [item]))
     filtered.push({ path: '/keys', labelKey: 'nav.apiKeys' })
     filtered.push({ path: '/admin/settings', labelKey: 'nav.settings' })
     for (const cm of deps.customMenuItemsForAdmin) {

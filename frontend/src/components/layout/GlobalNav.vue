@@ -218,6 +218,26 @@
               {{ t('nav.apiKeys') }}
             </router-link>
 
+            <template v-if="authStore.isAdmin && adminPersonalMenuItems.length > 0">
+              <div class="gn-pop-sep"></div>
+              <router-link
+                v-for="item in adminPersonalMenuItems"
+                :key="item.path"
+                :to="item.path"
+                class="gn-pop-item"
+                role="menuitem"
+                @click="closeDropdown"
+              >
+                <span
+                  v-if="item.iconSvg"
+                  class="gn-svg-icon"
+                  v-html="sanitizeSvg(item.iconSvg)"
+                ></span>
+                <Icon v-else name="link" />
+                {{ resolveNavLabel(item, t) }}
+              </router-link>
+            </template>
+
             <a
               v-if="authStore.isAdmin"
               href="https://github.com/Wei-Shaw/sub2api"
@@ -479,6 +499,9 @@ const isSimpleMode = computed(() => authStore.isSimpleMode)
 
 const userNavItems = computed(() => finalizeNav(buildSelfNavItems(navDeps.value, true), authStore.isSimpleMode))
 const personalNavItems = computed(() => finalizeNav(buildSelfNavItems(navDeps.value, false), authStore.isSimpleMode))
+const adminPersonalMenuItems = computed(() =>
+  personalNavItems.value.filter((item) => item.path !== '/profile' && item.path !== '/keys'),
+)
 const adminNavItems = computed(() => buildAdminNavItems(navDeps.value))
 
 /**

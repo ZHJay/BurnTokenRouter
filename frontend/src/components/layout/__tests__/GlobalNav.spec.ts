@@ -546,7 +546,12 @@ describe('GlobalNav — simple-mode filtering (rendered)', () => {
   })
 
   it('admin simple mode keeps a flat list and re-appends /keys + settings', async () => {
-    const { wrapper } = await mountNav({ path: '/admin/dashboard', admin: true, simple: true })
+    const { wrapper } = await mountNav({
+      path: '/admin/dashboard',
+      admin: true,
+      simple: true,
+      settings: { risk_control_enabled: true },
+    })
     expect(link(wrapper, '/admin/dashboard').exists()).toBe(true)
     expect(link(wrapper, '/admin/accounts').exists()).toBe(true)
     expect(link(wrapper, '/admin/announcements').exists()).toBe(true)
@@ -554,6 +559,8 @@ describe('GlobalNav — simple-mode filtering (rendered)', () => {
     expect(link(wrapper, '/admin/usage').exists()).toBe(true)
     expect(link(wrapper, '/keys').exists()).toBe(true)
     expect(link(wrapper, '/admin/settings').exists()).toBe(true)
+    expect(link(wrapper, '/admin/risk-control').exists()).toBe(true)
+    expect(link(wrapper, '/admin/prompt-audit').exists()).toBe(true)
     expect(link(wrapper, '/admin/users').exists()).toBe(false)
     expect(link(wrapper, '/admin/groups').exists()).toBe(false)
     expect(link(wrapper, '/admin/subscriptions').exists()).toBe(false)
@@ -730,6 +737,40 @@ describe('GlobalNav — re-homed header action cluster', () => {
     await wrapper.find('.gn-avatar').trigger('click')
     expect(wrapper.find('a[href="https://github.com/Wei-Shaw/sub2api"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('GitHub')
+  })
+
+  it('admin dropdown keeps personal pages and user custom links reachable', async () => {
+    const custom: CustomMenuItem[] = [
+      { id: 'user-one', label: 'UserOne', icon_svg: '', url: '', visibility: 'user', sort_order: 1 },
+    ]
+    const { wrapper } = await mountNav({
+      path: '/admin/dashboard',
+      admin: true,
+      settings: {
+        available_channels_enabled: true,
+        affiliate_enabled: true,
+        payment_enabled: true,
+        custom_menu_items: custom,
+      },
+    })
+    await wrapper.find('.gn-avatar').trigger('click')
+
+    for (const path of [
+      '/usage',
+      '/available-channels',
+      '/monitor',
+      '/subscriptions',
+      '/purchase',
+      '/orders',
+      '/redeem',
+      '/affiliate',
+      '/custom/user-one',
+    ]) {
+      expect(
+        wrapper.find(`.gn-pop a[href="${path}"]`).exists(),
+        `${path} should be in the admin account menu`,
+      ).toBe(true)
+    }
   })
 
   it('theme toggle drives the real useTheme composable (html.dark + localStorage)', async () => {
