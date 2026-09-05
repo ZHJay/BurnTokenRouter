@@ -277,7 +277,7 @@
               v-if="period"
               class="font-bold text-primary-600 dark:text-primary-400"
               :title="t('modelPlaza.table.timePricingRateHint', { rate: effectiveRate, multiplier: period.multiplier })"
-              >{{ periodRate(period) }}x</span
+              >{{ formatMultiplier(periodRate(period)) }}x</span
             >
             <span
               v-else-if="usesIndependentImageRate(m)"
