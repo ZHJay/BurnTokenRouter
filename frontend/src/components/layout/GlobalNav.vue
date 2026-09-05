@@ -439,6 +439,7 @@ const flagPayment = makeSidebarFlag(FeatureFlags.payment)
 const flagAvailableChannels = makeSidebarFlag(FeatureFlags.availableChannels)
 const flagAffiliate = makeSidebarFlag(FeatureFlags.affiliate)
 const flagRiskControl = makeSidebarFlag(FeatureFlags.riskControl)
+const flagPluginManagement = makeSidebarFlag(FeatureFlags.pluginManagement)
 const flagOpsMonitoring = () => adminSettingsStore.opsMonitoringEnabled
 const flagAdminPayment = () => adminSettingsStore.paymentEnabled
 const flagBatchImageAccess = () => canUseBatchImage.value
@@ -465,6 +466,7 @@ const navDeps = computed<NavDeps>(() => ({
     availableChannels: flagAvailableChannels,
     affiliate: flagAffiliate,
     riskControl: flagRiskControl,
+    pluginManagement: flagPluginManagement,
     opsMonitoring: flagOpsMonitoring,
     adminPayment: flagAdminPayment,
     batchImageAccess: flagBatchImageAccess,

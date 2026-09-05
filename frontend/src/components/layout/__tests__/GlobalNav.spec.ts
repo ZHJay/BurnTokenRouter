@@ -335,6 +335,7 @@ const allFlagsOn = (): NavDeps['flags'] => ({
   availableChannels: () => true,
   affiliate: () => true,
   riskControl: () => true,
+  pluginManagement: () => true,
   opsMonitoring: () => true,
   adminPayment: () => true,
   batchImageAccess: () => true,
@@ -349,6 +350,16 @@ const deps = (overrides: Partial<NavDeps> = {}): NavDeps => ({
 })
 
 describe('navItems module — filtering', () => {
+  it('shows plugin management only when its feature flag is enabled', () => {
+    const enabled = buildAdminNavItems(deps())
+    expect(enabled.filter((item) => item.path === '/admin/plugins')).toHaveLength(1)
+
+    const disabled = buildAdminNavItems(
+      deps({ flags: { ...allFlagsOn(), pluginManagement: () => false } }),
+    )
+    expect(disabled.some((item) => item.path === '/admin/plugins')).toBe(false)
+  })
+
   it('applyFeatureFlags hides items whose flag is false and recurses into children', () => {
     const items = [
       { path: '/a', labelKey: 'nav.a' },
@@ -479,6 +490,19 @@ describe('GlobalNav — feature-flag filtering (rendered)', () => {
     })
     expect(link(wrapper, '/available-channels').exists()).toBe(true)
     expect(link(wrapper, '/affiliate').exists()).toBe(true)
+  })
+
+  it('renders plugin management only when explicitly enabled', async () => {
+    const disabled = await mountNav({ path: '/admin/dashboard', admin: true, settings: {} })
+    expect(link(disabled.wrapper, '/admin/plugins').exists()).toBe(false)
+    disabled.wrapper.unmount()
+
+    const enabled = await mountNav({
+      path: '/admin/dashboard',
+      admin: true,
+      settings: { plugin_management_enabled: true },
+    })
+    expect(link(enabled.wrapper, '/admin/plugins').exists()).toBe(true)
   })
 
   it('admin ops/payment flags come from the admin settings store', async () => {
@@ -1611,6 +1635,7 @@ describe('navItems — flyout spec regression (admin grouping)', () => {
       // resources
       ['/admin/accounts', 'resources'],
       ['/admin/groups', 'resources'],
+      ['/admin/plugins', 'resources'],
       ['/admin/proxies', 'resources'],
       ['/admin/channels/pricing', 'resources'],
       ['/admin/channels/monitor', 'resources'],
