@@ -87,4 +87,28 @@ describe('PlazaModelCardGrid', () => {
     expect(cardPaid).toEqual(['$0.50', '$2.50'])
     cardPaid.forEach((price) => expect(table.text()).toContain(price))
   })
+
+  it('Composite 同名模型按具体平台保留两张稳定卡片', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const anthropic = { ...model('shared-model', 1e-5), platform: 'anthropic' }
+    const openai = { ...model('shared-model', 1e-5), platform: 'openai' }
+    const wrapper = mount(PlazaModelCardGrid, {
+      props: { models: [anthropic, openai], platform: 'composite', rateMultiplier: 1 },
+    })
+
+    expect(wrapper.findAll('.plaza-card')).toHaveLength(2)
+    expect(wrapper.findAll('.plaza-card .badge').map((badge) => badge.text())).toEqual([
+      'Anthropic',
+      'OpenAI',
+    ])
+
+    await wrapper.setProps({ models: [openai, anthropic] })
+    expect(wrapper.findAll('.plaza-card')).toHaveLength(2)
+    expect(wrapper.findAll('.plaza-card .badge').map((badge) => badge.text())).toEqual([
+      'OpenAI',
+      'Anthropic',
+    ])
+    expect(warn.mock.calls.flat().join(' ')).not.toContain('Duplicate keys')
+    warn.mockRestore()
+  })
 })

@@ -2,9 +2,9 @@
   <div class="plaza-card-grid">
     <PlazaModelCard
       v-for="m in sortedModels"
-      :key="m.name"
+      :key="`${m.platform}:${m.name}`"
       :model="m"
-      :platform="platform"
+      :platform="m.platform"
       :rate-multiplier="rateMultiplier"
       :user-rate-multiplier="userRateMultiplier ?? null"
       :image-rate-independent="imageRateIndependent"
