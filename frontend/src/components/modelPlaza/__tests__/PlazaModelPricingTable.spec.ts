@@ -195,6 +195,13 @@ describe('PlazaModelPricingTable', () => {
     expect(wrapper.findAll('tbody td')).toHaveLength(8)
   })
 
+  it('为双侧 1h 缓存明细保留足够的内部滚动画布', () => {
+    const wrapper = mountTable([tokenModel()], 1)
+    const table = wrapper.get('table')
+    expect(table.classes()).toContain('min-w-[1320px]')
+    expect(wrapper.get('.plaza-pricing-table').classes()).toContain('overflow-x-auto')
+  })
+
   it('官方价包含 1h 缓存写入价;official_pricing 为 null 时官方三列显示 -', () => {
     const withOfficial = mountTable([tokenModel()], 1)
     expect(withOfficial.text()).toContain('$6.00')
