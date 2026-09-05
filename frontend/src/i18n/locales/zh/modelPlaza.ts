@@ -78,6 +78,8 @@ export default {
     cards: {
       tiered: '阶梯定价',
       cache: '缓存计费',
+      timePricing: '分时定价',
+      weekdaysOnly: '仅工作日',
       unitPrice: '单价'
     }
   }

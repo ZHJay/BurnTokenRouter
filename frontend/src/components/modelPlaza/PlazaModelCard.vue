@@ -101,6 +101,10 @@ const tags = computed(() => {
   }
   if (tieredIntervals.value.length > 1) list.push(t('modelPlaza.cards.tiered'))
   if (hasCachePricing(props.model)) list.push(t('modelPlaza.cards.cache'))
+  if (props.model.time_pricing?.periods.length) {
+    list.push(t('modelPlaza.cards.timePricing'))
+    if (props.model.time_pricing.weekdays_only) list.push(t('modelPlaza.cards.weekdaysOnly'))
+  }
   return list
 })
 

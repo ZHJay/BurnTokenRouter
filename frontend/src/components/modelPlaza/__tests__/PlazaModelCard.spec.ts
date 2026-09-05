@@ -157,6 +157,23 @@ describe('PlazaModelCard', () => {
     ])
   })
 
+  it('默认卡片视图标出分时计价及工作日规则', () => {
+    const wrapper = mountCard(
+      tokenModel({
+        time_pricing: {
+          timezone: 'Asia/Shanghai',
+          weekdays_only: true,
+          periods: [{ start_time: '00:30', end_time: '08:30', multiplier: 0.5 }],
+        },
+      }),
+      1,
+    )
+
+    const tags = wrapper.findAll('.plaza-tag').map((el) => el.text())
+    expect(tags).toContain('modelPlaza.cards.timePricing')
+    expect(tags).toContain('modelPlaza.cards.weekdaysOnly')
+  })
+
   it('按次计费:单行单价 + 单位后缀,不显示 $/1M token 脚注', () => {
     const model = tokenModel({
       name: 'search-tool',

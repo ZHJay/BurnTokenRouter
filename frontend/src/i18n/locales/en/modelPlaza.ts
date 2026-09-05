@@ -81,6 +81,8 @@ export default {
     cards: {
       tiered: 'Tiered pricing',
       cache: 'Cache pricing',
+      timePricing: 'Time-based pricing',
+      weekdaysOnly: 'Weekdays only',
       unitPrice: 'Unit price'
     }
   }
