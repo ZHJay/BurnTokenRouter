@@ -105,8 +105,8 @@ describe('PlazaModelCardGrid', () => {
     await wrapper.setProps({ models: [openai, anthropic] })
     expect(wrapper.findAll('.plaza-card')).toHaveLength(2)
     expect(wrapper.findAll('.plaza-card .badge').map((badge) => badge.text())).toEqual([
-      'OpenAI',
       'Anthropic',
+      'OpenAI',
     ])
     expect(warn.mock.calls.flat().join(' ')).not.toContain('Duplicate keys')
     warn.mockRestore()

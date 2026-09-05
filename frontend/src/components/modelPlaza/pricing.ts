@@ -121,6 +121,7 @@ function trimZero(n: number): string {
  * 1. token 计费的排在前，按图/按次计费的沉到末尾——它们的官方 token 价与实付的按张/按次价不同量纲，混排无意义；
  * 2. 组内按官方输出价从高到低，无官方价的排最后；
  * 3. 同价按名称降序（新版本号在前，如 gpt-5.6 先于 gpt-5.5）。
+ * 4. Composite 同名模型按平台升序，避免顺序受 API 返回顺序影响。
  */
 export function sortPlazaModels(models: PlazaModel[]): PlazaModel[] {
   return [...models].sort((a, b) => {
@@ -132,6 +133,6 @@ export function sortPlazaModels(models: PlazaModel[]): PlazaModel[] {
     if (pa != null && pb != null && pa !== pb) return pb - pa
     if (pa != null && pb == null) return -1
     if (pa == null && pb != null) return 1
-    return b.name.localeCompare(a.name)
+    return b.name.localeCompare(a.name) || a.platform.localeCompare(b.platform)
   })
 }
