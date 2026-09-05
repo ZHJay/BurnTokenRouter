@@ -13,6 +13,8 @@ type PluginHostInfo struct {
 	BuildType string
 }
 
+const forkDisplayVersionSuffix = "_burntoken"
+
 func EvaluatePluginCompatibility(manifest PluginManifest, host PluginHostInfo) PluginCompatibility {
 	result := PluginCompatibility{
 		CurrentSub2API:     host.Version,
@@ -36,7 +38,7 @@ func EvaluatePluginCompatibility(manifest PluginManifest, host PluginHostInfo) P
 	}
 	result.Compatible = true
 	for _, tested := range manifest.Requires.TestedSub2APIVersions {
-		if normalizeSemver(tested) == normalizeSemver(host.Version) {
+		if normalizeSemver(tested) == normalizePluginHostSemver(host.Version) {
 			result.Tested = true
 			break
 		}
@@ -65,8 +67,17 @@ func normalizeSemver(version string) string {
 	return v
 }
 
+// normalizePluginHostSemver removes this fork's display-only suffix before
+// comparing the host against plugin manifests. Plugin and manifest versions
+// remain strict SemVer through normalizeSemver.
+func normalizePluginHostSemver(version string) string {
+	v := strings.TrimSpace(version)
+	v = strings.TrimSuffix(v, forkDisplayVersionSuffix)
+	return normalizeSemver(v)
+}
+
 func matchesSemverRange(version, expression string) bool {
-	v := normalizeSemver(version)
+	v := normalizePluginHostSemver(version)
 	if v == "" {
 		return false
 	}

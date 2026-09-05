@@ -29,6 +29,21 @@ func TestEvaluatePluginCompatibility(t *testing.T) {
 	assert.Equal(t, "incompatible", result.Status)
 }
 
+func TestEvaluatePluginCompatibilityAcceptsForkDisplayVersion(t *testing.T) {
+	manifest := testPluginManifest(nil)
+	manifest.Requires.Sub2API = ">=0.2.0 <0.3.0"
+	manifest.Requires.TestedSub2APIVersions = []string{"0.2.0"}
+
+	result := EvaluatePluginCompatibility(manifest, PluginHostInfo{
+		Version:   "0.2.0_burntoken",
+		BuildType: "release",
+	})
+
+	require.True(t, result.Compatible)
+	assert.True(t, result.Tested)
+	assert.Equal(t, "compatible", result.Status)
+}
+
 func TestEvaluatePluginCompatibilityRejectsProtocolMismatch(t *testing.T) {
 	manifest := testPluginManifest(nil)
 	manifest.Requires.PluginProtocol = pluginv1.ProtocolVersion + 1
@@ -41,6 +56,8 @@ func TestEvaluatePluginCompatibilityRejectsProtocolMismatch(t *testing.T) {
 
 func TestMatchesSemverRange(t *testing.T) {
 	assert.True(t, matchesSemverRange("0.1.179", ">=0.1.170, <0.2.0"))
+	assert.True(t, matchesSemverRange("0.2.0_burntoken", ">=0.2.0, <0.3.0"))
+	assert.False(t, matchesSemverRange("0.2.0_other", ">=0.2.0, <0.3.0"))
 	assert.True(t, matchesSemverRange("v1.2.3", "=1.2.3"))
 	assert.False(t, matchesSemverRange("0.1.169", ">=0.1.170 <0.2.0"))
 	assert.False(t, matchesSemverRange("dev", ">=0.1.0"))
