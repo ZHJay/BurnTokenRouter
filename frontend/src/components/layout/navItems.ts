@@ -58,7 +58,7 @@ export interface NavFlags {
   availableChannels: () => boolean | undefined
   affiliate: () => boolean | undefined
   riskControl: () => boolean | undefined
-  pluginManagement: () => boolean | undefined
+  pluginManagement?: () => boolean | undefined
   opsMonitoring: () => boolean | undefined
   adminPayment: () => boolean | undefined
   batchImageAccess: () => boolean | undefined
@@ -185,7 +185,11 @@ export function buildAdminNavItems(deps: NavDeps): NavItem[] {
     },
     { path: '/admin/subscriptions', labelKey: 'nav.subscriptions', hideInSimpleMode: true },
     { path: '/admin/accounts', labelKey: 'nav.accounts' },
-    { path: '/admin/plugins', labelKey: 'nav.plugins', featureFlag: deps.flags.pluginManagement },
+    {
+      path: '/admin/plugins',
+      labelKey: 'nav.plugins',
+      featureFlag: () => deps.flags.pluginManagement?.() ?? false,
+    },
     { path: '/admin/announcements', labelKey: 'nav.announcements' },
     { path: '/admin/proxies', labelKey: 'nav.proxies' },
     {
