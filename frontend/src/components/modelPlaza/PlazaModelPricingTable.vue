@@ -309,6 +309,7 @@ import {
 import {
   billingModeOf,
   effectiveRateOf,
+  formatTimeWindow,
   hasCachePricing as hasCachePricingOf,
   hasCustomRate as hasCustomRateOf,
   hasOfficialCache as hasOfficialCacheOf,
@@ -468,12 +469,6 @@ function timePricingRowHint(m: PlazaModel): string {
     })
   }
   return hint
-}
-
-/** “00:30–08:30”;整分钟的 HH:mm:ss 省略秒。 */
-function formatTimeWindow(p: PlazaTimePricingPeriod): string {
-  const clock = (v: string) => v.replace(/^(\d{2}:\d{2}):00$/, '$1')
-  return `${clock(p.start_time)}–${clock(p.end_time)}`
 }
 
 /** 上下文档位按下限升序展示(后端已升序,此处兜底)。 */

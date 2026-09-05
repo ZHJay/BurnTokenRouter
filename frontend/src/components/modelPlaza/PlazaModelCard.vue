@@ -18,7 +18,7 @@
 
     <!-- 能力标签：计费模式 / 阶梯定价 / 缓存 -->
     <div v-if="tags.length" class="plaza-card-tags">
-      <span v-for="tag in tags" :key="tag" class="plaza-tag">{{ tag }}</span>
+      <span v-for="tag in tags" :key="tag.text" class="plaza-tag" :title="tag.title">{{ tag.text }}</span>
     </div>
 
     <!-- 关键定价：实付价为主，官方参考价次级 -->
@@ -47,6 +47,7 @@ import { platformBadgeVariant } from './platformBadge'
 import {
   billingModeOf,
   effectiveRateOf,
+  formatTimeWindow,
   hasCachePricing,
   hasCustomRate,
   isTokenBilling,
@@ -57,6 +58,7 @@ import {
   rowRate,
   tierLabel,
   tokenIntervals,
+  usesIndependentImageRate,
   type PlazaRateContext
 } from './pricing'
 import { BILLING_MODE_IMAGE } from '@/constants/channel'
@@ -71,6 +73,8 @@ const props = defineProps<{
   userRateMultiplier?: number | null
   imageRateIndependent?: boolean
   imageRateMultiplier?: number | null
+  peakWindow?: string
+  peakRateMultiplier?: number | null
 }>()
 
 const { t } = useI18n()
@@ -85,27 +89,52 @@ const ctx = computed<PlazaRateContext>(() => ({
 
 const badgeVariant = computed(() => platformBadgeVariant(props.platform || ''))
 const tokenBilling = computed(() => isTokenBilling(props.model))
-const customRate = computed(() => hasCustomRate(ctx.value))
+const customRate = computed(
+  () => hasCustomRate(ctx.value) && !usesIndependentImageRate(props.model, ctx.value)
+)
 
 /** 卡片右上角展示该模型实际生效的倍率（按图独立倍率优先）。 */
 const displayRate = computed(() => rowRate(props.model, ctx.value))
 
 const tags = computed(() => {
-  const list: string[] = []
+  const list: { text: string; title?: string }[] = []
   if (!tokenBilling.value) {
-    list.push(
-      billingModeOf(props.model) === BILLING_MODE_IMAGE
-        ? t('modelPlaza.table.perImage')
-        : t('modelPlaza.table.perRequest')
-    )
+    list.push({
+      text:
+        billingModeOf(props.model) === BILLING_MODE_IMAGE
+          ? t('modelPlaza.table.perImage')
+          : t('modelPlaza.table.perRequest')
+    })
   }
-  if (tieredIntervals.value.length > 1) list.push(t('modelPlaza.cards.tiered'))
-  if (hasCachePricing(props.model)) list.push(t('modelPlaza.cards.cache'))
+  if (tieredIntervals.value.length > 1) list.push({ text: t('modelPlaza.cards.tiered') })
+  if (hasCachePricing(props.model)) list.push({ text: t('modelPlaza.cards.cache') })
   if (props.model.time_pricing?.periods.length) {
-    list.push(t('modelPlaza.cards.timePricing'))
-    if (props.model.time_pricing.weekdays_only) list.push(t('modelPlaza.cards.weekdaysOnly'))
+    const windows = props.model.time_pricing.periods.map(formatTimeWindow).join(', ')
+    list.push({
+      text: t('modelPlaza.cards.timePricing') + ' ' + windows,
+      title: timePricingHint.value
+    })
+    if (props.model.time_pricing.weekdays_only) {
+      list.push({ text: t('modelPlaza.cards.weekdaysOnly') })
+    }
   }
   return list
+})
+
+const timePricingHint = computed(() => {
+  const pricing = props.model.time_pricing
+  if (!pricing?.periods.length) return undefined
+  const key = pricing.weekdays_only
+    ? 'modelPlaza.table.timePricingRowHintWeekdays'
+    : 'modelPlaza.table.timePricingRowHint'
+  let hint = t(key, { timezone: pricing.timezone })
+  if (props.peakWindow) {
+    hint += t('modelPlaza.table.timePricingRowHintPeak', {
+      window: props.peakWindow,
+      multiplier: props.peakRateMultiplier ?? 1
+    })
+  }
+  return hint
 })
 
 /** 阶梯档位：token 模式取全部区间，按次/按图取配了按次价的区间。 */

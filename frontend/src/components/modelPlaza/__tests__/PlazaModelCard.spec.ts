@@ -8,7 +8,8 @@ vi.mock('vue-i18n', async () => {
   return {
     ...actual,
     useI18n: () => ({
-      t: (key: string) => key
+      t: (key: string, params?: Record<string, unknown>) =>
+        params ? `${key} ${JSON.stringify(params)}` : key
     })
   }
 })
@@ -47,6 +48,8 @@ function mountCard(
     platform?: string
     imageRateIndependent?: boolean
     imageRateMultiplier?: number | null
+    peakWindow?: string
+    peakRateMultiplier?: number | null
   }
 ) {
   return mount(PlazaModelCard, {
@@ -56,7 +59,9 @@ function mountCard(
       rateMultiplier,
       userRateMultiplier: userRateMultiplier ?? null,
       imageRateIndependent: extraProps?.imageRateIndependent,
-      imageRateMultiplier: extraProps?.imageRateMultiplier
+      imageRateMultiplier: extraProps?.imageRateMultiplier,
+      peakWindow: extraProps?.peakWindow,
+      peakRateMultiplier: extraProps?.peakRateMultiplier
     }
   })
 }
@@ -157,7 +162,7 @@ describe('PlazaModelCard', () => {
     ])
   })
 
-  it('默认卡片视图标出分时计价及工作日规则', () => {
+  it('默认卡片视图披露分时时段、时区、工作日规则及高峰叠加', () => {
     const wrapper = mountCard(
       tokenModel({
         time_pricing: {
@@ -167,11 +172,19 @@ describe('PlazaModelCard', () => {
         },
       }),
       1,
+      null,
+      { peakWindow: '18:00–22:00 UTC+8', peakRateMultiplier: 1.2 },
     )
 
     const tags = wrapper.findAll('.plaza-tag').map((el) => el.text())
-    expect(tags).toContain('modelPlaza.cards.timePricing')
+    expect(tags).toContain('modelPlaza.cards.timePricing 00:30–08:30')
     expect(tags).toContain('modelPlaza.cards.weekdaysOnly')
+    const timeTag = wrapper.find('.plaza-tag[title]')
+    expect(timeTag.attributes('title')).toContain('modelPlaza.table.timePricingRowHintWeekdays')
+    expect(timeTag.attributes('title')).toContain('Asia/Shanghai')
+    expect(timeTag.attributes('title')).toContain('modelPlaza.table.timePricingRowHintPeak')
+    expect(timeTag.attributes('title')).toContain('18:00–22:00 UTC+8')
+    expect(timeTag.attributes('title')).toContain('1.2')
   })
 
   it('按次计费:单行单价 + 单位后缀,不显示 $/1M token 脚注', () => {
@@ -229,6 +242,34 @@ describe('PlazaModelCard', () => {
     expect(wrapper.find('.plaza-price-paid').text()).toBe('$0.02')
     expect(wrapper.find('.plaza-rate-value').text()).toBe('1.00x')
     expect(wrapper.find('.badge').classes()).toContain('b-openai')
+  })
+
+  it('生图独立倍率不把用户专属倍率误画成折扣', () => {
+    const model = tokenModel({
+      name: 'gpt-image-2',
+      platform: 'openai',
+      pricing: {
+        billing_mode: 'image',
+        input_price: null,
+        output_price: null,
+        cache_write_price: null,
+        cache_read_price: null,
+        image_input_price: null,
+        image_output_price: null,
+        per_request_price: 0.02,
+        intervals: []
+      },
+      official_pricing: null
+    })
+    const wrapper = mountCard(model, 0.1, 0.8, {
+      imageRateIndependent: true,
+      imageRateMultiplier: 1
+    })
+
+    expect(wrapper.find('.plaza-rate-orig').exists()).toBe(false)
+    expect(wrapper.find('.plaza-rate-value').classes()).not.toContain('is-custom')
+    expect(wrapper.find('.plaza-rate-value').text()).toBe('1.00x')
+    expect(wrapper.find('.plaza-price-paid').text()).toBe('$0.02')
   })
 
   it('未知平台回退品牌蓝徽标,不抛错', () => {

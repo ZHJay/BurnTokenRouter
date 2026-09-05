@@ -9,7 +9,7 @@
 
 import { formatScaled } from '@/utils/pricing'
 import { BILLING_MODE_TOKEN, BILLING_MODE_IMAGE, type BillingMode } from '@/constants/channel'
-import type { PlazaModel } from '@/api/modelPlaza'
+import type { PlazaModel, PlazaTimePricingPeriod } from '@/api/modelPlaza'
 import type { UserPricingInterval } from '@/api/channels'
 
 export const PER_MILLION = 1_000_000
@@ -96,6 +96,12 @@ export function tokenIntervals(m: PlazaModel): UserPricingInterval[] {
 /** 按次/按图模式的阶梯定价（仅保留配了按次价的档位）。 */
 export function requestIntervals(m: PlazaModel): UserPricingInterval[] {
   return (m.pricing?.intervals ?? []).filter((iv) => iv.per_request_price != null)
+}
+
+/** ‘00:30–08:30’；整分钟的 HH:mm:ss 省略秒。 */
+export function formatTimeWindow(period: PlazaTimePricingPeriod): string {
+  const clock = (value: string) => value.replace(/^(\d{2}:\d{2}):00$/, '$1')
+  return clock(period.start_time) + '–' + clock(period.end_time)
 }
 
 /** 档位标签：有上限统一展示为 ≤上限，末档展示为 >下限。 */

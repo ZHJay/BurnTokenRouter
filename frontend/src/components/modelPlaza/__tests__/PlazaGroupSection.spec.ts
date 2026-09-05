@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import PlazaGroupSection from '../PlazaGroupSection.vue'
+import PlazaModelCardGrid from '../PlazaModelCardGrid.vue'
 import PlazaModelPricingTable from '../PlazaModelPricingTable.vue'
 import type { ModelPlazaGroup, PlazaModel } from '@/api/modelPlaza'
 
@@ -132,6 +133,21 @@ describe('PlazaGroupSection 高峰配置传递', () => {
   it('分组未启用高峰时窗口描述为空串', () => {
     const wrapper = mountSection('table', group())
     expect(wrapper.findComponent(PlazaModelPricingTable).props('peakWindow')).toBe('')
+  })
+
+  it('卡片视图也收到同一份高峰窗口描述与倍率', () => {
+    const wrapper = mountSection('cards',
+      group({
+        subscription_type: 'subscription',
+        peak_rate_enabled: true,
+        peak_start: '14:00',
+        peak_end: '18:00',
+        peak_rate_multiplier: 1.5
+      })
+    )
+    const grid = wrapper.findComponent(PlazaModelCardGrid)
+    expect(grid.props('peakWindow')).toBe('14:00-18:00 ×1.5')
+    expect(grid.props('peakRateMultiplier')).toBe(1.5)
   })
 })
 

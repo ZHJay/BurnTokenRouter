@@ -9,6 +9,8 @@
       :user-rate-multiplier="userRateMultiplier ?? null"
       :image-rate-independent="imageRateIndependent"
       :image-rate-multiplier="imageRateMultiplier"
+      :peak-window="peakWindow"
+      :peak-rate-multiplier="peakRateMultiplier"
     />
   </div>
 </template>
@@ -26,6 +28,8 @@ const props = defineProps<{
   userRateMultiplier?: number | null
   imageRateIndependent?: boolean
   imageRateMultiplier?: number | null
+  peakWindow?: string
+  peakRateMultiplier?: number | null
 }>()
 
 /** 与表格视图共用排序，两个视图的模型顺序必须一致。 */
