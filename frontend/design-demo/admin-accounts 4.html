@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>账号管理 · Sub2API 设计稿</title>
+<link rel="stylesheet" href="apple-theme.css" />
+<script src="apple-theme.js"></script>
+<style>
+  /* =========================================================================
+     页面级样式：管理端 · 账号管理（复用 apple-theme.css 组件，仅做布局微调）
+     ========================================================================= */
+
+  /* 页头：标题 + 右侧操作组 */
+  .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+  .page-actions { display: flex; align-items: center; gap: 10px; }
+
+  /* 表格密度微调：13.5px 字号 + 紧凑但留白的单元格 */
+  .table-card thead th,
+  .table-card tbody td { padding: 12px 14px; }
+  .col-check { width: 44px; }
+  .col-pri { width: 54px; }
+  .col-today { width: 104px; }
+  .col-enable { width: 60px; }
+  .col-ops { width: 138px; text-align: right; }
+  .table-card table { min-width: 920px; }
+
+  /* 账号单元格：名称 + 邮箱两行 */
+  .acct-cell { display: flex; flex-direction: column; gap: 2px; min-width: 128px; }
+  .acct-cell .mail { font-size: 11.5px; white-space: nowrap; }
+
+  /* 平台单元格：徽章 + 套餐 pill */
+  .plat-cell { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+  .plat-cell .badge svg { width: 13px; height: 13px; }
+
+  /* 状态单元格：圆点 + 副说明 */
+  .status-cell { display: flex; flex-direction: column; gap: 3px; }
+
+  /* 今日单元格：请求数 + token 两行小字 */
+  .today-cell { display: flex; flex-direction: column; gap: 2px; white-space: nowrap; }
+  .today-cell .t-req { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 12px; color: var(--text-secondary); }
+  .today-cell .t-tok { font-size: 11px; color: var(--text-tertiary); }
+
+  /* 分组 pills */
+  .group-pills { display: flex; flex-wrap: wrap; gap: 4px; max-width: 172px; }
+
+  /* 选中行：柔和品牌蓝底 */
+  tbody tr.selected,
+  tbody tr.selected:hover { background: var(--blue-soft); }
+
+  /* 批量条：默认隐藏，勾选后滑入 */
+  .bulk-bar { display: none; }
+  .bulk-bar.show { display: flex; animation: bulkIn 0.28s var(--ease); }
+  @keyframes bulkIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* 分页总数加粗 */
+  .pagination b { color: var(--text-primary); font-weight: 600; }
+
+  /* 排序指示字重 */
+  thead th.sortable .sort-ind { font-size: 11px; font-weight: 700; }
+
+  /* 响应式 */
+  @media (max-width: 768px) {
+    .page-head { align-items: flex-start; }
+  }
+  @media (max-width: 560px) {
+    .page-actions { width: 100%; }
+    .page-actions .btn { flex: 1; }
+    .toolbar .search { min-width: 0; flex: 1 1 100%; }
+    .filter-chip { padding: 0 12px; font-size: 13px; }
+    .bulk-bar { flex-wrap: wrap; row-gap: 6px; }
+  }
+</style>
+</head>
+<body data-nav="admin" data-active="accounts">
+
+<main class="page">
+
+  <!-- ==================== 页头 ==================== -->
+  <header class="page-head fade-up">
+    <div>
+      <h1 class="page-title">账号管理</h1>
+      <p class="page-sub">管理上游 AI 平台账号与调度</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-secondary" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        导入
+      </button>
+      <button class="btn btn-primary" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        创建账号
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== 统计卡 ==================== -->
+  <section class="stat-row fade-up fade-up-1">
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-icon tint-blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18"/></svg>
+        </div>
+      </div>
+      <div class="stat-label">总账号</div>
+      <div class="stat-value">24</div>
+      <div class="stat-trend trend-up">↑ 3 本周新增</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-icon tint-green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.7 2.7L16 9"/></svg>
+        </div>
+      </div>
+      <div class="stat-label">正常</div>
+      <div class="stat-value">18</div>
+      <div class="stat-trend trend-up">75% 健康率</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-icon tint-orange">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        </div>
+      </div>
+      <div class="stat-label">冷却中</div>
+      <div class="stat-value">3</div>
+      <div class="stat-trend trend-up">2 个即将恢复</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-top">
+        <div class="stat-icon tint-red">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+        </div>
+      </div>
+      <div class="stat-label">异常</div>
+      <div class="stat-value">3</div>
+      <div class="stat-trend trend-down">1 个需重新授权</div>
+    </div>
+  </section>
+
+  <!-- ==================== 筛选工具条 ==================== -->
+  <div class="toolbar fade-up fade-up-2">
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" placeholder="搜索名称 / 邮箱…" aria-label="搜索账号" />
+    </div>
+    <button class="filter-chip" type="button">
+      全部平台
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <button class="filter-chip" type="button">
+      全部状态
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <button class="filter-chip" type="button">
+      全部分组
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <div class="grow"></div>
+    <div class="segmented" role="tablist" aria-label="状态筛选">
+      <button class="active" type="button" role="tab">全部</button>
+      <button type="button" role="tab">正常</button>
+      <button type="button" role="tab">异常</button>
+    </div>
+  </div>
+
+  <!-- ==================== 账号表格 ==================== -->
+  <div class="table-card fade-up fade-up-3">
+
+    <!-- 批量操作条（勾选联动） -->
+    <div class="bulk-bar show" id="bulkBar">
+      <span class="count" id="bulkCount">已选 2 项</span>
+      <span class="sep"></span>
+      <span class="bulk-link" id="bulkEnable">批量启用</span>
+      <span class="bulk-link" id="bulkDisable">批量禁用</span>
+      <span class="bulk-link" id="bulkDelete">批量删除</span>
+      <span style="flex:1"></span>
+      <span class="bulk-link" id="bulkClear">取消选择</span>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-check">
+              <div class="checkbox" id="selectAll" role="checkbox" aria-label="全选" title="全选">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </div>
+            </th>
+            <th>账号</th>
+            <th>平台</th>
+            <th>状态</th>
+            <th class="col-pri">优先级</th>
+            <th>容量 / 用量</th>
+            <th class="col-today sortable" id="sortToday" title="按请求数排序">今日 <span class="sort-ind">↑</span></th>
+            <th>分组</th>
+            <th class="col-enable">启用</th>
+            <th class="col-ops">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr>
+            <td class="col-check">
+              <div class="checkbox checked" role="checkbox" aria-label="选择 codex-pro-01">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </div>
+            </td>
+            <td><div class="acct-cell"><span class="strong">codex-pro-01</span><span class="mail muted">alex.chen@icloud.com</span></div></td>
+            <td><div class="plat-cell"><span class="badge b-openai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l1.8 7.2L21 12l-7.2 1.8L12 21l-1.8-7.2L3 12l7.2-1.8Z"/></svg>OpenAI</span><span class="gpill">Pro</span></div></td>
+            <td><div class="status-cell"><span class="status"><span class="dot dot-active"></span>正常</span><span class="status-sub">剩余 42%</span></div></td>
+            <td class="col-pri"><span class="mono">100</span></td>
+            <td><div class="meter"><div class="label"><span>34 / 40</span><span>85%</span></div><div class="track"><div class="fill warn" style="width:85%"></div></div></div></td>
+            <td><div class="today-cell" data-req="1284"><span class="t-req">1,284 次</span><span class="t-tok">12.4M tokens</span></div></td>
+            <td><div class="group-pills"><span class="gpill">默认</span><span class="gpill">高优先</span></div></td>
+            <td class="col-enable"><button class="switch on" type="button" aria-label="启用 codex-pro-01"><span class="knob"></span></button></td>
+            <td class="col-ops">
+              <div class="row-actions" style="justify-content:flex-end">
+                <button class="icon-btn" type="button" title="测试"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9.5 22 19 9.5h-6.5Z"/></svg></button>
+                <button class="icon-btn" type="button" title="编辑"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg></button>
+                <button class="icon-btn" type="button" title="更多"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
+                <button class="icon-btn danger" type="button" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="col-check">
+              <div class="checkbox" role="checkbox" aria-label="选择 claude-team-a">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </div>
+            </td>
+            <td><div class="acct-cell"><span class="strong">claude-team-a</span><span class="mail muted">team-a@burntoken.dev</span></div></td>
+            <td><div class="plat-cell"><span class="badge b-claude"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M5.2 7.5l13.6 9M18.8 7.5l-13.6 9"/></svg>Claude</span><span class="gpill">Max 20x</span></div></td>
+            <td><div class="status-cell"><span class="status"><span class="dot dot-active"></span>正常</span><span class="status-sub">剩余 63%</span></div></td>
+            <td class="col-pri"><span class="mono">90</span></td>
+            <td><div class="meter"><div class="label"><span>18 / 50</span><span>36%</span></div><div class="track"><div class="fill" style="width:36%"></div></div></div></td>
+            <td><div class="today-cell" data-req="862"><span class="t-req">862 次</span><span class="t-tok">8.1M tokens</span></div></td>
+            <td><div class="group-pills"><span class="gpill">Claude 池</span></div></td>
+            <td class="col-enable"><button class="switch on" type="button" aria-label="启用 claude-team-a"><span class="knob"></span></button></td>
+            <td class="col-ops">
+              <div class="row-actions" style="justify-content:flex-end">
+                <button class="icon-btn" type="button" title="测试"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9.5 22 19 9.5h-6.5Z"/></svg></button>
+                <button class="icon-btn" type="button" title="编辑"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg></button>
+                <button class="icon-btn" type="button" title="更多"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
+                <button class="icon-btn danger" type="button" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="col-check">
+              <div class="checkbox" role="checkbox" aria-label="选择 gpt5-shared-07">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </div>
+            </td>
+            <td><div class="acct-cell"><span class="strong">gpt5-shared-07</span><span class="mail muted">ops+7@burntoken.dev</span></div></td>
+            <td><div class="plat-cell"><span class="badge b-openai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l1.8 7.2L21 12l-7.2 1.8L12 21l-1.8-7.2L3 12l7.2-1.8Z"/></svg>OpenAI</span><span class="gpill">Plus</span></div></td>
+            <td><div class="status-cell"><span class="status"><span class="dot dot-cooldown"></span>冷却中</span><span class="status-sub">14:32 自动恢复</span></div></td>
+            <td class="col-pri"><span class="mono">60</span></td>
+            <td><div class="meter"><div class="label"><span>47 / 50</span><span>94%</span></div><div class="track"><div class="fill high" style="width:94%"></div></div></div></td>
+            <td><div class="today-cell" data-req="2190"><span class="t-req">2,190 次</span><span class="t-tok">21.9M tokens</span></div></td>
+            <td><div class="group-pills"><span class="gpill">共享池</span><span class="gpill">默认</span></div></td>
+            <td class="col-enable"><button class="switch" type="button" aria-label="启用 gpt5-shared-07"><span class="knob"></span></button></td>
+            <td class="col-ops">
+              <div class="row-actions" style="justify-content:flex-end">
+                <button class="icon-btn" type="button" title="测试"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9.5 22 19 9.5h-6.5Z"/></svg></button>
+                <button class="icon-btn" type="button" title="编辑"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg></button>
+                <button class="icon-btn" type="button" title="更多"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
+                <button class="icon-btn danger" type="button" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="col-check">
+              <div class="checkbox" role="checkbox" aria-label="选择 gemini-vertex-3">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </div>
+            </td>
+            <td><div class="acct-cell"><span class="strong">gemini-vertex-3</span><span class="mail muted">svc-vertex-3@gcp</span></div></td>
+            <td><div class="plat-cell"><span class="badge b-gemini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 5 5-5 13-5-13Z"/><path d="m7 8 10 0"/></svg>Gemini</span><span class="gpill">Vertex</span></div></td>
+            <td><div class="status-cell"><span class="status"><span class="dot dot-active"></span>正常</span><span class="status-sub">剩余 88%</span></div></td>
+            <td class="col-pri"><span class="mono">80</span></td>
+            <td><div class="meter"><div class="label"><span>12 / 60</span><span>20%</span></div><div class="track"><div class="fill" style="width:20%"></div></div></div></td>
+            <td><div class="today-cell" data-req="433"><span class="t-req">433 次</span><span class="t-tok">5.6M tokens</span></div></td>
+            <td><div class="group-pills"><span class="gpill">Gemini</span></div></td>
+            <td class="col-enable"><button class="switch on" type="button" aria-label="启用 gemini-vertex-3"><span class="knob"></span></button></td>
+            <td class="col-ops">
+              <div class="row-actions" style="justify-content:flex-end">
+                <button class="icon-btn" type="button" title="测试"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9.5 22 19 9.5h-6.5Z"/></svg></button>
+                <button class="icon-btn" type="button" title="编辑"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg></button>
+                <button class="icon-btn" type="button" title="更多"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
+                <button class="icon-btn danger" type="button" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="col-check">
+              <div class="checkbox checked" role="checkbox" aria-label="选择 claude-oauth-12">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </div>
+            </td>
+            <td><div class="acct-cell"><span class="strong">claude-oauth-12</span><span class="mail muted">maria.lopez@me.com</span></div></td>
+            <td><div class="plat-cell"><span class="badge b-claude"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M5.2 7.5l13.6 9M18.8 7.5l-13.6 9"/></svg>Claude</span><span class="gpill">Pro</span></div></td>
+            <td><div class="status-cell"><span class="status"><span class="dot dot-limited"></span>限流</span><span class="status-sub">Opus 限流至 15:10</span></div></td>
+            <td class="col-pri"><span class="mono">95</span></td>
+            <td><div class="meter"><div class="label"><span>29 / 30</span><span>97%</span></div><div class="track"><div class="fill high" style="width:97%"></div></div></div></td>
+            <td><div class="today-cell" data-req="1592"><span class="t-req">1,592 次</span><span class="t-tok">15.2M tokens</span></div></td>
+            <td><div class="group-pills"><span class="gpill">Claude 池</span><span class="gpill">高优先</span></div></td>
+            <td class="col-enable"><button class="switch on" type="button" aria-label="启用 claude-oauth-12"><span class="knob"></span></button></td>
+            <td class="col-ops">
+              <div class="row-actions" style="justify-content:flex-end">
+                <button class="icon-btn" type="button" title="测试"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9.5 22 19 9.5h-6.5Z"/></svg></button>
+                <button class="icon-btn" type="button" title="编辑"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg></button>
+                <button class="icon-btn" type="button" title="更多"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
+                <button class="icon-btn danger" type="button" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="col-check">
+              <div class="checkbox" role="checkbox" aria-label="选择 gpt5-backup-19">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </div>
+            </td>
+            <td><div class="acct-cell"><span class="strong">gpt5-backup-19</span><span class="mail muted">backup19@burntoken.dev</span></div></td>
+            <td><div class="plat-cell"><span class="badge b-openai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l1.8 7.2L21 12l-7.2 1.8L12 21l-1.8-7.2L3 12l7.2-1.8Z"/></svg>OpenAI</span><span class="gpill">Plus</span></div></td>
+            <td><div class="status-cell"><span class="status"><span class="dot dot-error"></span>异常</span><span class="status-sub">令牌失效 · 待重新授权</span></div></td>
+            <td class="col-pri"><span class="mono">20</span></td>
+            <td><div class="meter"><div class="label"><span>3 / 50</span><span>6%</span></div><div class="track"><div class="fill" style="width:6%"></div></div></div></td>
+            <td><div class="today-cell" data-req="0"><span class="t-req">0 次</span><span class="t-tok">0 tokens</span></div></td>
+            <td><div class="group-pills"><span class="gpill">备用池</span></div></td>
+            <td class="col-enable"><button class="switch" type="button" aria-label="启用 gpt5-backup-19"><span class="knob"></span></button></td>
+            <td class="col-ops">
+              <div class="row-actions" style="justify-content:flex-end">
+                <button class="icon-btn" type="button" title="测试"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9.5 22 19 9.5h-6.5Z"/></svg></button>
+                <button class="icon-btn" type="button" title="编辑"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg></button>
+                <button class="icon-btn" type="button" title="更多"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
+                <button class="icon-btn danger" type="button" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="col-check">
+              <div class="checkbox" role="checkbox" aria-label="选择 grok-x-premium">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </div>
+            </td>
+            <td><div class="acct-cell"><span class="strong">grok-x-premium</span><span class="mail muted">grok@burntoken.dev</span></div></td>
+            <td><div class="plat-cell"><span class="badge b-grok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l14 14M19 5 5 19"/></svg>Grok</span><span class="gpill">Premium+</span></div></td>
+            <td><div class="status-cell"><span class="status"><span class="dot dot-active"></span>正常</span><span class="status-sub">剩余 72%</span></div></td>
+            <td class="col-pri"><span class="mono">70</span></td>
+            <td><div class="meter"><div class="label"><span>8 / 25</span><span>32%</span></div><div class="track"><div class="fill" style="width:32%"></div></div></div></td>
+            <td><div class="today-cell" data-req="219"><span class="t-req">219 次</span><span class="t-tok">2.3M tokens</span></div></td>
+            <td><div class="group-pills"><span class="gpill">Grok</span></div></td>
+            <td class="col-enable"><button class="switch on" type="button" aria-label="启用 grok-x-premium"><span class="knob"></span></button></td>
+            <td class="col-ops">
+              <div class="row-actions" style="justify-content:flex-end">
+                <button class="icon-btn" type="button" title="测试"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9.5 22 19 9.5h-6.5Z"/></svg></button>
+                <button class="icon-btn" type="button" title="编辑"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg></button>
+                <button class="icon-btn" type="button" title="更多"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
+                <button class="icon-btn danger" type="button" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="col-check">
+              <div class="checkbox" role="checkbox" aria-label="选择 codex-agent-05">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </div>
+            </td>
+            <td><div class="acct-cell"><span class="strong">codex-agent-05</span><span class="mail muted">agent05@burntoken.dev</span></div></td>
+            <td><div class="plat-cell"><span class="badge b-openai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l1.8 7.2L21 12l-7.2 1.8L12 21l-1.8-7.2L3 12l7.2-1.8Z"/></svg>OpenAI</span><span class="gpill">Codex</span></div></td>
+            <td><div class="status-cell"><span class="status"><span class="dot dot-paused"></span>暂停</span><span class="status-sub">手动暂停</span></div></td>
+            <td class="col-pri"><span class="mono">50</span></td>
+            <td><div class="meter"><div class="label"><span>41 / 45</span><span>91%</span></div><div class="track"><div class="fill high" style="width:91%"></div></div></div></td>
+            <td><div class="today-cell" data-req="971"><span class="t-req">971 次</span><span class="t-tok">9.8M tokens</span></div></td>
+            <td><div class="group-pills"><span class="gpill">Codex</span></div></td>
+            <td class="col-enable"><button class="switch" type="button" aria-label="启用 codex-agent-05"><span class="knob"></span></button></td>
+            <td class="col-ops">
+              <div class="row-actions" style="justify-content:flex-end">
+                <button class="icon-btn" type="button" title="测试"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9.5 22 19 9.5h-6.5Z"/></svg></button>
+                <button class="icon-btn" type="button" title="编辑"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg></button>
+                <button class="icon-btn" type="button" title="更多"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
+                <button class="icon-btn danger" type="button" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 分页 -->
+    <div class="pagination">
+      <span>共 <b>24</b> 个账号</span>
+      <div class="pager">
+        <button type="button" aria-label="上一页">‹</button>
+        <button type="button" class="active">1</button>
+        <button type="button">2</button>
+        <button type="button">3</button>
+        <button type="button">…</button>
+        <button type="button">6</button>
+        <button type="button" aria-label="下一页">›</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  (function () {
+    'use strict';
+
+    var tbody = document.getElementById('tbody');
+    var bulkBar = document.getElementById('bulkBar');
+    var bulkCount = document.getElementById('bulkCount');
+    var selectAll = document.getElementById('selectAll');
+    var checkboxes = [].slice.call(tbody.querySelectorAll('.checkbox'));
+
+    /* ---------- 复选框 + 批量条联动 ---------- */
+    function selectedCount() {
+      return checkboxes.filter(function (c) { return c.classList.contains('checked'); }).length;
+    }
+    function syncBulk() {
+      var n = selectedCount();
+      bulkCount.textContent = '已选 ' + n + ' 项';
+      bulkBar.classList.toggle('show', n > 0);
+      selectAll.classList.toggle('checked', n === checkboxes.length && n > 0);
+      checkboxes.forEach(function (c) {
+        c.closest('tr').classList.toggle('selected', c.classList.contains('checked'));
+      });
+    }
+    checkboxes.forEach(function (c) {
+      c.addEventListener('click', function () { c.classList.toggle('checked'); syncBulk(); });
+    });
+    selectAll.addEventListener('click', function () {
+      var on = !selectAll.classList.contains('checked');
+      checkboxes.forEach(function (c) { c.classList.toggle('checked', on); });
+      syncBulk();
+    });
+
+    /* ---------- iOS 开关 ---------- */
+    [].slice.call(tbody.querySelectorAll('.switch')).forEach(function (s) {
+      s.addEventListener('click', function () { s.classList.toggle('on'); });
+    });
+
+    /* ---------- 批量操作 ---------- */
+    function setSwitches(on) {
+      checkboxes.forEach(function (c) {
+        if (c.classList.contains('checked')) {
+          c.closest('tr').querySelector('.switch').classList.toggle('on', on);
+        }
+      });
+    }
+    document.getElementById('bulkEnable').addEventListener('click', function () { setSwitches(true); });
+    document.getElementById('bulkDisable').addEventListener('click', function () { setSwitches(false); });
+    document.getElementById('bulkDelete').addEventListener('click', function () {
+      checkboxes.forEach(function (c) {
+        if (c.classList.contains('checked')) c.closest('tr').remove();
+      });
+      checkboxes = [].slice.call(tbody.querySelectorAll('.checkbox'));
+      syncBulk();
+    });
+    document.getElementById('bulkClear').addEventListener('click', function () {
+      checkboxes.forEach(function (c) { c.classList.remove('checked'); });
+      syncBulk();
+    });
+
+    /* ---------- 筛选 chip ---------- */
+    [].slice.call(document.querySelectorAll('.filter-chip')).forEach(function (ch) {
+      ch.addEventListener('click', function () { ch.classList.toggle('on'); });
+    });
+
+    /* ---------- 分段控件 ---------- */
+    [].slice.call(document.querySelectorAll('.segmented button')).forEach(function (b) {
+      b.addEventListener('click', function () {
+        [].slice.call(b.parentElement.querySelectorAll('button')).forEach(function (x) { x.classList.remove('active'); });
+        b.classList.add('active');
+      });
+    });
+
+    /* ---------- “今日”列排序 ---------- */
+    var sortToday = document.getElementById('sortToday');
+    var sortInd = sortToday.querySelector('.sort-ind');
+    var asc = true;
+    sortToday.addEventListener('click', function () {
+      asc = !asc;
+      sortInd.textContent = asc ? '↑' : '↓';
+      var rows = [].slice.call(tbody.querySelectorAll('tr'));
+      rows.sort(function (a, b) {
+        var av = +a.querySelector('.today-cell').getAttribute('data-req');
+        var bv = +b.querySelector('.today-cell').getAttribute('data-req');
+        return asc ? av - bv : bv - av;
+      });
+      rows.forEach(function (r) { tbody.appendChild(r); });
+    });
+
+    /* ---------- 分页 ---------- */
+    var pager = [].slice.call(document.querySelectorAll('.pager button'));
+    function setActivePage(p) {
+      pager.forEach(function (b) { b.classList.toggle('active', b.textContent === String(p)); });
+    }
+    function currentPage() {
+      var a = pager.filter(function (b) { return b.classList.contains('active'); })[0];
+      return a ? +a.textContent : 1;
+    }
+    pager.forEach(function (b) {
+      b.addEventListener('click', function () {
+        var t = b.textContent;
+        if (t === '…') return;
+        if (t === '‹') { setActivePage(Math.max(1, currentPage() - 1)); return; }
+        if (t === '›') { setActivePage(Math.min(6, currentPage() + 1)); return; }
+        setActivePage(+t);
+      });
+    });
+
+    /* 首屏已预选 2 项，同步选中态 */
+    syncBulk();
+  })();
+</script>
+</body>
+</html>
