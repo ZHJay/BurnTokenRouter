@@ -60,6 +60,7 @@
           :class="[instanceId]"
           :style="dropdownStyle"
           role="listbox"
+          tabindex="-1"
           @click.stop
           @mousedown.stop
         >
@@ -367,6 +368,12 @@ const findNextEnabledIndex = (startIndex: number): number => {
 const isNavigableOption = (option: any): boolean => {
   return !isOptionDisabled(option) && !isGroupHeaderOption(option)
 }
+
+watch(filteredOptions, () => {
+  if (!isOpen.value) return
+  focusedIndex.value = findNextEnabledIndex(0)
+  if (focusedIndex.value >= 0) scrollToFocused()
+})
 
 const handleOptionMouseEnter = (option: any, index: number) => {
   if (isOptionDisabled(option) || isGroupHeaderOption(option)) return

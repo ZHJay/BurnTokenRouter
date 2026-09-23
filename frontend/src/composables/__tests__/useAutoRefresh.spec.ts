@@ -87,7 +87,8 @@ describe('useAutoRefresh 可见性暂停', () => {
 
     // 恢复可见（不派发事件，仅靠 tick 内的默认 shouldPause 判断）
     hidden = false
-    await vi.advanceTimersByTimeAsync(2_000)
+    // 上游修正了调度语义（countdown <= 1 即刷新），interval=1s 时下一个 tick 就会刷新
+    await vi.advanceTimersByTimeAsync(1_100)
     expect(onRefresh).toHaveBeenCalledTimes(1)
   })
 
@@ -114,7 +115,7 @@ describe('useAutoRefresh 可见性暂停', () => {
 
     const vm = wrapper.vm as { autoRefresh: { setEnabled: (v: boolean) => void } }
     vm.autoRefresh.setEnabled(true)
-    await vi.advanceTimersByTimeAsync(2_100)
+    await vi.advanceTimersByTimeAsync(1_100)
     expect(onRefresh).toHaveBeenCalledTimes(1)
 
     vm.autoRefresh.setEnabled(false)

@@ -3,7 +3,7 @@
     <div class="space-y-4">
       <!-- Filters -->
       <div class="toolbar">
-        <Select v-model="currentFilter" :options="statusFilters" class="w-36" @change="fetchOrders" />
+        <Select v-model="currentFilter" :options="statusFilters" class="w-36" @change="handlePageChange(1)" />
         <div class="grow"></div>
         <button @click="fetchOrders" :disabled="loading" class="icon-btn" :title="t('common.refresh')" :aria-label="t('common.refresh')">
           <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />

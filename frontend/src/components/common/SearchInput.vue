@@ -2,16 +2,16 @@
   <div class="search">
     <Icon name="search" size="md" aria-hidden="true" />
     <input
-      :value="modelValue"
+      v-model="searchValue"
       type="search"
       :placeholder="placeholder"
       :aria-label="placeholder"
-      @input="handleInput"
     />
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import Icon from '@/components/icons/Icon.vue'
 
@@ -33,11 +33,13 @@ const debouncedEmitSearch = useDebounceFn((value: string) => {
   emit('search', value)
 }, props.debounceMs)
 
-const handleInput = (event: Event) => {
-  const value = (event.target as HTMLInputElement).value
-  emit('update:modelValue', value)
-  debouncedEmitSearch(value)
-}
+const searchValue = computed({
+  get: () => props.modelValue,
+  set: (value: string) => {
+    emit('update:modelValue', value)
+    debouncedEmitSearch(value)
+  }
+})
 </script>
 
 <style scoped>

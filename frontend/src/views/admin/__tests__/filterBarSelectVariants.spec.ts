@@ -71,6 +71,11 @@ vi.mock('@/stores/app', () => ({
   useAppStore: () => ({ showSuccess: vi.fn(), showError: vi.fn() }),
 }))
 
+// GroupsView gates its filters/actions on the simple-mode flag (upstream v0.2.7).
+vi.mock('@/stores/auth', () => ({
+  useAuthStore: () => ({ isSimpleMode: false }),
+}))
+
 vi.mock('@/stores/onboarding', () => ({
   useOnboardingStore: () => ({
     isCurrentStep: vi.fn(() => false),

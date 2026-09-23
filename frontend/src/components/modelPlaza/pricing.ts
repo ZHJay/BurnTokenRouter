@@ -7,7 +7,7 @@
  * 行为与提取前逐字等价，由 PlazaModelPricingTable.spec.ts 的 13 个用例锁定。
  */
 
-import { formatScaled } from '@/utils/pricing'
+import { formatScaled, resolveIntervalPrices } from '@/utils/pricing'
 import { BILLING_MODE_TOKEN, BILLING_MODE_IMAGE, type BillingMode } from '@/constants/channel'
 import type { PlazaModel, PlazaTimePricingPeriod } from '@/api/modelPlaza'
 import type { UserPricingInterval } from '@/api/channels'
@@ -90,7 +90,8 @@ export function hasOfficialCache(o: NonNullable<PlazaModel['official_pricing']>)
 
 /** token 模式的阶梯定价（表格内联进输入/输出列）。 */
 export function tokenIntervals(m: PlazaModel): UserPricingInterval[] {
-  return [...(m.pricing?.intervals ?? [])].sort((a, b) => a.min_tokens - b.min_tokens)
+  const sorted = [...(m.pricing?.intervals ?? [])].sort((a, b) => a.min_tokens - b.min_tokens)
+  return m.pricing ? sorted.map((iv) => resolveIntervalPrices(iv, m.pricing!)) : sorted
 }
 
 /** 按次/按图模式的阶梯定价（仅保留配了按次价的档位）。 */

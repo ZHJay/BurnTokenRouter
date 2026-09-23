@@ -182,6 +182,11 @@ const badgeClass = computed(() => {
   if (props.platform === 'deepseek') {
     return 'b-cyan'
   }
+  if (props.platform === 'minimax') {
+    return isSubscription.value
+      ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+      : 'bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-400'
+  }
   if (props.platform === 'composite') {
     return 'b-teal'
   }
