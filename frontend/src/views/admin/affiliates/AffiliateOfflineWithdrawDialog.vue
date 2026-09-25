@@ -10,7 +10,7 @@
         <label class="input-label">{{ t('admin.affiliates.withdraw.user') }}</label>
         <div
           v-if="selectedUser"
-          class="flex items-center justify-between gap-3 rounded-md border border-primary-200 bg-primary-50 px-3 py-2 dark:border-primary-700/50 dark:bg-primary-900/20"
+          class="flex items-center justify-between gap-3 rounded-[var(--r-control)] border border-primary-200 bg-primary-50 px-3 py-2 dark:border-primary-700/50 dark:bg-primary-900/20"
           data-test="withdraw-selected-user"
         >
           <div class="min-w-0 truncate text-sm">
@@ -40,7 +40,7 @@
           />
           <div
             v-if="userResults.length > 0"
-            class="mt-1 max-h-40 overflow-y-auto rounded border border-gray-200 dark:border-dark-700"
+            class="mt-1 max-h-40 overflow-y-auto rounded-[var(--r-md)] border border-gray-200 dark:border-dark-700"
           >
             <button
               v-for="user in userResults"
@@ -59,7 +59,7 @@
 
       <div
         v-if="selectedUser"
-        class="rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-dark-700 dark:bg-dark-800"
+        class="rounded-[var(--r-md)] border border-[color:var(--separator)] bg-[color:var(--fill)] p-3"
       >
         <div class="flex items-center justify-between text-sm">
           <span class="text-gray-500 dark:text-dark-400">{{ t('admin.affiliates.withdraw.availableQuota') }}</span>
@@ -103,13 +103,13 @@
 
       <div
         v-if="outcomeUncertain"
-        class="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-700/50 dark:bg-blue-900/20 dark:text-blue-300"
+        class="rounded-[var(--r-md)] border border-primary-200 bg-primary-50 p-3 text-sm text-primary-800 dark:border-primary-700/50 dark:bg-primary-900/20 dark:text-primary-300"
         data-test="withdraw-uncertain-hint"
       >
         {{ t('admin.affiliates.withdraw.uncertainHint') }}
       </div>
 
-      <div class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-300">
+      <div class="rounded-[var(--r-md)] border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-300">
         {{ t('admin.affiliates.withdraw.warning') }}
       </div>
     </form>
